@@ -42,6 +42,105 @@ const Index = () => {
       area: 320,
       score: 97,
     },
+    {
+      id: 4,
+      image: property1,
+      price: "$3,200,000",
+      title: "Casa Colonial Restaurada",
+      location: "Guanajuato, México",
+      beds: 4,
+      baths: 3,
+      area: 220,
+      score: 96,
+    },
+    {
+      id: 5,
+      image: property2,
+      price: "$5,900,000",
+      title: "Penthouse Contemporáneo",
+      location: "Guadalajara, Jalisco",
+      beds: 3,
+      baths: 3,
+      area: 200,
+      score: 94,
+    },
+    {
+      id: 6,
+      image: property3,
+      price: "$8,500,000",
+      title: "Residencia con Alberca",
+      location: "Mérida, Yucatán",
+      beds: 5,
+      baths: 4,
+      area: 380,
+      score: 99,
+    },
+    {
+      id: 7,
+      image: property1,
+      price: "$2,800,000",
+      title: "Departamento en Torre Premium",
+      location: "Monterrey, Nuevo León",
+      beds: 2,
+      baths: 2,
+      area: 120,
+      score: 93,
+    },
+    {
+      id: 8,
+      image: property2,
+      price: "$7,200,000",
+      title: "Casa Minimalista con Jardín",
+      location: "San Miguel de Allende, Guanajuato",
+      beds: 3,
+      baths: 2,
+      area: 250,
+      score: 97,
+    },
+    {
+      id: 9,
+      image: property3,
+      price: "$15,000,000",
+      title: "Mansion Frente al Golf",
+      location: "Los Cabos, Baja California Sur",
+      beds: 6,
+      baths: 5,
+      area: 500,
+      score: 98,
+    },
+    {
+      id: 10,
+      image: property1,
+      price: "$4,100,000",
+      title: "Loft Industrial Remodelado",
+      location: "Puebla, México",
+      beds: 2,
+      baths: 1,
+      area: 140,
+      score: 92,
+    },
+    {
+      id: 11,
+      image: property2,
+      price: "$9,500,000",
+      title: "Casa en Condominio Exclusivo",
+      location: "Valle de Bravo, Estado de México",
+      beds: 4,
+      baths: 3,
+      area: 300,
+      score: 96,
+    },
+    {
+      id: 12,
+      image: property3,
+      price: "$5,600,000",
+      title: "Residencia Ecológica Sustentable",
+      location: "Tulum, Quintana Roo",
+      beds: 3,
+      baths: 2,
+      area: 190,
+      score: 95,
+    },
   ];
 
   return (
@@ -122,10 +221,41 @@ const Index = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {/* Filtro Rápido */}
+          <div className="flex flex-col md:flex-row gap-4 mb-12 max-w-4xl mx-auto">
+            <div className="flex-1">
+              <input
+                type="text"
+                placeholder="Buscar por ubicación..."
+                className="w-full px-6 py-3 rounded-lg bg-card border border-border text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ribbon"
+              />
+            </div>
+            <select className="px-6 py-3 rounded-lg bg-card border border-border text-card-foreground focus:outline-none focus:ring-2 focus:ring-ribbon">
+              <option value="">Tipo de Propiedad</option>
+              <option value="casa">Casa</option>
+              <option value="departamento">Departamento</option>
+              <option value="terreno">Terreno</option>
+            </select>
+            <Button variant="hero" size="lg">
+              <Search className="w-5 h-5" />
+              Buscar
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             {featuredProperties.map((property) => (
               <PropertyCard key={property.id} {...property} />
             ))}
+          </div>
+
+          {/* CTA Ver Todas */}
+          <div className="text-center mt-12">
+            <Button variant="hero" size="xl" asChild>
+              <Link to="/">
+                Ver Todas las Propiedades
+                <TrendingUp className="w-5 h-5" />
+              </Link>
+            </Button>
           </div>
         </div>
       </section>
