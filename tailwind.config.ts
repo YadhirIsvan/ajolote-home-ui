@@ -47,16 +47,19 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        sidebar: {
-          DEFAULT: "hsl(var(--sidebar-background))",
-          foreground: "hsl(var(--sidebar-foreground))",
-          primary: "hsl(var(--sidebar-primary))",
-          "primary-foreground": "hsl(var(--sidebar-primary-foreground))",
-          accent: "hsl(var(--sidebar-accent))",
-          "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
-          border: "hsl(var(--sidebar-border))",
-          ring: "hsl(var(--sidebar-ring))",
-        },
+        // Colores Vy Cite específicos
+        tuatara: "hsl(var(--tuatara))",
+        ribbon: "hsl(var(--ribbon-blue))",
+        flamingo: "hsl(var(--flamingo))",
+        carissma: "hsl(var(--carissma))",
+      },
+      backgroundImage: {
+        'dawn': 'var(--gradient-dawn)',
+        'card-gradient': 'var(--gradient-card)',
+      },
+      boxShadow: {
+        'glow-blue': 'var(--shadow-glow-blue)',
+        'glow-orange': 'var(--shadow-glow-orange)',
       },
       borderRadius: {
         lg: "var(--radius)",
