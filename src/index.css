@@ -2,63 +2,54 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* Luxury Real Estate Design System - Mobile First */
 
 @layer base {
   :root {
-    /* Vy Cite Paleta Oficial */
-    --tuatara: 60 1% 15%; /* #272725 - Fondo base oscuro */
-    --ribbon-blue: 223 88% 53%; /* #1E52F1 - Azul principal */
-    --flamingo: 14 87% 57%; /* #F3702F - Naranja/Rojo acento */
-    --carissma: 344 76% 74%; /* #EA8AAB - Rosa suave */
+    /* Luxury Color Palette */
+    --midnight: 222 47% 11%; /* #0F172A - Deep Midnight Blue */
+    --midnight-light: 215 25% 27%; /* #1E293B - Lighter Midnight */
+    --champagne: 40 50% 55%; /* #C5A059 - Champagne Gold */
+    --champagne-dark: 40 45% 49%; /* #B48E43 - Bronze Gold */
+    --white-pure: 0 0% 100%; /* #FFFFFF */
+    --grey-light: 220 14% 96%; /* #F3F4F6 - Light Grey */
+    --grey-dark: 0 0% 20%; /* #333333 - Dark Grey for text */
     
-    /* Semantic tokens */
-    --background: var(--tuatara);
-    --foreground: 0 0% 100%; /* Blanco puro para texto */
+    /* Semantic tokens - Light/Luxury Theme */
+    --background: var(--white-pure);
+    --foreground: var(--midnight);
 
-    --card: 0 0% 100%; /* Tarjetas blancas */
-    --card-foreground: var(--tuatara);
+    --card: var(--white-pure);
+    --card-foreground: var(--midnight);
 
-    --popover: 0 0% 100%;
-    --popover-foreground: var(--tuatara);
+    --popover: var(--white-pure);
+    --popover-foreground: var(--midnight);
 
-    --primary: var(--ribbon-blue);
-    --primary-foreground: 0 0% 100%;
+    --primary: var(--midnight);
+    --primary-foreground: var(--white-pure);
 
-    --secondary: var(--flamingo);
-    --secondary-foreground: 0 0% 100%;
+    --secondary: var(--grey-light);
+    --secondary-foreground: var(--midnight);
 
-    --muted: 60 1% 25%;
-    --muted-foreground: 0 0% 70%;
+    --muted: var(--grey-light);
+    --muted-foreground: 0 0% 40%;
 
-    --accent: var(--carissma);
-    --accent-foreground: 0 0% 100%;
+    --accent: var(--champagne);
+    --accent-foreground: var(--white-pure);
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive-foreground: var(--white-pure);
 
-    --border: 0 0% 30%;
-    --input: 0 0% 20%;
-    --ring: var(--ribbon-blue);
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: var(--champagne);
 
     --radius: 0.75rem;
 
-    /* Gradientes vibrantes para "Amanecer" */
-    --gradient-dawn: radial-gradient(ellipse at top, hsl(var(--ribbon-blue) / 0.3), transparent 60%),
-                      radial-gradient(ellipse at bottom right, hsl(var(--flamingo) / 0.25), transparent 50%),
-                      radial-gradient(ellipse at bottom left, hsl(var(--carissma) / 0.2), transparent 50%),
-                      hsl(var(--tuatara));
-    
-    --gradient-card: linear-gradient(135deg, hsl(var(--ribbon-blue) / 0.1), hsl(var(--flamingo) / 0.05));
-    
-    /* Sombras vibrantes */
-    --shadow-glow-blue: 0 0 40px hsl(var(--ribbon-blue) / 0.3);
-    --shadow-glow-orange: 0 0 40px hsl(var(--flamingo) / 0.3);
-    
-    /* Transiciones suaves */
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Luxury shadows */
+    --shadow-soft: 0 4px 20px rgba(15, 23, 42, 0.08);
+    --shadow-medium: 0 8px 30px rgba(15, 23, 42, 0.12);
+    --shadow-gold: 0 4px 20px rgba(197, 160, 89, 0.25);
   }
 }
 
@@ -68,6 +59,30 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
+
+  /* Ensure touch targets are at least 44px */
+  button, a, [role="button"] {
+    min-height: 44px;
+  }
+}
+
+/* Custom scrollbar for luxury feel */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--grey-light));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--champagne));
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--champagne-dark));
 }

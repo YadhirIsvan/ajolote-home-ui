@@ -7,8 +7,12 @@ export default {
   theme: {
     container: {
       center: true,
-      padding: "2rem",
+      padding: "1rem",
       screens: {
+        sm: "640px",
+        md: "768px",
+        lg: "1024px",
+        xl: "1280px",
         "2xl": "1400px",
       },
     },
@@ -47,19 +51,18 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // Colores Vy Cite específicos
-        tuatara: "hsl(var(--tuatara))",
-        ribbon: "hsl(var(--ribbon-blue))",
-        flamingo: "hsl(var(--flamingo))",
-        carissma: "hsl(var(--carissma))",
-      },
-      backgroundImage: {
-        'dawn': 'var(--gradient-dawn)',
-        'card-gradient': 'var(--gradient-card)',
+        // Luxury Real Estate Colors
+        midnight: "hsl(var(--midnight))",
+        "midnight-light": "hsl(var(--midnight-light))",
+        champagne: "hsl(var(--champagne))",
+        "champagne-dark": "hsl(var(--champagne-dark))",
+        "grey-light": "hsl(var(--grey-light))",
+        "grey-dark": "hsl(var(--grey-dark))",
       },
       boxShadow: {
-        'glow-blue': 'var(--shadow-glow-blue)',
-        'glow-orange': 'var(--shadow-glow-orange)',
+        'soft': 'var(--shadow-soft)',
+        'medium': 'var(--shadow-medium)',
+        'gold': 'var(--shadow-gold)',
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -68,25 +71,22 @@ export default {
       },
       keyframes: {
         "accordion-down": {
-          from: {
-            height: "0",
-          },
-          to: {
-            height: "var(--radix-accordion-content-height)",
-          },
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
-          from: {
-            height: "var(--radix-accordion-content-height)",
-          },
-          to: {
-            height: "0",
-          },
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
+        },
+        "fade-in": {
+          from: { opacity: "0", transform: "translateY(10px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
         },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "fade-in": "fade-in 0.3s ease-out",
       },
     },
   },
