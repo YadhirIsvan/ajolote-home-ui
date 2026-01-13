@@ -30,6 +30,10 @@ import {
   ChevronDown,
   ChevronUp,
   FileText,
+  GraduationCap,
+  ShoppingBag,
+  Hospital,
+  Train,
 } from "lucide-react";
 import property1 from "@/assets/property-1.jpg";
 import property2 from "@/assets/property-2.jpg";
@@ -58,12 +62,37 @@ const PropertyDetail = () => {
       "Hermosa casa de diseño contemporáneo en una de las zonas más exclusivas de Orizaba. Cuenta con amplios espacios, jardín privado, y acabados de primera calidad. Perfecta para familias que buscan confort y seguridad. La propiedad incluye cocina integral de granito, pisos de mármol en áreas comunes, sistema de seguridad inteligente, y estacionamiento para 2 vehículos. Ubicada cerca de escuelas, hospitales y centros comerciales.",
     hasVideoTour: true,
     hasFloorPlan: true,
+    coordinates: {
+      lat: 18.8496,
+      lng: -97.1006,
+    },
+    nearbyPOIs: [
+      { icon: "school", label: "5 min de Escuelas" },
+      { icon: "shopping", label: "10 min de Centros Comerciales" },
+      { icon: "hospital", label: "8 min de Hospitales" },
+      { icon: "transport", label: "3 min de Transporte" },
+    ],
     agent: {
       name: "María González",
       photo: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=face",
       phone: "+52 272 123 4567",
       email: "maria@vycite.com",
     },
+  };
+
+  const getPOIIcon = (iconType: string) => {
+    switch (iconType) {
+      case "school":
+        return <GraduationCap className="w-4 h-4" />;
+      case "shopping":
+        return <ShoppingBag className="w-4 h-4" />;
+      case "hospital":
+        return <Hospital className="w-4 h-4" />;
+      case "transport":
+        return <Train className="w-4 h-4" />;
+      default:
+        return <MapPin className="w-4 h-4" />;
+    }
   };
 
   const timeSlots = [
@@ -188,6 +217,25 @@ const PropertyDetail = () => {
             </div>
           </div>
 
+          {/* Video Tour - Moved up per mobile order */}
+          {property.hasVideoTour && (
+            <div className="px-4 mb-6">
+              <h3 className="text-lg font-semibold text-primary mb-3">Recorrido Virtual</h3>
+              <div className="aspect-video bg-primary/5 rounded-2xl relative overflow-hidden shadow-medium">
+                <img
+                  src={property.images[0]}
+                  alt="Video thumbnail"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 flex items-center justify-center bg-primary/20">
+                  <button className="w-16 h-16 bg-champagne rounded-full flex items-center justify-center shadow-gold transition-transform hover:scale-110">
+                    <Play className="w-7 h-7 text-white ml-1" fill="white" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Description */}
           <div className="px-4 mb-6">
             <h3 className="text-lg font-semibold text-primary mb-2">Descripción</h3>
@@ -210,25 +258,6 @@ const PropertyDetail = () => {
             </button>
           </div>
 
-          {/* Video Tour */}
-          {property.hasVideoTour && (
-            <div className="px-4 mb-6">
-              <h3 className="text-lg font-semibold text-primary mb-3">Recorrido Virtual</h3>
-              <div className="aspect-video bg-primary/5 rounded-2xl relative overflow-hidden shadow-medium">
-                <img
-                  src={property.images[0]}
-                  alt="Video thumbnail"
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 flex items-center justify-center bg-primary/20">
-                  <button className="w-16 h-16 bg-champagne rounded-full flex items-center justify-center shadow-gold transition-transform hover:scale-110">
-                    <Play className="w-7 h-7 text-white ml-1" fill="white" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Floor Plan */}
           {property.hasFloorPlan && (
             <div className="px-4 mb-6">
@@ -244,6 +273,36 @@ const PropertyDetail = () => {
               </div>
             </div>
           )}
+
+          {/* Google Maps - Ubicación Exacta */}
+          <div className="px-4 mb-6">
+            <h3 className="text-lg font-semibold text-primary mb-3">Ubicación Exacta</h3>
+            <div className="rounded-2xl overflow-hidden shadow-medium">
+              <iframe
+                src={`https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3780.7!2d${property.coordinates.lng}!3d${property.coordinates.lat}!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTjCsDUwJzU4LjYiTiA5N8KwMDYnMDIuMiJX!5e0!3m2!1ses!2smx!4v1699999999999!5m2!1ses!2smx`}
+                width="100%"
+                height="250"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                className="w-full"
+                title="Ubicación de la propiedad"
+              />
+            </div>
+            {/* Nearby POIs */}
+            <div className="grid grid-cols-2 gap-2 mt-3">
+              {property.nearbyPOIs.map((poi, index) => (
+                <div
+                  key={index}
+                  className="flex items-center gap-2 bg-muted/50 rounded-xl px-3 py-2.5 text-sm"
+                >
+                  <span className="text-champagne">{getPOIIcon(poi.icon)}</span>
+                  <span className="text-foreground/70">{poi.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
 
           {/* Agent Card */}
           <div className="px-4 mb-6">
@@ -386,6 +445,36 @@ const PropertyDetail = () => {
                     </div>
                   </div>
                 )}
+
+                {/* Google Maps - Ubicación Exacta (Desktop) */}
+                <div>
+                  <h3 className="text-xl font-semibold text-primary mb-4">Ubicación Exacta</h3>
+                  <div className="rounded-2xl overflow-hidden shadow-medium">
+                    <iframe
+                      src={`https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3780.7!2d${property.coordinates.lng}!3d${property.coordinates.lat}!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTjCsDUwJzU4LjYiTiA5N8KwMDYnMDIuMiJX!5e0!3m2!1ses!2smx!4v1699999999999!5m2!1ses!2smx`}
+                      width="100%"
+                      height="350"
+                      style={{ border: 0 }}
+                      allowFullScreen
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      className="w-full"
+                      title="Ubicación de la propiedad"
+                    />
+                  </div>
+                  {/* Nearby POIs */}
+                  <div className="grid grid-cols-4 gap-3 mt-4">
+                    {property.nearbyPOIs.map((poi, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center gap-2 bg-muted/50 rounded-xl px-4 py-3 text-sm"
+                      >
+                        <span className="text-champagne">{getPOIIcon(poi.icon)}</span>
+                        <span className="text-foreground/70">{poi.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               {/* Right Column - Sticky */}
