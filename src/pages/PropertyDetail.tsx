@@ -53,6 +53,7 @@ const PropertyDetail = () => {
     baths: 2,
     area: 180,
     verified: true,
+    status: "Disponible",
     description:
       "Hermosa casa de diseño contemporáneo en una de las zonas más exclusivas de Orizaba. Cuenta con amplios espacios, jardín privado, y acabados de primera calidad. Perfecta para familias que buscan confort y seguridad. La propiedad incluye cocina integral de granito, pisos de mármol en áreas comunes, sistema de seguridad inteligente, y estacionamiento para 2 vehículos. Ubicada cerca de escuelas, hospitales y centros comerciales.",
     hasVideoTour: true,
@@ -79,7 +80,6 @@ const PropertyDetail = () => {
 
   const handleConfirmAppointment = () => {
     if (selectedDate && selectedTime) {
-      // In production, this would send to an API
       console.log("Appointment scheduled:", { date: selectedDate, time: selectedTime });
       setShowScheduleModal(false);
       setSelectedDate(undefined);
@@ -92,12 +92,12 @@ const PropertyDetail = () => {
       {/* Mobile Header */}
       <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border lg:hidden">
         <div className="flex items-center justify-between px-4 h-14">
-          <Button variant="ghost" size="icon" asChild className="text-midnight">
+          <Button variant="ghost" size="icon" asChild className="text-primary">
             <Link to="/comprar">
               <ArrowLeft className="w-5 h-5" />
             </Link>
           </Button>
-          <Button variant="ghost" size="icon" className="text-midnight">
+          <Button variant="ghost" size="icon" className="text-primary">
             <Share2 className="w-5 h-5" />
           </Button>
         </div>
@@ -107,13 +107,13 @@ const PropertyDetail = () => {
       <div className="hidden lg:block pt-6 pb-4 border-b border-border">
         <div className="container mx-auto px-6">
           <div className="flex items-center justify-between">
-            <Button variant="ghost" asChild className="text-midnight hover:text-champagne">
+            <Button variant="ghost" asChild className="text-primary hover:text-champagne">
               <Link to="/comprar">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Volver a Propiedades
               </Link>
             </Button>
-            <Button variant="ghost" size="icon" className="text-midnight">
+            <Button variant="ghost" size="icon" className="text-primary">
               <Share2 className="w-5 h-5" />
             </Button>
           </div>
@@ -127,7 +127,7 @@ const PropertyDetail = () => {
           {/* Title & Location */}
           <div className="px-4 pt-4 pb-3">
             <div className="flex items-start gap-2">
-              <h1 className="text-xl font-bold text-midnight leading-tight flex-1">
+              <h1 className="text-xl font-bold text-primary leading-tight flex-1">
                 {property.title}
               </h1>
               {property.verified && (
@@ -149,7 +149,7 @@ const PropertyDetail = () => {
               <CarouselContent>
                 {property.images.map((image, index) => (
                   <CarouselItem key={index}>
-                    <div className="aspect-[4/3] rounded-2xl overflow-hidden shadow-elegant">
+                    <div className="aspect-[4/3] rounded-2xl overflow-hidden shadow-medium">
                       <img
                         src={image}
                         alt={`${property.title} - Vista ${index + 1}`}
@@ -174,23 +174,23 @@ const PropertyDetail = () => {
           <div className="px-4 mb-6">
             <div className="flex items-center gap-6 py-3 px-4 bg-muted/50 rounded-2xl">
               <div className="flex items-center gap-2">
-                <BedDouble className="w-5 h-5 text-midnight" />
-                <span className="text-sm font-medium text-midnight">{property.beds} Rec</span>
+                <BedDouble className="w-5 h-5 text-primary" />
+                <span className="text-sm font-medium text-primary">{property.beds} Rec</span>
               </div>
               <div className="flex items-center gap-2">
-                <Bath className="w-5 h-5 text-midnight" />
-                <span className="text-sm font-medium text-midnight">{property.baths} Baños</span>
+                <Bath className="w-5 h-5 text-primary" />
+                <span className="text-sm font-medium text-primary">{property.baths} Baños</span>
               </div>
               <div className="flex items-center gap-2">
-                <Maximize className="w-5 h-5 text-midnight" />
-                <span className="text-sm font-medium text-midnight">{property.area}m²</span>
+                <Maximize className="w-5 h-5 text-primary" />
+                <span className="text-sm font-medium text-primary">{property.area}m²</span>
               </div>
             </div>
           </div>
 
           {/* Description */}
           <div className="px-4 mb-6">
-            <h3 className="text-lg font-semibold text-midnight mb-2">Descripción</h3>
+            <h3 className="text-lg font-semibold text-primary mb-2">Descripción</h3>
             <p className="text-sm text-foreground/70 leading-relaxed">
               {showFullDescription ? property.description : truncatedDescription}
             </p>
@@ -213,14 +213,14 @@ const PropertyDetail = () => {
           {/* Video Tour */}
           {property.hasVideoTour && (
             <div className="px-4 mb-6">
-              <h3 className="text-lg font-semibold text-midnight mb-3">Recorrido Virtual</h3>
-              <div className="aspect-video bg-midnight/5 rounded-2xl relative overflow-hidden shadow-elegant">
+              <h3 className="text-lg font-semibold text-primary mb-3">Recorrido Virtual</h3>
+              <div className="aspect-video bg-primary/5 rounded-2xl relative overflow-hidden shadow-medium">
                 <img
                   src={property.images[0]}
                   alt="Video thumbnail"
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 flex items-center justify-center bg-midnight/20">
+                <div className="absolute inset-0 flex items-center justify-center bg-primary/20">
                   <button className="w-16 h-16 bg-champagne rounded-full flex items-center justify-center shadow-gold transition-transform hover:scale-110">
                     <Play className="w-7 h-7 text-white ml-1" fill="white" />
                   </button>
@@ -232,7 +232,7 @@ const PropertyDetail = () => {
           {/* Floor Plan */}
           {property.hasFloorPlan && (
             <div className="px-4 mb-6">
-              <h3 className="text-lg font-semibold text-midnight mb-3">Planos</h3>
+              <h3 className="text-lg font-semibold text-primary mb-3">Planos</h3>
               <div className="aspect-[4/3] bg-muted/50 rounded-2xl flex items-center justify-center border-2 border-dashed border-border">
                 <div className="text-center">
                   <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
@@ -247,8 +247,8 @@ const PropertyDetail = () => {
 
           {/* Agent Card */}
           <div className="px-4 mb-6">
-            <h3 className="text-lg font-semibold text-midnight mb-3">Agente Inmobiliario</h3>
-            <Card className="p-4 rounded-2xl shadow-elegant">
+            <h3 className="text-lg font-semibold text-primary mb-3">Agente Inmobiliario</h3>
+            <Card className="p-4 rounded-2xl shadow-soft">
               <div className="flex items-center gap-4 mb-4">
                 <img
                   src={property.agent.photo}
@@ -256,14 +256,14 @@ const PropertyDetail = () => {
                   className="w-16 h-16 rounded-full object-cover border-2 border-champagne"
                 />
                 <div>
-                  <p className="font-semibold text-midnight">{property.agent.name}</p>
+                  <p className="font-semibold text-primary">{property.agent.name}</p>
                   <p className="text-sm text-muted-foreground">Agente Certificado</p>
                 </div>
               </div>
               <div className="flex gap-3">
                 <Button
                   variant="outline"
-                  className="flex-1 border-midnight text-midnight hover:bg-midnight hover:text-white"
+                  className="flex-1 border-primary text-primary hover:bg-primary hover:text-white"
                 >
                   <Mail className="w-4 h-4 mr-2" />
                   Email
@@ -282,7 +282,7 @@ const PropertyDetail = () => {
           <div className="container mx-auto px-6 pt-8">
             {/* Bento Box Gallery */}
             <div className="grid grid-cols-4 grid-rows-2 gap-3 h-[500px] mb-8">
-              <div className="col-span-2 row-span-2 rounded-2xl overflow-hidden shadow-elegant">
+              <div className="col-span-2 row-span-2 rounded-2xl overflow-hidden shadow-medium">
                 <img
                   src={property.images[0]}
                   alt={property.title}
@@ -290,7 +290,7 @@ const PropertyDetail = () => {
                 />
               </div>
               {property.images.slice(1, 5).map((image, index) => (
-                <div key={index} className="rounded-2xl overflow-hidden shadow-elegant">
+                <div key={index} className="rounded-2xl overflow-hidden shadow-soft">
                   <img
                     src={image}
                     alt={`Vista ${index + 2}`}
@@ -307,7 +307,7 @@ const PropertyDetail = () => {
                 {/* Title & Badge */}
                 <div>
                   <div className="flex items-start gap-3 mb-2">
-                    <h1 className="text-3xl font-bold text-midnight">{property.title}</h1>
+                    <h1 className="text-3xl font-bold text-primary">{property.title}</h1>
                     {property.verified && (
                       <div className="flex items-center gap-1 bg-champagne/10 text-champagne px-3 py-1.5 rounded-full text-sm font-medium shrink-0">
                         <CheckCircle2 className="w-4 h-4" />
@@ -324,25 +324,25 @@ const PropertyDetail = () => {
                 {/* Key Specs */}
                 <div className="flex items-center gap-8 py-4 px-6 bg-muted/50 rounded-2xl w-fit">
                   <div className="flex items-center gap-3">
-                    <BedDouble className="w-6 h-6 text-midnight" />
+                    <BedDouble className="w-6 h-6 text-primary" />
                     <div>
-                      <p className="font-semibold text-midnight">{property.beds}</p>
+                      <p className="font-semibold text-primary">{property.beds}</p>
                       <p className="text-xs text-muted-foreground">Recámaras</p>
                     </div>
                   </div>
                   <div className="w-px h-10 bg-border" />
                   <div className="flex items-center gap-3">
-                    <Bath className="w-6 h-6 text-midnight" />
+                    <Bath className="w-6 h-6 text-primary" />
                     <div>
-                      <p className="font-semibold text-midnight">{property.baths}</p>
+                      <p className="font-semibold text-primary">{property.baths}</p>
                       <p className="text-xs text-muted-foreground">Baños</p>
                     </div>
                   </div>
                   <div className="w-px h-10 bg-border" />
                   <div className="flex items-center gap-3">
-                    <Maximize className="w-6 h-6 text-midnight" />
+                    <Maximize className="w-6 h-6 text-primary" />
                     <div>
-                      <p className="font-semibold text-midnight">{property.area}m²</p>
+                      <p className="font-semibold text-primary">{property.area}m²</p>
                       <p className="text-xs text-muted-foreground">Área Total</p>
                     </div>
                   </div>
@@ -350,21 +350,21 @@ const PropertyDetail = () => {
 
                 {/* Description */}
                 <div>
-                  <h3 className="text-xl font-semibold text-midnight mb-3">Descripción</h3>
+                  <h3 className="text-xl font-semibold text-primary mb-3">Descripción</h3>
                   <p className="text-foreground/70 leading-relaxed">{property.description}</p>
                 </div>
 
                 {/* Video Tour */}
                 {property.hasVideoTour && (
                   <div>
-                    <h3 className="text-xl font-semibold text-midnight mb-4">Recorrido Virtual</h3>
-                    <div className="aspect-video bg-midnight/5 rounded-2xl relative overflow-hidden shadow-elegant">
+                    <h3 className="text-xl font-semibold text-primary mb-4">Recorrido Virtual</h3>
+                    <div className="aspect-video bg-primary/5 rounded-2xl relative overflow-hidden shadow-medium">
                       <img
                         src={property.images[0]}
                         alt="Video thumbnail"
                         className="w-full h-full object-cover"
                       />
-                      <div className="absolute inset-0 flex items-center justify-center bg-midnight/20">
+                      <div className="absolute inset-0 flex items-center justify-center bg-primary/20">
                         <button className="w-20 h-20 bg-champagne rounded-full flex items-center justify-center shadow-gold transition-transform hover:scale-110">
                           <Play className="w-9 h-9 text-white ml-1" fill="white" />
                         </button>
@@ -376,7 +376,7 @@ const PropertyDetail = () => {
                 {/* Floor Plan */}
                 {property.hasFloorPlan && (
                   <div>
-                    <h3 className="text-xl font-semibold text-midnight mb-4">Planos</h3>
+                    <h3 className="text-xl font-semibold text-primary mb-4">Planos</h3>
                     <div className="aspect-[16/9] bg-muted/50 rounded-2xl flex items-center justify-center border-2 border-dashed border-border">
                       <div className="text-center">
                         <FileText className="w-16 h-16 text-muted-foreground mx-auto mb-3" />
@@ -392,7 +392,7 @@ const PropertyDetail = () => {
               <div className="col-span-1">
                 <div className="sticky top-8 space-y-6">
                   {/* Price Card */}
-                  <Card className="p-6 rounded-2xl shadow-elegant">
+                  <Card className="p-6 rounded-2xl shadow-medium">
                     <p className="text-4xl font-bold text-champagne mb-1">{property.price}</p>
                     <p className="text-sm text-muted-foreground mb-6">MXN</p>
 
@@ -414,7 +414,7 @@ const PropertyDetail = () => {
                           className="w-14 h-14 rounded-full object-cover border-2 border-champagne"
                         />
                         <div>
-                          <p className="font-semibold text-midnight">{property.agent.name}</p>
+                          <p className="font-semibold text-primary">{property.agent.name}</p>
                           <p className="text-sm text-muted-foreground">Agente Certificado</p>
                         </div>
                       </div>
@@ -422,7 +422,7 @@ const PropertyDetail = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="flex-1 border-midnight text-midnight hover:bg-midnight hover:text-white"
+                          className="flex-1 border-primary text-primary hover:bg-primary hover:text-white"
                         >
                           <Mail className="w-4 h-4" />
                         </Button>
@@ -456,9 +456,9 @@ const PropertyDetail = () => {
 
       {/* Schedule Modal */}
       <Dialog open={showScheduleModal} onOpenChange={setShowScheduleModal}>
-        <DialogContent className="sm:max-w-md rounded-2xl">
+        <DialogContent className="sm:max-w-md rounded-2xl bg-background">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-midnight text-center">
+            <DialogTitle className="text-xl font-bold text-primary text-center">
               Programa tu visita
             </DialogTitle>
           </DialogHeader>
@@ -477,7 +477,7 @@ const PropertyDetail = () => {
 
             {/* Time Slots */}
             <div>
-              <p className="text-sm font-medium text-midnight mb-3">Selecciona un horario</p>
+              <p className="text-sm font-medium text-primary mb-3">Selecciona un horario</p>
               <div className="grid grid-cols-3 gap-2">
                 {timeSlots.map((time) => (
                   <button
@@ -486,7 +486,7 @@ const PropertyDetail = () => {
                     className={`py-2.5 px-3 rounded-xl text-sm font-medium transition-all min-h-[44px] ${
                       selectedTime === time
                         ? "bg-champagne text-white shadow-gold"
-                        : "bg-muted text-midnight hover:bg-champagne/10"
+                        : "bg-muted text-primary hover:bg-champagne/10"
                     }`}
                   >
                     {time}
