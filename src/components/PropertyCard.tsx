@@ -17,53 +17,57 @@ interface PropertyCardProps {
 
 const PropertyCard = ({ id, image, price, title, location, beds, baths, area, score }: PropertyCardProps) => {
   return (
-    <Card className="group overflow-hidden transition-all duration-300 hover:shadow-glow-blue hover:-translate-y-1">
+    <Card className="group overflow-hidden bg-card border border-border/50 hover:shadow-medium transition-all duration-300 hover:-translate-y-1">
       <Link to={`/propiedad/${id}`}>
-        {/* Imagen */}
+        {/* Image */}
         <div className="relative overflow-hidden aspect-[4/3]">
           <img
             src={image}
             alt={title}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
           {score && (
-            <div className="absolute top-3 right-3 bg-ribbon text-foreground px-3 py-1 rounded-full text-sm font-bold shadow-lg">
+            <div className="absolute top-3 right-3 bg-primary text-primary-foreground px-3 py-1 rounded-full text-xs font-semibold">
               Score: {score}
             </div>
           )}
         </div>
 
-        {/* Contenido */}
-        <div className="p-5">
-          <div className="flex items-baseline justify-between mb-3">
-            <span className="text-2xl font-bold text-flamingo">{price}</span>
+        {/* Content */}
+        <div className="p-4 space-y-3">
+          {/* Price */}
+          <div className="flex items-baseline justify-between">
+            <span className="text-xl font-bold text-champagne">{price}</span>
             <span className="text-xs text-muted-foreground">MXN</span>
           </div>
 
-          <h3 className="text-lg font-semibold text-card-foreground mb-2 line-clamp-1">{title}</h3>
+          {/* Title */}
+          <h3 className="text-base font-semibold text-primary line-clamp-1">{title}</h3>
 
-          <div className="flex items-center gap-1 text-muted-foreground text-sm mb-4">
-            <MapPin className="w-4 h-4" />
+          {/* Location */}
+          <div className="flex items-center gap-1 text-muted-foreground text-sm">
+            <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
             <span className="line-clamp-1">{location}</span>
           </div>
 
-          {/* Características */}
-          <div className="flex items-center gap-4 mb-4 text-sm text-card-foreground">
+          {/* Features */}
+          <div className="flex items-center gap-4 text-sm text-foreground/70 pt-2 border-t border-border/50">
             <div className="flex items-center gap-1">
-              <BedDouble className="w-4 h-4 text-ribbon" />
+              <BedDouble className="w-4 h-4 text-champagne" />
               <span>{beds}</span>
             </div>
             <div className="flex items-center gap-1">
-              <Bath className="w-4 h-4 text-ribbon" />
+              <Bath className="w-4 h-4 text-champagne" />
               <span>{baths}</span>
             </div>
             <div className="flex items-center gap-1">
-              <Maximize className="w-4 h-4 text-ribbon" />
+              <Maximize className="w-4 h-4 text-champagne" />
               <span>{area}m²</span>
             </div>
           </div>
 
-          <Button variant="hero" className="w-full">
+          {/* CTA Button */}
+          <Button variant="gold-outline" className="w-full mt-2">
             Ver Detalles
           </Button>
         </div>
