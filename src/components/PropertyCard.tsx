@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { MapPin, BedDouble, Bath, Maximize } from "lucide-react";
 
+export type PropertyStatus = "disponible" | "preventa" | "oportunidad" | "vendida";
+
 interface PropertyCardProps {
   id: number;
   image: string;
@@ -12,25 +14,47 @@ interface PropertyCardProps {
   beds: number;
   baths: number;
   area: number;
-  score?: number;
+  status?: PropertyStatus;
 }
 
-const PropertyCard = ({ id, image, price, title, location, beds, baths, area, score }: PropertyCardProps) => {
+const statusConfig: Record<PropertyStatus, { label: string; className: string }> = {
+  disponible: {
+    label: "Disponible",
+    className: "bg-emerald-500/80",
+  },
+  preventa: {
+    label: "Preventa",
+    className: "bg-champagne/90",
+  },
+  oportunidad: {
+    label: "Oportunidad",
+    className: "bg-midnight/80",
+  },
+  vendida: {
+    label: "Vendida",
+    className: "bg-red-500/80",
+  },
+};
+
+const PropertyCard = ({ id, image, price, title, location, beds, baths, area, status = "disponible" }: PropertyCardProps) => {
+  const statusStyle = statusConfig[status];
+
   return (
-    <Card className="group overflow-hidden bg-card border border-border/50 hover:shadow-medium transition-all duration-300 hover:-translate-y-1">
+    <Card className="group overflow-hidden bg-card border border-border/50 hover:shadow-medium transition-all duration-300 hover:-translate-y-1 rounded-2xl">
       <Link to={`/propiedad/${id}`}>
-        {/* Image */}
+        {/* Image with Status Tag */}
         <div className="relative overflow-hidden aspect-[4/3]">
           <img
             src={image}
             alt={title}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
-          {score && (
-            <div className="absolute top-3 right-3 bg-primary text-primary-foreground px-3 py-1 rounded-full text-xs font-semibold">
-              Score: {score}
-            </div>
-          )}
+          {/* Glassmorphism Status Tag */}
+          <div
+            className={`absolute top-3 right-3 px-3 py-1.5 rounded-full text-xs font-semibold text-white backdrop-blur-md shadow-lg ${statusStyle.className}`}
+          >
+            {statusStyle.label}
+          </div>
         </div>
 
         {/* Content */}
