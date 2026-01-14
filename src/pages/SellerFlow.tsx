@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import Navigation from "@/components/Navigation";
+import SellerLeadForm from "@/components/SellerLeadForm";
 import {
   Accordion,
   AccordionContent,
@@ -20,7 +21,7 @@ import {
 } from "lucide-react";
 
 const SellerFlow = () => {
-  const [showStickyFooter, setShowStickyFooter] = useState(true);
+  const [isFormOpen, setIsFormOpen] = useState(false);
 
   const steps = [
     {
@@ -62,8 +63,8 @@ const SellerFlow = () => {
     },
   ];
 
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
+  const openForm = () => {
+    setIsFormOpen(true);
   };
 
   return (
@@ -82,6 +83,7 @@ const SellerFlow = () => {
           <Button
             size="lg"
             className="bg-[hsl(var(--champagne-gold))] hover:bg-[hsl(var(--champagne-gold-dark))] text-white rounded-xl px-10 py-6 text-lg font-semibold shadow-lg hover:shadow-xl transition-all"
+            onClick={openForm}
           >
             Quiero vender ahora
             <ArrowRight className="w-5 h-5 ml-2" />
@@ -188,6 +190,7 @@ const SellerFlow = () => {
           <Button
             size="lg"
             className="bg-[hsl(var(--champagne-gold))] hover:bg-[hsl(var(--champagne-gold-dark))] text-white rounded-xl px-10 py-6 text-lg font-semibold shadow-lg hover:shadow-xl transition-all"
+            onClick={openForm}
           >
             Empezar ahora
             <ArrowRight className="w-5 h-5 ml-2" />
@@ -200,7 +203,7 @@ const SellerFlow = () => {
         <Button
           size="lg"
           className="w-full bg-[hsl(var(--champagne-gold))] hover:bg-[hsl(var(--champagne-gold-dark))] text-white rounded-xl py-6 text-lg font-semibold shadow-lg"
-          onClick={scrollToTop}
+          onClick={openForm}
         >
           Quiero vender ahora
           <ArrowRight className="w-5 h-5 ml-2" />
@@ -209,6 +212,9 @@ const SellerFlow = () => {
 
       {/* Bottom padding for sticky footer on mobile */}
       <div className="h-24 md:hidden" />
+
+      {/* Lead Capture Form Modal */}
+      <SellerLeadForm open={isFormOpen} onOpenChange={setIsFormOpen} />
     </div>
   );
 };
