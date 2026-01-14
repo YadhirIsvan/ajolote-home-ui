@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
 import SalesPipeline, { pipelineStages } from "./SalesPipeline";
+import VerticalPipeline from "./VerticalPipeline";
 import PipelineActionSheet from "./PipelineActionSheet";
 
 interface Lead {
@@ -58,7 +59,7 @@ const LeadDetailCard = ({ lead, onBack, onUploadDocs, onStageChange }: LeadDetai
   const currentStageName = pipelineStages.find((s) => s.id === lead.stage)?.label || "";
 
   return (
-    <div className="space-y-5 px-4 md:px-0">
+    <div className="space-y-5 px-0">
       {/* Back Button */}
       <Button
         variant="ghost"
@@ -67,7 +68,7 @@ const LeadDetailCard = ({ lead, onBack, onUploadDocs, onStageChange }: LeadDetai
         className="text-foreground/60 hover:text-midnight -ml-2 min-h-[44px]"
       >
         <ArrowLeft className="w-4 h-4 mr-2" />
-        Volver a leads
+        Volver a clientes
       </Button>
 
       {/* Contact Info Card */}
@@ -75,11 +76,11 @@ const LeadDetailCard = ({ lead, onBack, onUploadDocs, onStageChange }: LeadDetai
         <CardContent className="p-0">
           {/* Header with Avatar - Stacked on mobile */}
           <div className="p-4 md:p-6 pb-4">
-            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left">
-              <div className="w-20 h-20 sm:w-16 sm:h-16 rounded-2xl bg-champagne-gold/20 flex items-center justify-center flex-shrink-0">
-                <User className="w-10 h-10 sm:w-8 sm:h-8 text-champagne-gold" />
+            <div className="flex flex-col items-center gap-4 text-center">
+              <div className="w-20 h-20 rounded-2xl bg-champagne-gold/20 flex items-center justify-center">
+                <User className="w-10 h-10 text-champagne-gold" />
               </div>
-              <div className="flex-1 min-w-0 w-full">
+              <div className="w-full">
                 <h3 className="text-xl font-bold text-midnight break-words">{lead.name}</h3>
                 <p className="text-sm text-foreground/60 mt-1">{lead.lastContact}</p>
                 <div className="mt-2">
@@ -136,13 +137,24 @@ const LeadDetailCard = ({ lead, onBack, onUploadDocs, onStageChange }: LeadDetai
             Etapa {lead.stage}/9
           </Badge>
         </div>
+        
+        {/* Use Vertical Pipeline on mobile, Horizontal on desktop */}
         <Card className="border border-slate-100 shadow-sm p-4 md:p-6 bg-white">
-          <SalesPipeline
-            currentStage={lead.stage}
-            onStageClick={handleStageClick}
-            interactive={true}
-          />
+          {isMobile ? (
+            <VerticalPipeline
+              currentStage={lead.stage}
+              onStageClick={handleStageClick}
+              interactive={true}
+            />
+          ) : (
+            <SalesPipeline
+              currentStage={lead.stage}
+              onStageClick={handleStageClick}
+              interactive={true}
+            />
+          )}
         </Card>
+        
         <p className="text-xs text-center text-foreground/50">
           Toca cualquier etapa para actualizar el progreso
         </p>
