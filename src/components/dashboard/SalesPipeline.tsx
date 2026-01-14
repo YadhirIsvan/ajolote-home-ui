@@ -3,10 +3,11 @@ import { cn } from "@/lib/utils";
 
 interface SalesPipelineProps {
   currentStage: number;
-  onStageClick?: (stage: number) => void;
+  onStageClick?: (stage: number, stageName: string) => void;
+  interactive?: boolean;
 }
 
-const pipelineStages = [
+export const pipelineStages = [
   { id: 1, label: "Lead", shortLabel: "Lead" },
   { id: 2, label: "Visita", shortLabel: "Visita" },
   { id: 3, label: "Interés", shortLabel: "Int." },
@@ -18,7 +19,7 @@ const pipelineStages = [
   { id: 9, label: "Cerrado", shortLabel: "✓" },
 ];
 
-const SalesPipeline = ({ currentStage, onStageClick }: SalesPipelineProps) => {
+const SalesPipeline = ({ currentStage, onStageClick, interactive = false }: SalesPipelineProps) => {
   return (
     <div className="w-full">
       {/* Desktop Pipeline */}
@@ -37,26 +38,27 @@ const SalesPipeline = ({ currentStage, onStageClick }: SalesPipelineProps) => {
           {pipelineStages.map((stage) => (
             <div
               key={stage.id}
-              onClick={() => onStageClick?.(stage.id)}
+              onClick={() => interactive && onStageClick?.(stage.id, stage.label)}
               className={cn(
-                "relative z-10 flex flex-col items-center cursor-pointer group",
-                onStageClick && "hover:scale-105 transition-transform"
+                "relative z-10 flex flex-col items-center group",
+                interactive && "cursor-pointer hover:scale-110 transition-transform duration-200"
               )}
             >
               <div
                 className={cn(
-                  "w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300",
+                  "w-11 h-11 rounded-full flex items-center justify-center border-2 transition-all duration-300",
                   stage.id < currentStage
                     ? "bg-champagne-gold border-champagne-gold text-white"
                     : stage.id === currentStage
-                    ? "bg-white border-champagne-gold text-champagne-gold shadow-lg shadow-champagne-gold/20"
-                    : "bg-white border-border/50 text-foreground/40"
+                    ? "bg-white border-champagne-gold text-champagne-gold shadow-lg shadow-champagne-gold/30 animate-pulse"
+                    : "bg-white border-border/50 text-foreground/40",
+                  interactive && stage.id <= currentStage && "hover:shadow-xl hover:shadow-champagne-gold/40"
                 )}
               >
                 {stage.id < currentStage ? (
                   <Check className="w-5 h-5" />
                 ) : (
-                  <span className="text-sm font-medium">{stage.id}</span>
+                  <span className="text-sm font-semibold">{stage.id}</span>
                 )}
               </div>
               <span
@@ -67,40 +69,50 @@ const SalesPipeline = ({ currentStage, onStageClick }: SalesPipelineProps) => {
               >
                 {stage.label}
               </span>
+              {/* Interactive Hint */}
+              {interactive && stage.id === currentStage && (
+                <span className="absolute -bottom-6 text-[10px] text-champagne-gold font-medium">
+                  Toca para editar
+                </span>
+              )}
             </div>
           ))}
         </div>
       </div>
 
       {/* Mobile Pipeline - Horizontal Scroll */}
-      <div className="md:hidden overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide">
+      <div className="md:hidden overflow-x-auto pb-6 -mx-4 px-4 scrollbar-hide">
         <div className="flex items-center gap-2 min-w-max">
           {pipelineStages.map((stage, index) => (
             <div key={stage.id} className="flex items-center">
               <div
-                onClick={() => onStageClick?.(stage.id)}
+                onClick={() => interactive && onStageClick?.(stage.id, stage.label)}
                 className={cn(
-                  "flex items-center gap-2 px-3 py-2 rounded-full border transition-all cursor-pointer",
+                  "flex items-center gap-2 px-4 py-2.5 rounded-full border-2 transition-all duration-200",
                   stage.id < currentStage
                     ? "bg-champagne-gold border-champagne-gold text-white"
                     : stage.id === currentStage
-                    ? "bg-white border-champagne-gold text-champagne-gold shadow-md"
-                    : "bg-white border-border/50 text-foreground/40"
+                    ? "bg-white border-champagne-gold text-champagne-gold shadow-lg shadow-champagne-gold/20 animate-pulse"
+                    : "bg-white border-border/50 text-foreground/40",
+                  interactive && "cursor-pointer active:scale-95"
                 )}
               >
                 {stage.id < currentStage ? (
                   <Check className="w-4 h-4" />
                 ) : (
-                  <Circle className="w-4 h-4" />
+                  <Circle className={cn(
+                    "w-4 h-4",
+                    stage.id === currentStage && "fill-champagne-gold/20"
+                  )} />
                 )}
-                <span className="text-xs font-medium whitespace-nowrap">
+                <span className="text-xs font-semibold whitespace-nowrap">
                   {stage.shortLabel}
                 </span>
               </div>
               {index < pipelineStages.length - 1 && (
                 <div
                   className={cn(
-                    "w-4 h-0.5 mx-1",
+                    "w-4 h-0.5 mx-1 rounded-full",
                     stage.id < currentStage ? "bg-champagne-gold" : "bg-border/50"
                   )}
                 />

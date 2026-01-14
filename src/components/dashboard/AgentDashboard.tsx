@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { Home, Calendar, Users, ChevronRight, Clock, CheckCircle, XCircle, RefreshCw, Play, LogOut, Settings } from "lucide-react";
+import { Home, Calendar, Users, ChevronRight, CheckCircle, LogOut, Settings, Briefcase } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AgentPropertyModal from "./AgentPropertyModal";
+import AppointmentCard from "./AppointmentCard";
+import EmptyState from "./EmptyState";
 
 import property1 from "@/assets/property-1.jpg";
 import property2 from "@/assets/property-2.jpg";
@@ -72,28 +74,44 @@ const mockAppointments: Appointment[] = [
   { id: "6", client: "Roberto Díaz", property: "Penthouse Santa Fe", date: "17 Ene", time: "9:00 AM", status: "reagendada" },
 ];
 
-const statusConfig: Record<Appointment["status"], { label: string; color: string; icon: React.ComponentType<any> }> = {
-  programada: { label: "Programada", color: "bg-blue-100 text-blue-700", icon: Clock },
-  confirmada: { label: "Confirmada", color: "bg-green-100 text-green-700", icon: CheckCircle },
-  en_progreso: { label: "En Progreso", color: "bg-champagne-gold/20 text-champagne-gold", icon: Play },
-  completada: { label: "Completada", color: "bg-gray-100 text-gray-600", icon: CheckCircle },
-  cancelada: { label: "Cancelada", color: "bg-red-100 text-red-600", icon: XCircle },
-  reagendada: { label: "Reagendada", color: "bg-orange-100 text-orange-600", icon: RefreshCw },
-};
-
 const AgentDashboard = ({ onLogout }: AgentDashboardProps) => {
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [isPropertyModalOpen, setIsPropertyModalOpen] = useState(false);
+  const [appointments, setAppointments] = useState<Appointment[]>(mockAppointments);
 
   const handlePropertyClick = (property: Property) => {
     setSelectedProperty(property);
     setIsPropertyModalOpen(true);
   };
 
+  const handleCheckIn = (id: string, checked: boolean) => {
+    setAppointments((prev) =>
+      prev.map((apt) =>
+        apt.id === id ? { ...apt, status: checked ? "en_progreso" : "confirmada" } : apt
+      )
+    );
+  };
+
+  // Show empty state for appointments demo
+  const showEmptyAppointments = false;
+
   return (
-    <div className="space-y-8">
-      {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div className="space-y-6 md:space-y-8">
+      {/* Sticky Agent Header - Mobile */}
+      <div className="sticky top-16 z-20 -mx-6 px-6 py-4 bg-white/95 backdrop-blur-sm border-b border-border/30 md:hidden">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-full bg-champagne-gold/20 flex items-center justify-center">
+            <Briefcase className="w-6 h-6 text-champagne-gold" />
+          </div>
+          <div>
+            <h2 className="font-bold text-midnight">Alejandro Torres</h2>
+            <p className="text-sm text-foreground/60">Agente Premium</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Stats - Responsive Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         {[
           { label: "Propiedades", value: "3", icon: Home },
           { label: "Leads Activos", value: "16", icon: Users },
@@ -101,13 +119,13 @@ const AgentDashboard = ({ onLogout }: AgentDashboardProps) => {
           { label: "Ventas Mes", value: "1", icon: CheckCircle },
         ].map((stat, index) => (
           <Card key={index} className="border-border/50 bg-white">
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className="p-3 rounded-xl bg-champagne-gold/10">
-                <stat.icon className="w-5 h-5 text-champagne-gold" />
+            <CardContent className="p-3 md:p-4 flex items-center gap-3 md:gap-4">
+              <div className="p-2.5 md:p-3 rounded-xl bg-champagne-gold/10 flex-shrink-0">
+                <stat.icon className="w-4 h-4 md:w-5 md:h-5 text-champagne-gold" />
               </div>
-              <div>
-                <p className="text-2xl font-bold text-midnight">{stat.value}</p>
-                <p className="text-sm text-foreground/60">{stat.label}</p>
+              <div className="min-w-0">
+                <p className="text-xl md:text-2xl font-bold text-midnight">{stat.value}</p>
+                <p className="text-xs md:text-sm text-foreground/60 truncate">{stat.label}</p>
               </div>
             </CardContent>
           </Card>
@@ -115,33 +133,36 @@ const AgentDashboard = ({ onLogout }: AgentDashboardProps) => {
       </div>
 
       <Tabs defaultValue="properties" className="space-y-6">
-        <TabsList className="bg-muted/30 p-1">
+        <TabsList className="bg-muted/30 p-1 w-full grid grid-cols-3">
           <TabsTrigger 
             value="properties" 
-            className="data-[state=active]:bg-champagne-gold data-[state=active]:text-white gap-2"
+            className="data-[state=active]:bg-champagne-gold data-[state=active]:text-white gap-1.5 text-xs md:text-sm"
           >
             <Home className="w-4 h-4" />
-            Casas Asignadas
+            <span className="hidden sm:inline">Casas Asignadas</span>
+            <span className="sm:hidden">Casas</span>
           </TabsTrigger>
           <TabsTrigger 
             value="appointments" 
-            className="data-[state=active]:bg-champagne-gold data-[state=active]:text-white gap-2"
+            className="data-[state=active]:bg-champagne-gold data-[state=active]:text-white gap-1.5 text-xs md:text-sm"
           >
             <Calendar className="w-4 h-4" />
-            Gestión de Citas
+            <span className="hidden sm:inline">Gestión de Citas</span>
+            <span className="sm:hidden">Citas</span>
           </TabsTrigger>
           <TabsTrigger 
             value="settings" 
-            className="data-[state=active]:bg-champagne-gold data-[state=active]:text-white gap-2"
+            className="data-[state=active]:bg-champagne-gold data-[state=active]:text-white gap-1.5 text-xs md:text-sm"
           >
             <Settings className="w-4 h-4" />
-            Configuración
+            <span className="hidden sm:inline">Configuración</span>
+            <span className="sm:hidden">Config</span>
           </TabsTrigger>
         </TabsList>
 
         {/* Properties Tab */}
         <TabsContent value="properties">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {mockProperties.map((property) => (
               <Card
                 key={property.id}
@@ -152,7 +173,7 @@ const AgentDashboard = ({ onLogout }: AgentDashboardProps) => {
                   <img
                     src={property.image}
                     alt={property.title}
-                    className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                    className="w-full h-40 md:h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                   <Badge
                     className={`absolute top-3 right-3 ${
@@ -164,11 +185,11 @@ const AgentDashboard = ({ onLogout }: AgentDashboardProps) => {
                     {property.status}
                   </Badge>
                 </div>
-                <CardContent className="p-5">
-                  <h3 className="text-lg font-semibold text-midnight mb-1">{property.title}</h3>
+                <CardContent className="p-4 md:p-5">
+                  <h3 className="text-base md:text-lg font-semibold text-midnight mb-1 truncate">{property.title}</h3>
                   <p className="text-foreground/60 text-sm mb-3">{property.location}</p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xl font-bold text-champagne-gold">{property.price}</span>
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-lg md:text-xl font-bold text-champagne-gold">{property.price}</span>
                     <div className="flex items-center gap-2 text-sm text-foreground/60">
                       <Users className="w-4 h-4" />
                       <span>{property.leads} leads</span>
@@ -176,7 +197,7 @@ const AgentDashboard = ({ onLogout }: AgentDashboardProps) => {
                   </div>
                   <Button
                     variant="gold"
-                    className="w-full mt-4"
+                    className="w-full h-11"
                     onClick={(e) => {
                       e.stopPropagation();
                       handlePropertyClick(property);
@@ -194,47 +215,32 @@ const AgentDashboard = ({ onLogout }: AgentDashboardProps) => {
         {/* Appointments Tab */}
         <TabsContent value="appointments">
           <Card className="border-border/50">
-            <CardHeader>
-              <CardTitle className="text-xl text-midnight">Citas Programadas</CardTitle>
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg md:text-xl text-midnight">Citas Programadas</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {mockAppointments.map((appointment) => {
-                  const config = statusConfig[appointment.status];
-                  return (
-                    <div
+              {showEmptyAppointments ? (
+                <EmptyState type="appointments" />
+              ) : (
+                <div className="space-y-3">
+                  {appointments.map((appointment) => (
+                    <AppointmentCard
                       key={appointment.id}
-                      className="flex items-center justify-between p-4 bg-muted/20 rounded-xl border border-border/30 hover:border-champagne-gold/30 transition-all"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="hidden sm:flex flex-col items-center justify-center w-14 h-14 bg-champagne-gold/10 rounded-xl">
-                          <span className="text-sm font-bold text-midnight">{appointment.date.split(" ")[0]}</span>
-                          <span className="text-xs text-foreground/60">{appointment.date.split(" ")[1]}</span>
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-midnight">{appointment.client}</h4>
-                          <p className="text-sm text-foreground/60">
-                            {appointment.property} • {appointment.time}
-                          </p>
-                        </div>
-                      </div>
-                      <Badge className={`${config.color} gap-1`}>
-                        <config.icon className="w-3 h-3" />
-                        {config.label}
-                      </Badge>
-                    </div>
-                  );
-                })}
-              </div>
+                      appointment={appointment}
+                      onCheckIn={handleCheckIn}
+                    />
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
 
         {/* Settings Tab */}
         <TabsContent value="settings">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             <Card className="border-border/50">
-              <CardContent className="p-6">
+              <CardContent className="p-5 md:p-6">
                 <div className="flex items-center gap-4 mb-4">
                   <div className="p-3 rounded-xl bg-champagne-gold/10">
                     <Settings className="w-6 h-6 text-champagne-gold" />
@@ -244,14 +250,14 @@ const AgentDashboard = ({ onLogout }: AgentDashboardProps) => {
                     <p className="text-sm text-foreground/60">Notificaciones y preferencias</p>
                   </div>
                 </div>
-                <Button variant="outline" className="w-full border-champagne-gold text-champagne-gold hover:bg-champagne-gold hover:text-white">
+                <Button variant="outline" className="w-full h-12 border-champagne-gold text-champagne-gold hover:bg-champagne-gold hover:text-white">
                   Abrir Configuración
                 </Button>
               </CardContent>
             </Card>
 
             <Card className="border-border/50">
-              <CardContent className="p-6">
+              <CardContent className="p-5 md:p-6">
                 <div className="flex items-center gap-4 mb-4">
                   <div className="p-3 rounded-xl bg-red-100">
                     <LogOut className="w-6 h-6 text-red-500" />
@@ -263,7 +269,7 @@ const AgentDashboard = ({ onLogout }: AgentDashboardProps) => {
                 </div>
                 <Button
                   variant="outline"
-                  className="w-full border-red-200 text-red-500 hover:bg-red-50"
+                  className="w-full h-12 border-red-200 text-red-500 hover:bg-red-50"
                   onClick={onLogout}
                 >
                   Cerrar Sesión
