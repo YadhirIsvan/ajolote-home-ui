@@ -11,6 +11,8 @@
     --midnight-light: 215 25% 27%; /* #1E293B - Lighter Midnight */
     --champagne: 40 50% 55%; /* #C5A059 - Champagne Gold */
     --champagne-dark: 40 45% 49%; /* #B48E43 - Bronze Gold */
+    --champagne-gold: 40 50% 55%; /* #C5A059 - Champagne Gold (alias) */
+    --champagne-gold-dark: 40 45% 49%; /* #B48E43 - Bronze Gold (alias) */
     --white-pure: 0 0% 100%; /* #FFFFFF */
     --grey-light: 220 14% 96%; /* #F3F4F6 - Light Grey */
     --grey-dark: 0 0% 20%; /* #333333 - Dark Grey for text */
