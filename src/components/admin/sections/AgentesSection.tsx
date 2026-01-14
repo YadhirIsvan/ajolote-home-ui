@@ -7,17 +7,27 @@ import {
   Trash2,
   Calendar,
   X,
-  Check
+  Check,
+  Save,
+  Coffee,
+  Phone,
+  Mail
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from "@/components/ui/drawer";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface TimeBlock {
+  id: string;
   start: string;
   end: string;
   type: "work" | "lunch";
@@ -41,6 +51,20 @@ interface Agent {
 
 const DAYS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 
+const TIME_OPTIONS = [
+  "06:00", "07:00", "08:00", "09:00", "10:00", "11:00", "12:00",
+  "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00",
+  "20:00", "21:00", "22:00"
+];
+
+const createDefaultSchedule = (): AgentSchedule => {
+  const schedule: AgentSchedule = {};
+  DAYS.forEach(day => {
+    schedule[day] = [];
+  });
+  return schedule;
+};
+
 const mockAgents: Agent[] = [
   {
     id: "1",
@@ -52,12 +76,32 @@ const mockAgents: Agent[] = [
     sales: 5,
     status: "activo",
     schedule: {
-      Lunes: [{ start: "09:00", end: "14:00", type: "work" }, { start: "14:00", end: "15:00", type: "lunch" }, { start: "15:00", end: "18:00", type: "work" }],
-      Martes: [{ start: "09:00", end: "14:00", type: "work" }, { start: "14:00", end: "15:00", type: "lunch" }, { start: "15:00", end: "18:00", type: "work" }],
-      Miércoles: [{ start: "09:00", end: "14:00", type: "work" }, { start: "14:00", end: "15:00", type: "lunch" }, { start: "15:00", end: "18:00", type: "work" }],
-      Jueves: [{ start: "09:00", end: "14:00", type: "work" }, { start: "14:00", end: "15:00", type: "lunch" }, { start: "15:00", end: "18:00", type: "work" }],
-      Viernes: [{ start: "09:00", end: "14:00", type: "work" }, { start: "14:00", end: "15:00", type: "lunch" }, { start: "15:00", end: "17:00", type: "work" }],
-      Sábado: [{ start: "10:00", end: "14:00", type: "work" }],
+      Lunes: [
+        { id: "1a", start: "09:00", end: "14:00", type: "work" }, 
+        { id: "1b", start: "14:00", end: "15:00", type: "lunch" }, 
+        { id: "1c", start: "15:00", end: "18:00", type: "work" }
+      ],
+      Martes: [
+        { id: "2a", start: "09:00", end: "14:00", type: "work" }, 
+        { id: "2b", start: "14:00", end: "15:00", type: "lunch" }, 
+        { id: "2c", start: "15:00", end: "18:00", type: "work" }
+      ],
+      Miércoles: [
+        { id: "3a", start: "09:00", end: "14:00", type: "work" }, 
+        { id: "3b", start: "14:00", end: "15:00", type: "lunch" }, 
+        { id: "3c", start: "15:00", end: "18:00", type: "work" }
+      ],
+      Jueves: [
+        { id: "4a", start: "09:00", end: "14:00", type: "work" }, 
+        { id: "4b", start: "14:00", end: "15:00", type: "lunch" }, 
+        { id: "4c", start: "15:00", end: "18:00", type: "work" }
+      ],
+      Viernes: [
+        { id: "5a", start: "09:00", end: "14:00", type: "work" }, 
+        { id: "5b", start: "14:00", end: "15:00", type: "lunch" }, 
+        { id: "5c", start: "15:00", end: "17:00", type: "work" }
+      ],
+      Sábado: [{ id: "6a", start: "10:00", end: "14:00", type: "work" }],
       Domingo: [],
     },
   },
@@ -71,11 +115,11 @@ const mockAgents: Agent[] = [
     sales: 3,
     status: "activo",
     schedule: {
-      Lunes: [{ start: "10:00", end: "19:00", type: "work" }],
-      Martes: [{ start: "10:00", end: "19:00", type: "work" }],
-      Miércoles: [{ start: "10:00", end: "19:00", type: "work" }],
-      Jueves: [{ start: "10:00", end: "19:00", type: "work" }],
-      Viernes: [{ start: "10:00", end: "19:00", type: "work" }],
+      Lunes: [{ id: "7a", start: "10:00", end: "19:00", type: "work" }],
+      Martes: [{ id: "8a", start: "10:00", end: "19:00", type: "work" }],
+      Miércoles: [{ id: "9a", start: "10:00", end: "19:00", type: "work" }],
+      Jueves: [{ id: "10a", start: "10:00", end: "19:00", type: "work" }],
+      Viernes: [{ id: "11a", start: "10:00", end: "19:00", type: "work" }],
       Sábado: [],
       Domingo: [],
     },
@@ -89,36 +133,126 @@ const mockAgents: Agent[] = [
     properties: 6,
     sales: 4,
     status: "activo",
-    schedule: {
-      Lunes: [{ start: "08:00", end: "17:00", type: "work" }],
-      Martes: [{ start: "08:00", end: "17:00", type: "work" }],
-      Miércoles: [{ start: "08:00", end: "17:00", type: "work" }],
-      Jueves: [{ start: "08:00", end: "17:00", type: "work" }],
-      Viernes: [{ start: "08:00", end: "17:00", type: "work" }],
-      Sábado: [{ start: "09:00", end: "13:00", type: "work" }],
-      Domingo: [],
-    },
+    schedule: createDefaultSchedule(),
   },
 ];
 
+const emptyAgent: Omit<Agent, "id"> = {
+  name: "",
+  email: "",
+  phone: "",
+  avatar: "",
+  properties: 0,
+  sales: 0,
+  status: "activo",
+  schedule: createDefaultSchedule(),
+};
+
 const AgentesSection = () => {
   const isMobile = useIsMobile();
-  const [agents] = useState<Agent[]>(mockAgents);
+  const [agents, setAgents] = useState<Agent[]>(mockAgents);
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [isSchedulerOpen, setIsSchedulerOpen] = useState(false);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [formData, setFormData] = useState<Omit<Agent, "id">>(emptyAgent);
+  const [tempSchedule, setTempSchedule] = useState<AgentSchedule>(createDefaultSchedule());
+  
+  // Block form state
+  const [addingBlockDay, setAddingBlockDay] = useState<string | null>(null);
+  const [newBlock, setNewBlock] = useState<{ start: string; end: string; type: "work" | "lunch" }>({
+    start: "09:00",
+    end: "17:00",
+    type: "work"
+  });
 
   const handleOpenScheduler = (agent: Agent) => {
     setSelectedAgent(agent);
+    setTempSchedule(JSON.parse(JSON.stringify(agent.schedule)));
     setIsSchedulerOpen(true);
+  };
+
+  const handleCreate = () => {
+    setEditingId(null);
+    setFormData(emptyAgent);
+    setIsFormOpen(true);
+  };
+
+  const handleEdit = (agent: Agent) => {
+    setEditingId(agent.id);
+    setFormData({
+      name: agent.name,
+      email: agent.email,
+      phone: agent.phone,
+      avatar: agent.avatar,
+      properties: agent.properties,
+      sales: agent.sales,
+      status: agent.status,
+      schedule: agent.schedule,
+    });
+    setIsFormOpen(true);
+  };
+
+  const handleSaveAgent = () => {
+    if (editingId) {
+      setAgents(prev => prev.map(a => 
+        a.id === editingId ? { ...a, ...formData } : a
+      ));
+      toast.success("Agente actualizado");
+    } else {
+      const newAgent: Agent = {
+        id: Date.now().toString(),
+        ...formData,
+        avatar: formData.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2),
+      };
+      setAgents(prev => [...prev, newAgent]);
+      toast.success("Agente creado");
+    }
+    setIsFormOpen(false);
+  };
+
+  const handleDelete = (id: string) => {
+    setAgents(prev => prev.filter(a => a.id !== id));
+    toast.success("Agente eliminado");
+  };
+
+  const handleAddBlock = (day: string) => {
+    const block: TimeBlock = {
+      id: Date.now().toString(),
+      ...newBlock
+    };
+    setTempSchedule(prev => ({
+      ...prev,
+      [day]: [...(prev[day] || []), block].sort((a, b) => a.start.localeCompare(b.start))
+    }));
+    setAddingBlockDay(null);
+    setNewBlock({ start: "09:00", end: "17:00", type: "work" });
+  };
+
+  const handleRemoveBlock = (day: string, blockId: string) => {
+    setTempSchedule(prev => ({
+      ...prev,
+      [day]: (prev[day] || []).filter(b => b.id !== blockId)
+    }));
+  };
+
+  const handleSaveSchedule = () => {
+    if (selectedAgent) {
+      setAgents(prev => prev.map(a => 
+        a.id === selectedAgent.id ? { ...a, schedule: tempSchedule } : a
+      ));
+      toast.success("Horario guardado");
+    }
+    setIsSchedulerOpen(false);
   };
 
   const SchedulerContent = () => {
     if (!selectedAgent) return null;
 
     return (
-      <div className="space-y-6 p-4">
+      <div className="space-y-4">
         {/* Agent Header */}
-        <div className="flex items-center gap-4 pb-4 border-b border-border/30">
+        <div className="flex items-center gap-4 p-4 bg-champagne-gold/10 rounded-xl">
           <div className="w-14 h-14 rounded-full bg-champagne-gold flex items-center justify-center text-white text-xl font-bold">
             {selectedAgent.avatar}
           </div>
@@ -129,31 +263,82 @@ const AgentesSection = () => {
         </div>
 
         {/* Schedule Grid */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           <h4 className="font-semibold text-midnight flex items-center gap-2">
             <Calendar className="w-5 h-5 text-champagne-gold" />
             Horario Semanal
           </h4>
 
           {DAYS.map((day) => {
-            const blocks = selectedAgent.schedule[day] || [];
+            const blocks = tempSchedule[day] || [];
             const hasWork = blocks.length > 0;
 
             return (
               <div key={day} className="border border-border/30 rounded-xl overflow-hidden">
                 <div className="flex items-center justify-between p-3 bg-muted/20">
                   <span className="font-medium text-midnight">{day}</span>
-                  <Button variant="ghost" size="sm" className="text-champagne-gold h-8">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-champagne-gold h-8"
+                    onClick={() => setAddingBlockDay(addingBlockDay === day ? null : day)}
+                  >
                     <Plus className="w-4 h-4 mr-1" />
                     Añadir
                   </Button>
                 </div>
+
+                {/* Add Block Form */}
+                {addingBlockDay === day && (
+                  <div className="p-3 bg-champagne-gold/5 border-b border-champagne-gold/20 space-y-3">
+                    <div className="grid grid-cols-3 gap-2">
+                      <Select value={newBlock.start} onValueChange={(v) => setNewBlock(prev => ({ ...prev, start: v }))}>
+                        <SelectTrigger className="h-10">
+                          <SelectValue placeholder="Inicio" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {TIME_OPTIONS.map(t => (
+                            <SelectItem key={t} value={t}>{t}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Select value={newBlock.end} onValueChange={(v) => setNewBlock(prev => ({ ...prev, end: v }))}>
+                        <SelectTrigger className="h-10">
+                          <SelectValue placeholder="Fin" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {TIME_OPTIONS.map(t => (
+                            <SelectItem key={t} value={t}>{t}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Select value={newBlock.type} onValueChange={(v: "work" | "lunch") => setNewBlock(prev => ({ ...prev, type: v }))}>
+                        <SelectTrigger className="h-10">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="work">Trabajo</SelectItem>
+                          <SelectItem value="lunch">Comida</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={() => setAddingBlockDay(null)} className="flex-1">
+                        Cancelar
+                      </Button>
+                      <Button variant="gold" size="sm" onClick={() => handleAddBlock(day)} className="flex-1">
+                        <Plus className="w-4 h-4 mr-1" />
+                        Agregar
+                      </Button>
+                    </div>
+                  </div>
+                )}
                 
                 {hasWork ? (
                   <div className="p-3 space-y-2">
-                    {blocks.map((block, idx) => (
+                    {blocks.map((block) => (
                       <div 
-                        key={idx}
+                        key={block.id}
                         className={cn(
                           "flex items-center justify-between p-3 rounded-lg",
                           block.type === "lunch" 
@@ -162,10 +347,11 @@ const AgentesSection = () => {
                         )}
                       >
                         <div className="flex items-center gap-2">
-                          <Clock className={cn(
-                            "w-4 h-4",
-                            block.type === "lunch" ? "text-orange-500" : "text-champagne-gold"
-                          )} />
+                          {block.type === "lunch" ? (
+                            <Coffee className="w-4 h-4 text-orange-500" />
+                          ) : (
+                            <Clock className="w-4 h-4 text-champagne-gold" />
+                          )}
                           <span className="font-medium text-midnight">
                             {block.start} - {block.end}
                           </span>
@@ -175,7 +361,12 @@ const AgentesSection = () => {
                             </Badge>
                           )}
                         </div>
-                        <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-500 h-8 w-8 p-0">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-red-400 hover:text-red-500 h-8 w-8 p-0"
+                          onClick={() => handleRemoveBlock(day, block.id)}
+                        >
                           <X className="w-4 h-4" />
                         </Button>
                       </div>
@@ -190,14 +381,62 @@ const AgentesSection = () => {
             );
           })}
         </div>
-
-        <Button variant="gold" className="w-full h-12">
-          <Check className="w-4 h-4 mr-2" />
-          Guardar Horario
-        </Button>
       </div>
     );
   };
+
+  const FormContent = () => (
+    <div className="space-y-5 p-4">
+      <div className="space-y-2">
+        <Label>Nombre Completo</Label>
+        <Input
+          value={formData.name}
+          onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+          placeholder="Carlos Mendoza"
+          className="h-12"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label>Email</Label>
+        <Input
+          type="email"
+          value={formData.email}
+          onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+          placeholder="carlos@ajolote.mx"
+          className="h-12"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label>Teléfono</Label>
+        <Input
+          value={formData.phone}
+          onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+          placeholder="+52 55 1234 5678"
+          className="h-12"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label>Estado</Label>
+        <Select
+          value={formData.status}
+          onValueChange={(value: "activo" | "inactivo") => 
+            setFormData(prev => ({ ...prev, status: value }))
+          }
+        >
+          <SelectTrigger className="h-12">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="activo">Activo</SelectItem>
+            <SelectItem value="inactivo">Inactivo</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -206,7 +445,7 @@ const AgentesSection = () => {
           <h1 className="text-2xl md:text-3xl font-bold text-midnight">Gestión de Agentes</h1>
           <p className="text-foreground/60">Administra cuentas y horarios</p>
         </div>
-        <Button variant="gold" className="gap-2">
+        <Button variant="gold" className="gap-2" onClick={handleCreate}>
           <Plus className="w-4 h-4" />
           Nuevo Agente
         </Button>
@@ -230,6 +469,13 @@ const AgentesSection = () => {
                 </Badge>
               </div>
 
+              <div className="flex items-center gap-4 text-sm text-foreground/60 mb-4">
+                <div className="flex items-center gap-1">
+                  <Phone className="w-4 h-4" />
+                  <span className="truncate">{agent.phone}</span>
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-3 mb-4 p-3 bg-muted/20 rounded-xl">
                 <div className="text-center">
                   <p className="text-lg font-bold text-midnight">{agent.properties}</p>
@@ -250,10 +496,20 @@ const AgentesSection = () => {
                   <Clock className="w-4 h-4 mr-2" />
                   Horarios
                 </Button>
-                <Button variant="ghost" size="icon" className="text-foreground/60 hover:text-midnight">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="text-foreground/60 hover:text-midnight"
+                  onClick={() => handleEdit(agent)}
+                >
                   <Edit className="w-4 h-4" />
                 </Button>
-                <Button variant="ghost" size="icon" className="text-red-400 hover:text-red-500 hover:bg-red-50">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="text-red-400 hover:text-red-500 hover:bg-red-50"
+                  onClick={() => handleDelete(agent.id)}
+                >
                   <Trash2 className="w-4 h-4" />
                 </Button>
               </div>
@@ -267,20 +523,67 @@ const AgentesSection = () => {
         <Drawer open={isSchedulerOpen} onOpenChange={setIsSchedulerOpen}>
           <DrawerContent className="max-h-[90vh]">
             <DrawerHeader className="border-b border-border/30">
-              <DrawerTitle>Configurar Horarios</DrawerTitle>
+              <DrawerTitle>Scheduler Pro</DrawerTitle>
             </DrawerHeader>
-            <div className="overflow-y-auto">
+            <div className="overflow-y-auto p-4">
               <SchedulerContent />
             </div>
+            <DrawerFooter className="border-t border-border/30">
+              <Button variant="gold" onClick={handleSaveSchedule} className="w-full h-12">
+                <Check className="w-4 h-4 mr-2" />
+                Guardar Horario
+              </Button>
+            </DrawerFooter>
           </DrawerContent>
         </Drawer>
       ) : (
         <Dialog open={isSchedulerOpen} onOpenChange={setIsSchedulerOpen}>
           <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Configurar Horarios</DialogTitle>
+              <DialogTitle>Scheduler Pro</DialogTitle>
             </DialogHeader>
             <SchedulerContent />
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsSchedulerOpen(false)}>Cancelar</Button>
+              <Button variant="gold" onClick={handleSaveSchedule}>
+                <Check className="w-4 h-4 mr-2" />
+                Guardar Horario
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Agent Form Modal/Drawer */}
+      {isMobile ? (
+        <Drawer open={isFormOpen} onOpenChange={setIsFormOpen}>
+          <DrawerContent>
+            <DrawerHeader className="border-b border-border/30">
+              <DrawerTitle>{editingId ? "Editar Agente" : "Nuevo Agente"}</DrawerTitle>
+            </DrawerHeader>
+            <FormContent />
+            <DrawerFooter className="border-t border-border/30">
+              <Button variant="gold" onClick={handleSaveAgent} className="w-full h-12">
+                <Save className="w-4 h-4 mr-2" />
+                Guardar
+              </Button>
+            </DrawerFooter>
+          </DrawerContent>
+        </Drawer>
+      ) : (
+        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>{editingId ? "Editar Agente" : "Nuevo Agente"}</DialogTitle>
+            </DialogHeader>
+            <FormContent />
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsFormOpen(false)}>Cancelar</Button>
+              <Button variant="gold" onClick={handleSaveAgent}>
+                <Save className="w-4 h-4 mr-2" />
+                Guardar
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       )}

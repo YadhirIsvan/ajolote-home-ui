@@ -10,27 +10,40 @@ import {
   FileText,
   ChevronRight,
   Edit,
-  Trash2
+  Trash2,
+  Save,
+  Check,
+  Lock,
+  Upload
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from "@/components/ui/drawer";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 import property1 from "@/assets/property-1.jpg";
 import property2 from "@/assets/property-2.jpg";
+
+interface ClientDocument {
+  id: string;
+  name: string;
+  uploadedAt: string;
+}
 
 interface ClientProperty {
   id: string;
   title: string;
   image: string;
   stage: string;
-  documents: string[];
+  documents: ClientDocument[];
 }
 
 interface Client {
@@ -46,6 +59,16 @@ interface Client {
 const buyingStages = ["Lead", "Visita", "Interés", "Pre-Aprob", "Avalúo", "Crédito", "Docs Finales", "Escrituras", "Cerrado"];
 const sellingStages = ["Contacto Inicial", "Evaluación", "Valuación", "Presentación", "Firma Contrato", "Marketing", "Publicación"];
 
+const sellingStagesInfo = [
+  { stage: "Contacto Inicial", duration: "1-2 días" },
+  { stage: "Evaluación", duration: "2-7 días" },
+  { stage: "Valuación", duration: "1-3 días" },
+  { stage: "Presentación", duration: "1-2 días" },
+  { stage: "Firma Contrato", duration: "1-7 días" },
+  { stage: "Marketing", duration: "3-7 días" },
+  { stage: "Publicación", duration: "1-2 días" },
+];
+
 const mockClients: Client[] = [
   {
     id: "1",
@@ -54,10 +77,10 @@ const mockClients: Client[] = [
     phone: "+52 55 1234 5678",
     avatar: "MG",
     buyingProperties: [
-      { id: "b1", title: "Casa en Polanco", image: property1, stage: "Pre-Aprob", documents: ["INE.pdf", "Comprobante.pdf"] },
+      { id: "b1", title: "Casa en Polanco", image: property1, stage: "Pre-Aprob", documents: [{ id: "d1", name: "INE.pdf", uploadedAt: "2026-01-10" }, { id: "d2", name: "Comprobante.pdf", uploadedAt: "2026-01-11" }] },
     ],
     sellingProperties: [
-      { id: "s1", title: "Depto Condesa", image: property2, stage: "Marketing", documents: ["Escrituras.pdf"] },
+      { id: "s1", title: "Depto Condesa", image: property2, stage: "Marketing", documents: [{ id: "d3", name: "Escrituras.pdf", uploadedAt: "2026-01-08" }] },
     ],
   },
   {
@@ -79,17 +102,26 @@ const mockClients: Client[] = [
     avatar: "AM",
     buyingProperties: [],
     sellingProperties: [
-      { id: "s2", title: "Casa en Coyoacán", image: property1, stage: "Evaluación", documents: ["Escrituras.pdf", "Avalúo.pdf"] },
+      { id: "s2", title: "Casa en Coyoacán", image: property1, stage: "Evaluación", documents: [{ id: "d4", name: "Escrituras.pdf", uploadedAt: "2026-01-05" }, { id: "d5", name: "Avalúo.pdf", uploadedAt: "2026-01-07" }] },
     ],
   },
 ];
 
+const emptyClient: Omit<Client, "id" | "buyingProperties" | "sellingProperties" | "avatar"> = {
+  name: "",
+  email: "",
+  phone: "",
+};
+
 const ClientesSection = () => {
   const isMobile = useIsMobile();
-  const [clients] = useState<Client[]>(mockClients);
+  const [clients, setClients] = useState<Client[]>(mockClients);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [formData, setFormData] = useState(emptyClient);
 
   const filteredClients = clients.filter(
     (c) =>
@@ -102,7 +134,191 @@ const ClientesSection = () => {
     setIsDetailOpen(true);
   };
 
-  const PropertyCard = ({ property, stages }: { property: ClientProperty; stages: string[] }) => {
+  const handleCreate = () => {
+    setEditingId(null);
+    setFormData(emptyClient);
+    setIsFormOpen(true);
+  };
+
+  const handleEdit = (client: Client) => {
+    setEditingId(client.id);
+    setFormData({
+      name: client.name,
+      email: client.email,
+      phone: client.phone,
+    });
+    setIsFormOpen(true);
+    setIsDetailOpen(false);
+  };
+
+  const handleSave = () => {
+    if (editingId) {
+      setClients(prev => prev.map(c => 
+        c.id === editingId ? { ...c, ...formData } : c
+      ));
+      toast.success("Cliente actualizado");
+    } else {
+      const newClient: Client = {
+        id: Date.now().toString(),
+        ...formData,
+        avatar: formData.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2),
+        buyingProperties: [],
+        sellingProperties: [],
+      };
+      setClients(prev => [...prev, newClient]);
+      toast.success("Cliente creado");
+    }
+    setIsFormOpen(false);
+  };
+
+  const handleDelete = (id: string) => {
+    setClients(prev => prev.filter(c => c.id !== id));
+    setIsDetailOpen(false);
+    toast.success("Cliente eliminado");
+  };
+
+  const handleChangeStage = (clientId: string, propertyId: string, newStage: string, type: "buying" | "selling") => {
+    setClients(prev => prev.map(c => {
+      if (c.id !== clientId) return c;
+      
+      if (type === "buying") {
+        return {
+          ...c,
+          buyingProperties: c.buyingProperties.map(p => 
+            p.id === propertyId ? { ...p, stage: newStage } : p
+          )
+        };
+      } else {
+        return {
+          ...c,
+          sellingProperties: c.sellingProperties.map(p => 
+            p.id === propertyId ? { ...p, stage: newStage } : p
+          )
+        };
+      }
+    }));
+    
+    if (selectedClient?.id === clientId) {
+      setSelectedClient(prev => {
+        if (!prev) return null;
+        if (type === "buying") {
+          return {
+            ...prev,
+            buyingProperties: prev.buyingProperties.map(p => 
+              p.id === propertyId ? { ...p, stage: newStage } : p
+            )
+          };
+        } else {
+          return {
+            ...prev,
+            sellingProperties: prev.sellingProperties.map(p => 
+              p.id === propertyId ? { ...p, stage: newStage } : p
+            )
+          };
+        }
+      });
+    }
+    toast.success(`Etapa actualizada a "${newStage}"`);
+  };
+
+  const handleUploadDocument = (clientId: string, propertyId: string, type: "buying" | "selling") => {
+    const newDoc: ClientDocument = {
+      id: Date.now().toString(),
+      name: `Documento_${Date.now()}.pdf`,
+      uploadedAt: new Date().toISOString().split("T")[0],
+    };
+    
+    setClients(prev => prev.map(c => {
+      if (c.id !== clientId) return c;
+      
+      if (type === "buying") {
+        return {
+          ...c,
+          buyingProperties: c.buyingProperties.map(p => 
+            p.id === propertyId ? { ...p, documents: [...p.documents, newDoc] } : p
+          )
+        };
+      } else {
+        return {
+          ...c,
+          sellingProperties: c.sellingProperties.map(p => 
+            p.id === propertyId ? { ...p, documents: [...p.documents, newDoc] } : p
+          )
+        };
+      }
+    }));
+    
+    // Update selected client
+    if (selectedClient?.id === clientId) {
+      setSelectedClient(prev => {
+        if (!prev) return null;
+        if (type === "buying") {
+          return {
+            ...prev,
+            buyingProperties: prev.buyingProperties.map(p => 
+              p.id === propertyId ? { ...p, documents: [...p.documents, newDoc] } : p
+            )
+          };
+        } else {
+          return {
+            ...prev,
+            sellingProperties: prev.sellingProperties.map(p => 
+              p.id === propertyId ? { ...p, documents: [...p.documents, newDoc] } : p
+            )
+          };
+        }
+      });
+    }
+    
+    toast.success("Documento subido");
+  };
+
+  const handleDeleteDocument = (clientId: string, propertyId: string, docId: string, type: "buying" | "selling") => {
+    setClients(prev => prev.map(c => {
+      if (c.id !== clientId) return c;
+      
+      if (type === "buying") {
+        return {
+          ...c,
+          buyingProperties: c.buyingProperties.map(p => 
+            p.id === propertyId ? { ...p, documents: p.documents.filter(d => d.id !== docId) } : p
+          )
+        };
+      } else {
+        return {
+          ...c,
+          sellingProperties: c.sellingProperties.map(p => 
+            p.id === propertyId ? { ...p, documents: p.documents.filter(d => d.id !== docId) } : p
+          )
+        };
+      }
+    }));
+    
+    if (selectedClient?.id === clientId) {
+      setSelectedClient(prev => {
+        if (!prev) return null;
+        if (type === "buying") {
+          return {
+            ...prev,
+            buyingProperties: prev.buyingProperties.map(p => 
+              p.id === propertyId ? { ...p, documents: p.documents.filter(d => d.id !== docId) } : p
+            )
+          };
+        } else {
+          return {
+            ...prev,
+            sellingProperties: prev.sellingProperties.map(p => 
+              p.id === propertyId ? { ...p, documents: p.documents.filter(d => d.id !== docId) } : p
+            )
+          };
+        }
+      });
+    }
+    
+    toast.success("Documento eliminado");
+  };
+
+  const PropertyCard = ({ property, stages, clientId, type }: { property: ClientProperty; stages: string[]; clientId: string; type: "buying" | "selling" }) => {
     const currentStageIndex = stages.indexOf(property.stage);
     
     return (
@@ -122,48 +338,74 @@ const ClientesSection = () => {
             </div>
           </div>
 
-          {/* Mini Pipeline */}
-          <div className="flex items-center gap-1 mb-4 overflow-x-auto pb-2 scrollbar-hide">
-            {stages.map((stage, idx) => (
-              <div 
-                key={stage}
-                className={cn(
-                  "flex-shrink-0 w-2 h-2 rounded-full",
-                  idx <= currentStageIndex ? "bg-champagne-gold" : "bg-muted"
-                )}
-                title={stage}
-              />
-            ))}
+          {/* Pipeline Visualization */}
+          <div className="space-y-2 mb-4">
+            <p className="text-xs font-medium text-foreground/60">Pipeline</p>
+            <div className="space-y-1">
+              {stages.map((stage, idx) => {
+                const isCompleted = idx < currentStageIndex;
+                const isCurrent = idx === currentStageIndex;
+                const stageInfo = type === "selling" ? sellingStagesInfo.find(s => s.stage === stage) : null;
+                
+                return (
+                  <div 
+                    key={stage}
+                    className={cn(
+                      "flex items-center gap-2 p-2 rounded-lg text-xs transition-all cursor-pointer",
+                      isCompleted && "bg-green-50 text-green-700",
+                      isCurrent && "bg-champagne-gold/20 text-champagne-gold-dark border border-champagne-gold/30",
+                      !isCompleted && !isCurrent && "bg-muted/30 text-foreground/50"
+                    )}
+                    onClick={() => handleChangeStage(clientId, property.id, stage, type)}
+                  >
+                    {isCompleted ? (
+                      <Check className="w-3 h-3" />
+                    ) : isCurrent ? (
+                      <div className="w-3 h-3 rounded-full bg-champagne-gold" />
+                    ) : (
+                      <Lock className="w-3 h-3" />
+                    )}
+                    <span className="flex-1">{stage}</span>
+                    {stageInfo && <span className="text-foreground/40">{stageInfo.duration}</span>}
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           {/* Documents */}
           <div className="space-y-2">
             <p className="text-sm font-medium text-midnight">Documentos ({property.documents.length})</p>
             {property.documents.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {property.documents.map((doc, idx) => (
-                  <Badge key={idx} variant="outline" className="text-xs">
-                    <FileText className="w-3 h-3 mr-1" />
-                    {doc}
-                  </Badge>
+              <div className="space-y-1">
+                {property.documents.map((doc) => (
+                  <div key={doc.id} className="flex items-center justify-between p-2 bg-muted/20 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-3 h-3 text-champagne-gold" />
+                      <span className="text-xs text-midnight truncate">{doc.name}</span>
+                    </div>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-6 w-6 text-red-400 hover:text-red-500"
+                      onClick={() => handleDeleteDocument(clientId, property.id, doc.id, type)}
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                  </div>
                 ))}
               </div>
             ) : (
               <p className="text-xs text-foreground/50">Sin documentos</p>
             )}
-            <Button variant="outline" size="sm" className="w-full border-dashed border-champagne-gold text-champagne-gold">
-              <Plus className="w-3 h-3 mr-1" />
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="w-full border-dashed border-champagne-gold text-champagne-gold"
+              onClick={() => handleUploadDocument(clientId, property.id, type)}
+            >
+              <Upload className="w-3 h-3 mr-1" />
               Subir Documento
-            </Button>
-          </div>
-
-          <div className="flex gap-2 mt-4">
-            <Button variant="gold" size="sm" className="flex-1">
-              <Edit className="w-3 h-3 mr-1" />
-              Editar
-            </Button>
-            <Button variant="outline" size="sm" className="border-red-200 text-red-500 hover:bg-red-50">
-              <Trash2 className="w-3 h-3" />
             </Button>
           </div>
         </CardContent>
@@ -177,20 +419,35 @@ const ClientesSection = () => {
     return (
       <div className="space-y-6">
         {/* Client Header */}
-        <div className="flex items-center gap-4 p-4 bg-muted/20 rounded-xl">
-          <div className="w-16 h-16 rounded-full bg-champagne-gold flex items-center justify-center text-white text-xl font-bold">
-            {selectedClient.avatar}
+        <div className="flex items-center justify-between p-4 bg-muted/20 rounded-xl">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-full bg-champagne-gold flex items-center justify-center text-white text-xl font-bold">
+              {selectedClient.avatar}
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-xl font-bold text-midnight">{selectedClient.name}</h3>
+              <div className="flex items-center gap-2 text-sm text-foreground/60 mt-1">
+                <Mail className="w-4 h-4" />
+                <span className="truncate">{selectedClient.email}</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-foreground/60">
+                <Phone className="w-4 h-4" />
+                <span>{selectedClient.phone}</span>
+              </div>
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="text-xl font-bold text-midnight">{selectedClient.name}</h3>
-            <div className="flex items-center gap-2 text-sm text-foreground/60 mt-1">
-              <Mail className="w-4 h-4" />
-              <span className="truncate">{selectedClient.email}</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm text-foreground/60">
-              <Phone className="w-4 h-4" />
-              <span>{selectedClient.phone}</span>
-            </div>
+          <div className="flex gap-2">
+            <Button variant="ghost" size="icon" onClick={() => handleEdit(selectedClient)}>
+              <Edit className="w-4 h-4" />
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="text-red-400 hover:text-red-500"
+              onClick={() => handleDelete(selectedClient.id)}
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
           </div>
         </div>
 
@@ -221,7 +478,13 @@ const ClientesSection = () => {
               </div>
             ) : (
               selectedClient.buyingProperties.map((prop) => (
-                <PropertyCard key={prop.id} property={prop} stages={buyingStages} />
+                <PropertyCard 
+                  key={prop.id} 
+                  property={prop} 
+                  stages={buyingStages} 
+                  clientId={selectedClient.id}
+                  type="buying"
+                />
               ))
             )}
             <Button variant="outline" className="w-full border-dashed border-champagne-gold text-champagne-gold">
@@ -238,7 +501,13 @@ const ClientesSection = () => {
               </div>
             ) : (
               selectedClient.sellingProperties.map((prop) => (
-                <PropertyCard key={prop.id} property={prop} stages={sellingStages} />
+                <PropertyCard 
+                  key={prop.id} 
+                  property={prop} 
+                  stages={sellingStages} 
+                  clientId={selectedClient.id}
+                  type="selling"
+                />
               ))
             )}
             <Button variant="outline" className="w-full border-dashed border-champagne-gold text-champagne-gold">
@@ -251,14 +520,49 @@ const ClientesSection = () => {
     );
   };
 
+  const FormContent = () => (
+    <div className="space-y-5 p-4">
+      <div className="space-y-2">
+        <Label>Nombre Completo</Label>
+        <Input
+          value={formData.name}
+          onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+          placeholder="María García"
+          className="h-12"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label>Email</Label>
+        <Input
+          type="email"
+          value={formData.email}
+          onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+          placeholder="maria@email.com"
+          className="h-12"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label>Teléfono</Label>
+        <Input
+          value={formData.phone}
+          onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+          placeholder="+52 55 1234 5678"
+          className="h-12"
+        />
+      </div>
+    </div>
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-midnight">Directorio de Clientes</h1>
-          <p className="text-foreground/60">Perfiles detallados con CRM avanzado</p>
+          <p className="text-foreground/60">CRM avanzado con pipelines de compra y venta</p>
         </div>
-        <Button variant="gold" className="gap-2">
+        <Button variant="gold" className="gap-2" onClick={handleCreate}>
           <Plus className="w-4 h-4" />
           Nuevo Cliente
         </Button>
@@ -329,6 +633,40 @@ const ClientesSection = () => {
               <DialogTitle>Perfil de Cliente</DialogTitle>
             </DialogHeader>
             <ClientDetailContent />
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Form Modal/Drawer */}
+      {isMobile ? (
+        <Drawer open={isFormOpen} onOpenChange={setIsFormOpen}>
+          <DrawerContent>
+            <DrawerHeader className="border-b border-border/30">
+              <DrawerTitle>{editingId ? "Editar Cliente" : "Nuevo Cliente"}</DrawerTitle>
+            </DrawerHeader>
+            <FormContent />
+            <DrawerFooter className="border-t border-border/30">
+              <Button variant="gold" onClick={handleSave} className="w-full h-12">
+                <Save className="w-4 h-4 mr-2" />
+                Guardar
+              </Button>
+            </DrawerFooter>
+          </DrawerContent>
+        </Drawer>
+      ) : (
+        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>{editingId ? "Editar Cliente" : "Nuevo Cliente"}</DialogTitle>
+            </DialogHeader>
+            <FormContent />
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsFormOpen(false)}>Cancelar</Button>
+              <Button variant="gold" onClick={handleSave}>
+                <Save className="w-4 h-4 mr-2" />
+                Guardar
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       )}

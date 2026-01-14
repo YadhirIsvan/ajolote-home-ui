@@ -4,13 +4,20 @@ import {
   ChevronRight,
   User,
   Home,
-  Calendar
+  Calendar,
+  Clock,
+  ArrowRight,
+  ArrowLeft,
+  Eye
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from "@/components/ui/drawer";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface KanbanItem {
   id: string;
@@ -18,6 +25,8 @@ interface KanbanItem {
   property: string;
   agent: string;
   lastActivity: string;
+  price: string;
+  daysInStage: number;
 }
 
 interface KanbanColumn {
@@ -33,8 +42,8 @@ const initialColumns: KanbanColumn[] = [
     title: "Lead",
     color: "bg-blue-500",
     items: [
-      { id: "1", client: "María García", property: "Casa Polanco", agent: "Carlos M.", lastActivity: "Hace 2h" },
-      { id: "2", client: "Juan López", property: "Depto Roma", agent: "Laura S.", lastActivity: "Hace 1d" },
+      { id: "1", client: "María García", property: "Casa Polanco", agent: "Carlos M.", lastActivity: "Hace 2h", price: "$12.5M", daysInStage: 1 },
+      { id: "2", client: "Juan López", property: "Depto Roma", agent: "Laura S.", lastActivity: "Hace 1d", price: "$4.8M", daysInStage: 3 },
     ],
   },
   {
@@ -42,7 +51,7 @@ const initialColumns: KanbanColumn[] = [
     title: "Visita",
     color: "bg-indigo-500",
     items: [
-      { id: "3", client: "Ana Martínez", property: "Penthouse SF", agent: "Roberto D.", lastActivity: "Hace 3h" },
+      { id: "3", client: "Ana Martínez", property: "Penthouse SF", agent: "Roberto D.", lastActivity: "Hace 3h", price: "$18.9M", daysInStage: 2 },
     ],
   },
   {
@@ -50,8 +59,8 @@ const initialColumns: KanbanColumn[] = [
     title: "Interés",
     color: "bg-purple-500",
     items: [
-      { id: "4", client: "Pedro Hernández", property: "Casa Coyoacán", agent: "Carlos M.", lastActivity: "Hace 5h" },
-      { id: "5", client: "Sofía Ruiz", property: "Loft Condesa", agent: "Ana M.", lastActivity: "Hace 1d" },
+      { id: "4", client: "Pedro Hernández", property: "Casa Coyoacán", agent: "Carlos M.", lastActivity: "Hace 5h", price: "$8.2M", daysInStage: 4 },
+      { id: "5", client: "Sofía Ruiz", property: "Loft Condesa", agent: "Ana M.", lastActivity: "Hace 1d", price: "$6.5M", daysInStage: 2 },
     ],
   },
   {
@@ -59,7 +68,7 @@ const initialColumns: KanbanColumn[] = [
     title: "Pre-Aprob",
     color: "bg-champagne-gold",
     items: [
-      { id: "6", client: "Carlos Mendez", property: "Casa Polanco", agent: "Laura S.", lastActivity: "Hace 2d" },
+      { id: "6", client: "Carlos Mendez", property: "Casa Polanco", agent: "Laura S.", lastActivity: "Hace 2d", price: "$12.5M", daysInStage: 7 },
     ],
   },
   {
@@ -73,7 +82,7 @@ const initialColumns: KanbanColumn[] = [
     title: "Crédito",
     color: "bg-amber-500",
     items: [
-      { id: "7", client: "Roberto Silva", property: "Depto Roma", agent: "Roberto D.", lastActivity: "Hace 3d" },
+      { id: "7", client: "Roberto Silva", property: "Depto Roma", agent: "Roberto D.", lastActivity: "Hace 3d", price: "$4.8M", daysInStage: 10 },
     ],
   },
   {
@@ -87,7 +96,7 @@ const initialColumns: KanbanColumn[] = [
     title: "Escrituras",
     color: "bg-emerald-500",
     items: [
-      { id: "8", client: "Laura Pérez", property: "Penthouse SF", agent: "Carlos M.", lastActivity: "Hace 1d" },
+      { id: "8", client: "Laura Pérez", property: "Penthouse SF", agent: "Carlos M.", lastActivity: "Hace 1d", price: "$18.9M", daysInStage: 5 },
     ],
   },
   {
@@ -95,15 +104,17 @@ const initialColumns: KanbanColumn[] = [
     title: "Cerrado",
     color: "bg-green-600",
     items: [
-      { id: "9", client: "Miguel Torres", property: "Casa Coyoacán", agent: "Ana M.", lastActivity: "Hace 5d" },
+      { id: "9", client: "Miguel Torres", property: "Casa Coyoacán", agent: "Ana M.", lastActivity: "Hace 5d", price: "$8.2M", daysInStage: 0 },
     ],
   },
 ];
 
 const KanbanSection = () => {
   const isMobile = useIsMobile();
-  const [columns] = useState<KanbanColumn[]>(initialColumns);
+  const [columns, setColumns] = useState<KanbanColumn[]>(initialColumns);
   const [activeColumnIndex, setActiveColumnIndex] = useState(0);
+  const [selectedItem, setSelectedItem] = useState<{ item: KanbanItem; columnId: string } | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   const handleSwipe = (direction: "left" | "right") => {
     if (direction === "right" && activeColumnIndex < columns.length - 1) {
@@ -113,26 +124,152 @@ const KanbanSection = () => {
     }
   };
 
-  const KanbanCard = ({ item }: { item: KanbanItem }) => (
-    <Card className="border-border/30 bg-white hover:border-champagne-gold/50 hover:shadow-md transition-all cursor-pointer">
+  const handleItemClick = (item: KanbanItem, columnId: string) => {
+    setSelectedItem({ item, columnId });
+    setIsDetailOpen(true);
+  };
+
+  const handleMoveItem = (direction: "forward" | "backward") => {
+    if (!selectedItem) return;
+
+    const currentIndex = columns.findIndex(c => c.id === selectedItem.columnId);
+    const newIndex = direction === "forward" ? currentIndex + 1 : currentIndex - 1;
+
+    if (newIndex < 0 || newIndex >= columns.length) return;
+
+    const newColumns = columns.map((col, idx) => {
+      if (idx === currentIndex) {
+        return { ...col, items: col.items.filter(i => i.id !== selectedItem.item.id) };
+      }
+      if (idx === newIndex) {
+        return { ...col, items: [...col.items, { ...selectedItem.item, daysInStage: 0 }] };
+      }
+      return col;
+    });
+
+    setColumns(newColumns);
+    setSelectedItem({ ...selectedItem, columnId: columns[newIndex].id });
+    toast.success(`Movido a ${columns[newIndex].title}`);
+  };
+
+  const getCurrentColumnName = () => {
+    if (!selectedItem) return "";
+    return columns.find(c => c.id === selectedItem.columnId)?.title || "";
+  };
+
+  const canMoveForward = () => {
+    if (!selectedItem) return false;
+    const currentIndex = columns.findIndex(c => c.id === selectedItem.columnId);
+    return currentIndex < columns.length - 1;
+  };
+
+  const canMoveBackward = () => {
+    if (!selectedItem) return false;
+    const currentIndex = columns.findIndex(c => c.id === selectedItem.columnId);
+    return currentIndex > 0;
+  };
+
+  const KanbanCard = ({ item, columnId }: { item: KanbanItem; columnId: string }) => (
+    <Card 
+      className="border-border/30 bg-white hover:border-champagne-gold/50 hover:shadow-md transition-all cursor-pointer"
+      onClick={() => handleItemClick(item, columnId)}
+    >
       <CardContent className="p-4">
-        <div className="flex items-center gap-2 mb-2">
-          <User className="w-4 h-4 text-champagne-gold" />
-          <span className="font-semibold text-midnight text-sm">{item.client}</span>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <User className="w-4 h-4 text-champagne-gold" />
+            <span className="font-semibold text-midnight text-sm">{item.client}</span>
+          </div>
+          <Badge variant="outline" className="text-xs">
+            {item.daysInStage}d
+          </Badge>
         </div>
         <div className="flex items-center gap-2 text-xs text-foreground/60 mb-1">
           <Home className="w-3 h-3" />
           <span className="truncate">{item.property}</span>
         </div>
         <div className="flex items-center justify-between mt-3">
-          <Badge variant="outline" className="text-xs">
-            {item.agent}
-          </Badge>
+          <span className="text-sm font-bold text-champagne-gold">{item.price}</span>
           <span className="text-xs text-foreground/50">{item.lastActivity}</span>
+        </div>
+        <div className="flex items-center gap-1 mt-2 text-xs text-foreground/50">
+          <User className="w-3 h-3" />
+          {item.agent}
         </div>
       </CardContent>
     </Card>
   );
+
+  const ItemDetailContent = () => {
+    if (!selectedItem) return null;
+
+    return (
+      <div className="space-y-6 p-4">
+        <div className="p-4 bg-champagne-gold/10 rounded-xl">
+          <div className="flex items-center gap-2 mb-2">
+            <User className="w-5 h-5 text-champagne-gold" />
+            <span className="font-bold text-xl text-midnight">{selectedItem.item.client}</span>
+          </div>
+          <div className="flex items-center gap-2 text-foreground/60">
+            <Home className="w-4 h-4" />
+            <span>{selectedItem.item.property}</span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="p-3 bg-muted/20 rounded-xl text-center">
+            <p className="text-xs text-foreground/60">Precio</p>
+            <p className="font-bold text-champagne-gold">{selectedItem.item.price}</p>
+          </div>
+          <div className="p-3 bg-muted/20 rounded-xl text-center">
+            <p className="text-xs text-foreground/60">Días en Etapa</p>
+            <p className="font-bold text-midnight">{selectedItem.item.daysInStage}</p>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm">
+            <User className="w-4 h-4 text-champagne-gold" />
+            <span className="text-foreground/60">Agente:</span>
+            <span className="font-medium text-midnight">{selectedItem.item.agent}</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <Clock className="w-4 h-4 text-champagne-gold" />
+            <span className="text-foreground/60">Última Actividad:</span>
+            <span className="font-medium text-midnight">{selectedItem.item.lastActivity}</span>
+          </div>
+        </div>
+
+        <div className="p-4 bg-midnight/5 rounded-xl">
+          <p className="text-xs text-foreground/60 mb-2">Etapa Actual</p>
+          <Badge className={cn("text-white", columns.find(c => c.id === selectedItem.columnId)?.color)}>
+            {getCurrentColumnName()}
+          </Badge>
+        </div>
+
+        <div className="flex gap-3">
+          <Button 
+            variant="outline" 
+            className="flex-1"
+            disabled={!canMoveBackward()}
+            onClick={() => handleMoveItem("backward")}
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Regresar
+          </Button>
+          <Button 
+            variant="gold" 
+            className="flex-1"
+            disabled={!canMoveForward()}
+            onClick={() => handleMoveItem("forward")}
+          >
+            Avanzar
+            <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
+        </div>
+      </div>
+    );
+  };
 
   // Mobile: Single Column View with Swipe
   if (isMobile) {
@@ -181,15 +318,15 @@ const KanbanSection = () => {
               key={col.id}
               onClick={() => setActiveColumnIndex(idx)}
               className={cn(
-                "w-2 h-2 rounded-full transition-all",
-                idx === activeColumnIndex ? "w-6 bg-champagne-gold" : "bg-muted hover:bg-champagne-gold/50"
+                "h-2 rounded-full transition-all",
+                idx === activeColumnIndex ? "w-6 bg-champagne-gold" : "w-2 bg-muted hover:bg-champagne-gold/50"
               )}
             />
           ))}
         </div>
 
         {/* Cards */}
-        <div className="space-y-3">
+        <div className="space-y-3 min-h-[300px]">
           {currentColumn.items.length === 0 ? (
             <div className="text-center py-12 text-foreground/50">
               <Calendar className="w-12 h-12 mx-auto mb-3" />
@@ -197,10 +334,20 @@ const KanbanSection = () => {
             </div>
           ) : (
             currentColumn.items.map((item) => (
-              <KanbanCard key={item.id} item={item} />
+              <KanbanCard key={item.id} item={item} columnId={currentColumn.id} />
             ))
           )}
         </div>
+
+        {/* Detail Drawer */}
+        <Drawer open={isDetailOpen} onOpenChange={setIsDetailOpen}>
+          <DrawerContent>
+            <DrawerHeader className="border-b border-border/30">
+              <DrawerTitle>Detalle del Lead</DrawerTitle>
+            </DrawerHeader>
+            <ItemDetailContent />
+          </DrawerContent>
+        </Drawer>
       </div>
     );
   }
@@ -237,7 +384,7 @@ const KanbanSection = () => {
                   </div>
                 ) : (
                   column.items.map((item) => (
-                    <KanbanCard key={item.id} item={item} />
+                    <KanbanCard key={item.id} item={item} columnId={column.id} />
                   ))
                 )}
               </div>
@@ -283,12 +430,22 @@ const KanbanSection = () => {
         <Card className="border-border/50 hidden md:block">
           <CardContent className="p-4 text-center">
             <p className="text-2xl font-bold text-green-600">
-              {columns[8].items.length}
+              {columns[8]?.items.length || 0}
             </p>
             <p className="text-sm text-foreground/60">Cerrados</p>
           </CardContent>
         </Card>
       </div>
+
+      {/* Detail Modal */}
+      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Detalle del Lead</DialogTitle>
+          </DialogHeader>
+          <ItemDetailContent />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
