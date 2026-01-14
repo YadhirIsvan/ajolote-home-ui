@@ -56,6 +56,8 @@ export default {
         "midnight-light": "hsl(var(--midnight-light))",
         champagne: "hsl(var(--champagne))",
         "champagne-dark": "hsl(var(--champagne-dark))",
+        "champagne-gold": "hsl(var(--champagne-gold))",
+        "champagne-gold-dark": "hsl(var(--champagne-gold-dark))",
         "grey-light": "hsl(var(--grey-light))",
         "grey-dark": "hsl(var(--grey-dark))",
       },
