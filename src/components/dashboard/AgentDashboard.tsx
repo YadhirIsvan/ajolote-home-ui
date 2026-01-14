@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { Home, Calendar, Users, ChevronRight, CheckCircle, LogOut, Settings, Briefcase } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AgentPropertyModal from "./AgentPropertyModal";
-import AppointmentCard from "./AppointmentCard";
+import AppointmentKanban, { Appointment } from "./AppointmentKanban";
 import EmptyState from "./EmptyState";
 
 import property1 from "@/assets/property-1.jpg";
@@ -26,14 +26,7 @@ interface Property {
   status: string;
 }
 
-interface Appointment {
-  id: string;
-  client: string;
-  property: string;
-  date: string;
-  time: string;
-  status: "programada" | "confirmada" | "en_progreso" | "completada" | "cancelada" | "reagendada";
-}
+// Appointment interface is imported from AppointmentKanban
 
 const mockProperties: Property[] = [
   {
@@ -84,10 +77,10 @@ const AgentDashboard = ({ onLogout }: AgentDashboardProps) => {
     setIsPropertyModalOpen(true);
   };
 
-  const handleCheckIn = (id: string, checked: boolean) => {
+  const handleStatusChange = (id: string, newStatus: Appointment["status"]) => {
     setAppointments((prev) =>
       prev.map((apt) =>
-        apt.id === id ? { ...apt, status: checked ? "en_progreso" : "confirmada" } : apt
+        apt.id === id ? { ...apt, status: newStatus } : apt
       )
     );
   };
@@ -212,28 +205,31 @@ const AgentDashboard = ({ onLogout }: AgentDashboardProps) => {
           </div>
         </TabsContent>
 
-        {/* Appointments Tab */}
-        <TabsContent value="appointments">
-          <Card className="border-border/50">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg md:text-xl text-midnight">Citas Programadas</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {showEmptyAppointments ? (
+        {/* Appointments Tab - Kanban Style */}
+        <TabsContent value="appointments" className="mt-0">
+          <div className="space-y-4">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg md:text-xl font-bold text-midnight">
+                Gestión de Citas
+              </h2>
+              <Badge variant="outline" className="border-champagne-gold text-champagne-gold">
+                {appointments.length} citas totales
+              </Badge>
+            </div>
+
+            {/* Kanban Board */}
+            {showEmptyAppointments ? (
+              <Card className="border-border/50">
                 <EmptyState type="appointments" />
-              ) : (
-                <div className="space-y-3">
-                  {appointments.map((appointment) => (
-                    <AppointmentCard
-                      key={appointment.id}
-                      appointment={appointment}
-                      onCheckIn={handleCheckIn}
-                    />
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+              </Card>
+            ) : (
+              <AppointmentKanban
+                appointments={appointments}
+                onStatusChange={handleStatusChange}
+              />
+            )}
+          </div>
         </TabsContent>
 
         {/* Settings Tab */}
