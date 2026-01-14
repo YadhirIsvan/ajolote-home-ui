@@ -3,6 +3,7 @@ import { User, Phone, Mail, Upload, Star, ArrowLeft } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useIsMobile } from "@/hooks/use-mobile";
 import SalesPipeline, { pipelineStages } from "./SalesPipeline";
 import PipelineActionSheet from "./PipelineActionSheet";
 
@@ -32,6 +33,7 @@ const interestConfig = {
 const LeadDetailCard = ({ lead, onBack, onUploadDocs, onStageChange }: LeadDetailCardProps) => {
   const [showActionSheet, setShowActionSheet] = useState(false);
   const [selectedStage, setSelectedStage] = useState<{ id: number; name: string } | null>(null);
+  const isMobile = useIsMobile();
 
   const interestLevel = lead.interestLevel || "media";
   const interest = interestConfig[interestLevel];
@@ -56,71 +58,71 @@ const LeadDetailCard = ({ lead, onBack, onUploadDocs, onStageChange }: LeadDetai
   const currentStageName = pipelineStages.find((s) => s.id === lead.stage)?.label || "";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 px-4 md:px-0">
       {/* Back Button */}
       <Button
         variant="ghost"
         size="sm"
         onClick={onBack}
-        className="text-foreground/60 hover:text-midnight -ml-2"
+        className="text-foreground/60 hover:text-midnight -ml-2 min-h-[44px]"
       >
         <ArrowLeft className="w-4 h-4 mr-2" />
         Volver a leads
       </Button>
 
       {/* Contact Info Card */}
-      <Card className="border-champagne-gold/30 bg-gradient-to-br from-champagne-gold/5 to-transparent overflow-hidden">
+      <Card className="border border-slate-100 bg-white shadow-sm overflow-hidden">
         <CardContent className="p-0">
-          {/* Header with Avatar */}
-          <div className="p-6 pb-4 flex items-start gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-champagne-gold/20 flex items-center justify-center flex-shrink-0">
-              <User className="w-8 h-8 text-champagne-gold" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-start justify-between gap-2 flex-wrap">
-                <div>
-                  <h3 className="text-xl font-bold text-midnight truncate">{lead.name}</h3>
-                  <p className="text-sm text-foreground/60 mt-0.5">{lead.lastContact}</p>
+          {/* Header with Avatar - Stacked on mobile */}
+          <div className="p-4 md:p-6 pb-4">
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left">
+              <div className="w-20 h-20 sm:w-16 sm:h-16 rounded-2xl bg-champagne-gold/20 flex items-center justify-center flex-shrink-0">
+                <User className="w-10 h-10 sm:w-8 sm:h-8 text-champagne-gold" />
+              </div>
+              <div className="flex-1 min-w-0 w-full">
+                <h3 className="text-xl font-bold text-midnight break-words">{lead.name}</h3>
+                <p className="text-sm text-foreground/60 mt-1">{lead.lastContact}</p>
+                <div className="mt-2">
+                  <Badge className={`${interest.color} inline-flex items-center gap-1`}>
+                    <Star className="w-3 h-3" />
+                    {interest.label}
+                  </Badge>
                 </div>
-                <Badge className={`${interest.color} flex items-center gap-1`}>
-                  <Star className="w-3 h-3" />
-                  {interest.label}
-                </Badge>
               </div>
             </div>
           </div>
 
-          {/* Contact Details */}
-          <div className="px-6 pb-4 space-y-3">
-            <div className="flex items-center gap-3 p-3 bg-white/60 rounded-xl">
-              <div className="p-2 rounded-lg bg-champagne-gold/10">
+          {/* Contact Details - Vertical list */}
+          <div className="px-4 md:px-6 pb-4 space-y-3">
+            <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100">
+              <div className="p-2.5 rounded-lg bg-champagne-gold/10 flex-shrink-0">
                 <Phone className="w-4 h-4 text-champagne-gold" />
               </div>
-              <div>
+              <div className="min-w-0 flex-1">
                 <p className="text-xs text-foreground/50">Teléfono</p>
                 <p className="text-sm font-medium text-midnight">{lead.phone}</p>
               </div>
             </div>
-            <div className="flex items-center gap-3 p-3 bg-white/60 rounded-xl">
-              <div className="p-2 rounded-lg bg-champagne-gold/10">
+            <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100">
+              <div className="p-2.5 rounded-lg bg-champagne-gold/10 flex-shrink-0">
                 <Mail className="w-4 h-4 text-champagne-gold" />
               </div>
-              <div>
+              <div className="min-w-0 flex-1">
                 <p className="text-xs text-foreground/50">Correo electrónico</p>
-                <p className="text-sm font-medium text-midnight truncate">{lead.email}</p>
+                <p className="text-sm font-medium text-midnight break-all">{lead.email}</p>
               </div>
             </div>
           </div>
 
-          {/* Upload Button - Full Width */}
-          <div className="px-6 pb-6">
+          {/* Upload Button - Full Width with proper touch target */}
+          <div className="px-4 md:px-6 pb-5">
             <Button
-              variant="outline"
+              variant="gold"
               onClick={onUploadDocs}
-              className="w-full h-14 border-2 border-champagne-gold text-champagne-gold hover:bg-champagne-gold hover:text-white font-semibold gap-3 transition-all"
+              className="w-full min-h-[52px] font-semibold gap-3"
             >
               <Upload className="w-5 h-5" />
-              Subir Documentación
+              Subir Documentación del Cliente
             </Button>
           </div>
         </CardContent>
@@ -134,7 +136,7 @@ const LeadDetailCard = ({ lead, onBack, onUploadDocs, onStageChange }: LeadDetai
             Etapa {lead.stage}/9
           </Badge>
         </div>
-        <Card className="border-border/30 p-4 md:p-6">
+        <Card className="border border-slate-100 shadow-sm p-4 md:p-6 bg-white">
           <SalesPipeline
             currentStage={lead.stage}
             onStageClick={handleStageClick}
@@ -146,7 +148,7 @@ const LeadDetailCard = ({ lead, onBack, onUploadDocs, onStageChange }: LeadDetai
         </p>
       </div>
 
-      {/* Pipeline Action Sheet */}
+      {/* Pipeline Action Sheet - Uses Drawer on mobile, Dialog on desktop */}
       <PipelineActionSheet
         isOpen={showActionSheet}
         onClose={() => setShowActionSheet(false)}
@@ -154,6 +156,7 @@ const LeadDetailCard = ({ lead, onBack, onUploadDocs, onStageChange }: LeadDetai
         stageName={currentStageName}
         onAdvance={handleAdvance}
         onRevert={handleRevert}
+        isMobile={isMobile}
       />
     </div>
   );

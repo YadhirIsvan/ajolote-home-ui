@@ -80,21 +80,23 @@ const SalesPipeline = ({ currentStage, onStageClick, interactive = false }: Sale
         </div>
       </div>
 
-      {/* Mobile Pipeline - Horizontal Scroll */}
-      <div className="md:hidden overflow-x-auto pb-6 -mx-4 px-4 scrollbar-hide">
-        <div className="flex items-center gap-2 min-w-max">
+      {/* Mobile Pipeline - Horizontal Scroll with snap */}
+      <div className="md:hidden overflow-x-auto pb-6 -mx-4 px-4 scrollbar-hide scroll-smooth snap-x snap-mandatory">
+        <div className="flex items-center gap-3 min-w-max py-1">
           {pipelineStages.map((stage, index) => (
-            <div key={stage.id} className="flex items-center">
-              <div
+            <div key={stage.id} className="flex items-center snap-center">
+              <button
+                type="button"
                 onClick={() => interactive && onStageClick?.(stage.id, stage.label)}
+                disabled={!interactive}
                 className={cn(
-                  "flex items-center gap-2 px-4 py-2.5 rounded-full border-2 transition-all duration-200",
+                  "flex items-center gap-2 px-4 py-3 rounded-full border-2 transition-all duration-200 min-h-[44px] min-w-[44px]",
                   stage.id < currentStage
                     ? "bg-champagne-gold border-champagne-gold text-white"
                     : stage.id === currentStage
                     ? "bg-white border-champagne-gold text-champagne-gold shadow-lg shadow-champagne-gold/20 animate-pulse"
-                    : "bg-white border-border/50 text-foreground/40",
-                  interactive && "cursor-pointer active:scale-95"
+                    : "bg-white border-slate-200 text-foreground/40",
+                  interactive && "cursor-pointer active:scale-95 focus:outline-none focus:ring-2 focus:ring-champagne-gold/50"
                 )}
               >
                 {stage.id < currentStage ? (
@@ -108,12 +110,12 @@ const SalesPipeline = ({ currentStage, onStageClick, interactive = false }: Sale
                 <span className="text-xs font-semibold whitespace-nowrap">
                   {stage.shortLabel}
                 </span>
-              </div>
+              </button>
               {index < pipelineStages.length - 1 && (
                 <div
                   className={cn(
-                    "w-4 h-0.5 mx-1 rounded-full",
-                    stage.id < currentStage ? "bg-champagne-gold" : "bg-border/50"
+                    "w-5 h-0.5 mx-1.5 rounded-full flex-shrink-0",
+                    stage.id < currentStage ? "bg-champagne-gold" : "bg-slate-200"
                   )}
                 />
               )}
