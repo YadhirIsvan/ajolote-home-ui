@@ -91,22 +91,22 @@ const MiCuenta = () => {
     <div className="min-h-screen bg-white">
       <Navigation />
 
-      <div className="pt-24 pb-16">
-        <div className="container mx-auto px-6 max-w-7xl">
-          {/* Header */}
-          <div className="text-center mb-12">
+      <div className="pt-20 md:pt-24 pb-16">
+        <div className="container mx-auto px-4 md:px-6 max-w-7xl">
+          {/* Header - Hidden on mobile for agent/admin (they have sticky headers) */}
+          <div className={`text-center mb-8 md:mb-12 ${selectedRole !== "cliente" ? "hidden md:block" : ""}`}>
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-champagne-gold/10 text-champagne-gold text-sm font-medium mb-4">
               <RoleIcon className="w-4 h-4" />
               <span>{selectedRole ? roleLabels[selectedRole] : ""}</span>
             </div>
-            <h1 className="text-4xl font-bold text-midnight mb-4">
+            <h1 className="text-2xl md:text-4xl font-bold text-midnight mb-2 md:mb-4">
               {selectedRole === "admin"
                 ? "Panel de Administración"
                 : selectedRole === "agente"
                 ? "Panel del Agente"
                 : "Mi Cuenta"}
             </h1>
-            <p className="text-lg text-foreground/60">
+            <p className="text-sm md:text-lg text-foreground/60 max-w-xl mx-auto">
               {selectedRole === "admin"
                 ? "Control total de la plataforma"
                 : selectedRole === "agente"
