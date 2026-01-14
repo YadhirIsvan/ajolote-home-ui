@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import Navigation from "@/components/Navigation";
 import SellerLeadForm from "@/components/SellerLeadForm";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 import {
   Accordion,
   AccordionContent,
@@ -18,10 +20,13 @@ import {
   EyeOff,
   UserCheck,
   ArrowRight,
+  Play,
+  X,
 } from "lucide-react";
 
 const SellerFlow = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isVideoOpen, setIsVideoOpen] = useState(false);
 
   const steps = [
     {
@@ -121,8 +126,55 @@ const SellerFlow = () => {
         </div>
       </section>
 
-      {/* Trust & Authority Section */}
+      {/* Video Section */}
       <section className="py-16 px-6">
+        <div className="container mx-auto max-w-5xl">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
+            {/* Video Thumbnail */}
+            <div className="order-1">
+              <div
+                className="relative cursor-pointer group"
+                onClick={() => setIsVideoOpen(true)}
+              >
+                <AspectRatio ratio={16 / 9}>
+                  <div className="w-full h-full rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(15,23,42,0.15)] transition-all duration-300 group-hover:shadow-[0_25px_60px_rgba(15,23,42,0.2)]">
+                    <img
+                      src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1973&q=80"
+                      alt="Video sobre nuestro proceso de venta"
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                    {/* Overlay */}
+                    <div className="absolute inset-0 bg-primary/20 transition-opacity duration-300 group-hover:bg-primary/30" />
+                  </div>
+                </AspectRatio>
+
+                {/* Play Button */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-[hsl(var(--champagne-gold))] flex items-center justify-center shadow-lg transition-all duration-300 group-hover:scale-110 group-hover:shadow-xl">
+                    <Play className="w-6 h-6 md:w-8 md:h-8 text-white ml-1" fill="white" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Text Content */}
+            <div className="order-2 text-center md:text-left">
+              <h2 className="text-2xl md:text-3xl font-bold text-primary mb-4">
+                Tu propiedad en las mejores manos
+              </h2>
+              <p className="text-muted-foreground text-lg leading-relaxed mb-6">
+                Conoce de voz de nuestros expertos cómo logramos vender tu propiedad al mejor precio en tiempo récord.
+              </p>
+              <p className="text-sm text-primary/70 font-medium">
+                Más de 500 propietarios han confiado en nuestro método.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Trust & Authority Section */}
+      <section className="py-16 px-6 bg-secondary/30">
         <div className="container mx-auto max-w-4xl">
           <h2 className="text-2xl md:text-3xl font-bold text-primary text-center mb-12">
             ¿Por qué elegirnos?
@@ -215,6 +267,30 @@ const SellerFlow = () => {
 
       {/* Lead Capture Form Modal */}
       <SellerLeadForm open={isFormOpen} onOpenChange={setIsFormOpen} />
+
+      {/* Video Lightbox Modal */}
+      <Dialog open={isVideoOpen} onOpenChange={setIsVideoOpen}>
+        <DialogContent className="max-w-4xl w-[95vw] p-0 bg-primary border-0 overflow-hidden">
+          {/* Close Button */}
+          <button
+            onClick={() => setIsVideoOpen(false)}
+            className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+          >
+            <X className="w-5 h-5 text-white" />
+          </button>
+
+          {/* Video Player */}
+          <AspectRatio ratio={16 / 9}>
+            <iframe
+              src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1"
+              title="Video de presentación"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              className="w-full h-full"
+            />
+          </AspectRatio>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
