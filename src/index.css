@@ -88,3 +88,29 @@
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--champagne-dark));
 }
+
+/* Hide scrollbar while maintaining scroll functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Smooth transitions for Kanban cards */
+.kanban-card-enter {
+  animation: kanban-slide-in 0.3s ease-out forwards;
+}
+
+@keyframes kanban-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
