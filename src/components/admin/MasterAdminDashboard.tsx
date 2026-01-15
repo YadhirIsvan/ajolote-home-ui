@@ -1,7 +1,15 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { LogOut } from "lucide-react";
+import { LogOut, User, Settings, ExternalLink, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import AdminTabsNavigation, { AdminTab } from "./AdminTabsNavigation";
 import PropiedadesSection from "./sections/PropiedadesSection";
@@ -41,29 +49,63 @@ const MasterAdminDashboard = ({ onLogout }: MasterAdminDashboardProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Fixed Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-midnight text-white">
-        <div className={cn(
-          "flex items-center justify-between px-4 py-3",
-          !isMobile && "pr-60" // Make room for right sidebar on desktop
-        )}>
-          <div className="flex items-center gap-3">
-            <img src={ajoloteLogo} alt="Ajolote" className="w-8 h-8 object-contain" />
-            <div>
-              <h1 className="font-bold text-lg">Panel Admin</h1>
-              {!isMobile && <p className="text-xs text-white/60">Gestión integral</p>}
+    <div className="min-h-screen bg-background">
+      {/* Fixed Header - Same style as normal Navigation */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            {/* Logo */}
+            <Link to="/" className="flex items-center gap-2 group">
+              <img src={ajoloteLogo} alt="Vy Cite" className="w-9 h-9 transition-transform group-hover:scale-105" />
+              <span className="text-xl font-bold text-primary">Vy Cite</span>
+            </Link>
+
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center gap-6">
+              <Link
+                to="/"
+                className="flex items-center gap-2 text-sm font-medium text-foreground/70 hover:text-foreground transition-colors"
+              >
+                <ExternalLink className="w-4 h-4" />
+                Ver sitio público
+              </Link>
             </div>
+
+            {/* User Dropdown Menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="flex items-center gap-2 hover:bg-muted">
+                  <div className="w-8 h-8 rounded-full bg-champagne-gold/20 flex items-center justify-center">
+                    <User className="w-4 h-4 text-champagne-gold" />
+                  </div>
+                  {!isMobile && (
+                    <>
+                      <span className="text-sm font-medium text-foreground">Administrador</span>
+                      <ChevronDown className="w-4 h-4 text-foreground/60" />
+                    </>
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem className="cursor-pointer">
+                  <User className="w-4 h-4 mr-2" />
+                  Mi Perfil
+                </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer">
+                  <Settings className="w-4 h-4 mr-2" />
+                  Configuración del sistema
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
+                  onClick={onLogout}
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Cerrar Sesión
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-white/70 hover:text-white hover:bg-white/10 gap-2"
-            onClick={onLogout}
-          >
-            <LogOut className="w-4 h-4" />
-            {!isMobile && "Salir"}
-          </Button>
         </div>
       </header>
 
@@ -78,7 +120,7 @@ const MasterAdminDashboard = ({ onLogout }: MasterAdminDashboardProps) => {
         />
       )}
 
-      {/* Desktop Tab Navigation (right side) */}
+      {/* Desktop Tab Navigation (left side) */}
       {!isMobile && (
         <AdminTabsNavigation 
           activeTab={activeTab} 
@@ -89,7 +131,7 @@ const MasterAdminDashboard = ({ onLogout }: MasterAdminDashboardProps) => {
       {/* Main Content */}
       <main className={cn(
         "p-4 md:p-8",
-        !isMobile && "mr-56" // Make room for right sidebar on desktop
+        !isMobile && "ml-56" // Make room for left sidebar on desktop
       )}>
         {renderSection()}
       </main>

@@ -69,11 +69,11 @@ const AdminTabsNavigation = ({ activeTab, onTabChange }: AdminTabsNavigationProp
     );
   }
 
-  // Desktop: Right-side collapsible panel
+  // Desktop: Left-side collapsible panel
   return (
     <div 
       className={cn(
-        "fixed right-0 top-0 bottom-0 z-40 bg-white border-l border-border/50 shadow-lg transition-all duration-300 flex flex-col",
+        "fixed left-0 top-14 bottom-0 z-40 bg-white border-r border-border/50 shadow-lg transition-all duration-300 flex flex-col",
         isCollapsed ? "w-16" : "w-56"
       )}
     >
@@ -82,12 +82,12 @@ const AdminTabsNavigation = ({ activeTab, onTabChange }: AdminTabsNavigationProp
         variant="ghost"
         size="icon"
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -left-4 top-6 w-8 h-8 rounded-full bg-white border border-border shadow-md hover:bg-muted z-50"
+        className="absolute -right-4 top-6 w-8 h-8 rounded-full bg-white border border-border shadow-md hover:bg-muted z-50"
       >
         {isCollapsed ? (
-          <ChevronLeft className="w-4 h-4" />
-        ) : (
           <ChevronRight className="w-4 h-4" />
+        ) : (
+          <ChevronLeft className="w-4 h-4" />
         )}
       </Button>
 
