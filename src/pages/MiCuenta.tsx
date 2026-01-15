@@ -6,7 +6,7 @@ import RoleSelector, { UserRole } from "@/components/RoleSelector";
 import { Button } from "@/components/ui/button";
 import ClientDashboard from "@/components/dashboard/ClientDashboard";
 import AgentDashboard from "@/components/dashboard/AgentDashboard";
-import AdminDashboard from "@/components/dashboard/AdminDashboard";
+import MasterAdminDashboard from "@/components/admin/MasterAdminDashboard";
 
 const MiCuenta = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -118,7 +118,7 @@ const MiCuenta = () => {
           {/* Role-Specific Dashboard */}
           {selectedRole === "cliente" && <ClientDashboard onLogout={handleLogout} />}
           {selectedRole === "agente" && <AgentDashboard onLogout={handleLogout} />}
-          {selectedRole === "admin" && <AdminDashboard onLogout={handleLogout} />}
+          {selectedRole === "admin" && <MasterAdminDashboard onLogout={handleLogout} />}
         </div>
       </div>
     </div>
