@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { 
   Calendar as CalendarIcon,
   ChevronLeft,
@@ -11,7 +11,11 @@ import {
   Plus,
   Edit,
   Trash2,
-  Save
+  Save,
+  Search,
+  AlertCircle,
+  FileText,
+  Timer
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,6 +25,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from "@/components/ui/drawer";
+import { Textarea } from "@/components/ui/textarea";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -29,6 +34,16 @@ interface AppointmentType {
   id: string;
   name: string;
   color: string;
+  defaultDuration: number; // in minutes
+}
+
+interface Client {
+  id: string;
+  name: string;
+  matricula: string;
+  assignedAgent: string;
+  phone?: string;
+  email?: string;
 }
 
 interface Appointment {
@@ -36,27 +51,41 @@ interface Appointment {
   date: string;
   time: string;
   client: string;
+  clientId: string;
   property: string;
   agent: string;
   typeId: string;
+  duration: number;
   notes: string;
 }
 
 const appointmentTypes: AppointmentType[] = [
-  { id: "1", name: "Primera Visita", color: "bg-blue-100 text-blue-700" },
-  { id: "2", name: "Seguimiento", color: "bg-green-100 text-green-700" },
-  { id: "3", name: "Cierre de Contrato", color: "bg-champagne-gold/20 text-champagne-gold-dark" },
-  { id: "4", name: "Entrega de Llaves", color: "bg-purple-100 text-purple-700" },
-  { id: "5", name: "Avalúo", color: "bg-orange-100 text-orange-700" },
+  { id: "1", name: "Primera Visita", color: "bg-blue-100 text-blue-700", defaultDuration: 60 },
+  { id: "2", name: "Seguimiento", color: "bg-green-100 text-green-700", defaultDuration: 45 },
+  { id: "3", name: "Cierre de Contrato", color: "bg-champagne-gold/20 text-champagne-gold-dark", defaultDuration: 90 },
+  { id: "4", name: "Entrega de Llaves", color: "bg-purple-100 text-purple-700", defaultDuration: 30 },
+  { id: "5", name: "Avalúo", color: "bg-orange-100 text-orange-700", defaultDuration: 120 },
+];
+
+// Mock clients data with matricula (internal ID)
+const mockClients: Client[] = [
+  { id: "1", name: "María García", matricula: "CLI-2024-001", assignedAgent: "Carlos Mendoza", phone: "555-123-4567", email: "maria@email.com" },
+  { id: "2", name: "Juan López", matricula: "CLI-2024-002", assignedAgent: "Laura Sánchez", phone: "555-234-5678", email: "juan@email.com" },
+  { id: "3", name: "Ana Martínez", matricula: "CLI-2024-003", assignedAgent: "Roberto Díaz", phone: "555-345-6789", email: "ana@email.com" },
+  { id: "4", name: "Pedro Hernández", matricula: "CLI-2024-004", assignedAgent: "Carlos Mendoza", phone: "555-456-7890", email: "pedro@email.com" },
+  { id: "5", name: "Sofía Ruiz", matricula: "CLI-2024-005", assignedAgent: "Laura Sánchez", phone: "555-567-8901", email: "sofia@email.com" },
+  { id: "6", name: "Carlos Mendez", matricula: "CLI-2024-006", assignedAgent: "Roberto Díaz", phone: "555-678-9012", email: "carlos@email.com" },
+  { id: "7", name: "Laura Torres", matricula: "CLI-2024-007", assignedAgent: "Ana Martínez", phone: "555-789-0123", email: "laura@email.com" },
+  { id: "8", name: "Miguel Ángel Rojas", matricula: "CLI-2024-008", assignedAgent: "Carlos Mendoza", phone: "555-890-1234", email: "miguel@email.com" },
 ];
 
 const mockAppointments: Appointment[] = [
-  { id: "1", date: "2026-01-14", time: "10:00", client: "María García", property: "Casa en Polanco", agent: "Carlos Mendoza", typeId: "1", notes: "" },
-  { id: "2", date: "2026-01-14", time: "14:00", client: "Juan López", property: "Depto Roma Norte", agent: "Laura Sánchez", typeId: "2", notes: "" },
-  { id: "3", date: "2026-01-15", time: "11:00", client: "Ana Martínez", property: "Penthouse Santa Fe", agent: "Roberto Díaz", typeId: "3", notes: "" },
-  { id: "4", date: "2026-01-16", time: "09:00", client: "Pedro Hernández", property: "Casa en Polanco", agent: "Carlos Mendoza", typeId: "1", notes: "" },
-  { id: "5", date: "2026-01-17", time: "16:00", client: "Sofía Ruiz", property: "Depto Roma Norte", agent: "Laura Sánchez", typeId: "4", notes: "" },
-  { id: "6", date: "2026-01-20", time: "10:00", client: "Carlos Mendez", property: "Penthouse Santa Fe", agent: "Roberto Díaz", typeId: "2", notes: "" },
+  { id: "1", date: "2026-01-14", time: "10:00", client: "María García", clientId: "1", property: "Casa en Polanco", agent: "Carlos Mendoza", typeId: "1", duration: 60, notes: "" },
+  { id: "2", date: "2026-01-14", time: "14:00", client: "Juan López", clientId: "2", property: "Depto Roma Norte", agent: "Laura Sánchez", typeId: "2", duration: 45, notes: "" },
+  { id: "3", date: "2026-01-15", time: "11:00", client: "Ana Martínez", clientId: "3", property: "Penthouse Santa Fe", agent: "Roberto Díaz", typeId: "3", duration: 90, notes: "" },
+  { id: "4", date: "2026-01-16", time: "09:00", client: "Pedro Hernández", clientId: "4", property: "Casa en Polanco", agent: "Carlos Mendoza", typeId: "1", duration: 60, notes: "" },
+  { id: "5", date: "2026-01-17", time: "16:00", client: "Sofía Ruiz", clientId: "5", property: "Depto Roma Norte", agent: "Laura Sánchez", typeId: "4", duration: 30, notes: "" },
+  { id: "6", date: "2026-01-20", time: "10:00", client: "Carlos Mendez", clientId: "6", property: "Penthouse Santa Fe", agent: "Roberto Díaz", typeId: "2", duration: 45, notes: "" },
 ];
 
 const agents = ["Carlos Mendoza", "Laura Sánchez", "Roberto Díaz", "Ana Martínez"];
@@ -65,13 +94,37 @@ const properties = ["Casa en Polanco", "Depto Roma Norte", "Penthouse Santa Fe",
 const MONTHS = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
 const WEEKDAYS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
 
-const emptyAppointment: Omit<Appointment, "id"> = {
+const ALL_TIME_SLOTS = ["09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00"];
+
+const DURATION_OPTIONS = [
+  { value: 30, label: "30 minutos" },
+  { value: 45, label: "45 minutos" },
+  { value: 60, label: "1 hora" },
+  { value: 90, label: "1 hora 30 min" },
+  { value: 120, label: "2 horas" },
+];
+
+interface FormData {
+  date: string;
+  time: string;
+  clientId: string;
+  client: string;
+  property: string;
+  agent: string;
+  typeId: string;
+  duration: number;
+  notes: string;
+}
+
+const emptyFormData: FormData = {
   date: "",
-  time: "10:00",
+  time: "",
+  clientId: "",
   client: "",
   property: "",
   agent: "",
   typeId: "1",
+  duration: 60,
   notes: "",
 };
 
@@ -83,8 +136,10 @@ const CitasSection = () => {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState<Omit<Appointment, "id">>(emptyAppointment);
-  const [selectedDate, setSelectedDate] = useState<string>("");
+  const [formData, setFormData] = useState<FormData>(emptyFormData);
+  const [clientSearch, setClientSearch] = useState("");
+  const [isClientSearchFocused, setIsClientSearchFocused] = useState(false);
+  const [isFromCalendarClick, setIsFromCalendarClick] = useState(false);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -106,6 +161,68 @@ const CitasSection = () => {
     return appointmentTypes.find(t => t.id === typeId) || appointmentTypes[0];
   };
 
+  // Filter clients by search (name or matricula)
+  const filteredClients = useMemo(() => {
+    if (!clientSearch.trim()) return [];
+    const searchLower = clientSearch.toLowerCase();
+    return mockClients.filter(c => 
+      c.name.toLowerCase().includes(searchLower) || 
+      c.matricula.toLowerCase().includes(searchLower)
+    );
+  }, [clientSearch]);
+
+  // Get unavailable time slots for a specific agent and date
+  const getUnavailableSlots = useMemo(() => {
+    if (!formData.agent || !formData.date) return new Set<string>();
+    
+    const agentAppointments = appointments.filter(
+      apt => apt.agent === formData.agent && apt.date === formData.date && apt.id !== editingId
+    );
+    
+    const unavailable = new Set<string>();
+    
+    agentAppointments.forEach(apt => {
+      const [hours, minutes] = apt.time.split(':').map(Number);
+      const startMinutes = hours * 60 + minutes;
+      const endMinutes = startMinutes + apt.duration;
+      
+      ALL_TIME_SLOTS.forEach(slot => {
+        const [slotHours, slotMinutes] = slot.split(':').map(Number);
+        const slotStartMinutes = slotHours * 60 + slotMinutes;
+        const slotEndMinutes = slotStartMinutes + formData.duration;
+        
+        // Check if this slot overlaps with any existing appointment
+        if (
+          (slotStartMinutes >= startMinutes && slotStartMinutes < endMinutes) ||
+          (slotEndMinutes > startMinutes && slotEndMinutes <= endMinutes) ||
+          (slotStartMinutes <= startMinutes && slotEndMinutes >= endMinutes)
+        ) {
+          unavailable.add(slot);
+        }
+      });
+    });
+    
+    return unavailable;
+  }, [formData.agent, formData.date, formData.duration, appointments, editingId]);
+
+  const availableTimeSlots = useMemo(() => {
+    return ALL_TIME_SLOTS.map(slot => ({
+      time: slot,
+      available: !getUnavailableSlots.has(slot)
+    }));
+  }, [getUnavailableSlots]);
+
+  const handleSelectClient = (client: Client) => {
+    setFormData(prev => ({
+      ...prev,
+      clientId: client.id,
+      client: client.name,
+      agent: client.assignedAgent,
+    }));
+    setClientSearch(client.name);
+    setIsClientSearchFocused(false);
+  };
+
   const handleAppointmentClick = (apt: Appointment) => {
     setSelectedAppointment(apt);
     setIsDetailOpen(true);
@@ -113,9 +230,18 @@ const CitasSection = () => {
 
   const handleDayClick = (day: number) => {
     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    setSelectedDate(dateStr);
     setEditingId(null);
-    setFormData({ ...emptyAppointment, date: dateStr });
+    setFormData({ ...emptyFormData, date: dateStr });
+    setClientSearch("");
+    setIsFromCalendarClick(true);
+    setIsFormOpen(true);
+  };
+
+  const handleNewAppointment = () => {
+    setEditingId(null);
+    setFormData(emptyFormData);
+    setClientSearch("");
+    setIsFromCalendarClick(false);
     setIsFormOpen(true);
   };
 
@@ -124,20 +250,32 @@ const CitasSection = () => {
     setFormData({
       date: apt.date,
       time: apt.time,
+      clientId: apt.clientId,
       client: apt.client,
       property: apt.property,
       agent: apt.agent,
       typeId: apt.typeId,
+      duration: apt.duration,
       notes: apt.notes,
     });
+    setClientSearch(apt.client);
+    setIsFromCalendarClick(false);
     setIsDetailOpen(false);
     setIsFormOpen(true);
   };
 
   const handleSave = () => {
+    if (!formData.clientId || !formData.date || !formData.time || !formData.agent) {
+      toast.error("Por favor completa todos los campos requeridos");
+      return;
+    }
+
     if (editingId) {
       setAppointments(prev => prev.map(a => 
-        a.id === editingId ? { ...a, ...formData } : a
+        a.id === editingId ? { 
+          ...a, 
+          ...formData,
+        } : a
       ));
       toast.success("Cita actualizada");
     } else {
@@ -149,12 +287,24 @@ const CitasSection = () => {
       toast.success("Cita creada");
     }
     setIsFormOpen(false);
+    setFormData(emptyFormData);
+    setClientSearch("");
   };
 
   const handleDelete = (id: string) => {
     setAppointments(prev => prev.filter(a => a.id !== id));
     setIsDetailOpen(false);
     toast.success("Cita eliminada");
+  };
+
+  const handleTypeChange = (typeId: string) => {
+    const type = appointmentTypes.find(t => t.id === typeId);
+    setFormData(prev => ({
+      ...prev,
+      typeId,
+      duration: type?.defaultDuration || 60,
+      time: "", // Reset time when type changes since duration affects availability
+    }));
   };
 
   // Generate calendar days
@@ -193,6 +343,16 @@ const CitasSection = () => {
 
           <div className="flex items-start gap-3">
             <div className="p-2 rounded-lg bg-muted/30">
+              <Timer className="w-5 h-5 text-champagne-gold" />
+            </div>
+            <div>
+              <p className="text-sm text-foreground/60">Duración</p>
+              <p className="font-medium text-midnight">{selectedAppointment.duration} minutos</p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-lg bg-muted/30">
               <Home className="w-5 h-5 text-champagne-gold" />
             </div>
             <div>
@@ -220,6 +380,18 @@ const CitasSection = () => {
               <p className="font-medium text-midnight">{selectedAppointment.agent}</p>
             </div>
           </div>
+
+          {selectedAppointment.notes && (
+            <div className="flex items-start gap-3">
+              <div className="p-2 rounded-lg bg-muted/30">
+                <FileText className="w-5 h-5 text-champagne-gold" />
+              </div>
+              <div>
+                <p className="text-sm text-foreground/60">Notas</p>
+                <p className="font-medium text-midnight">{selectedAppointment.notes}</p>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="flex gap-3 pt-4">
@@ -239,95 +411,296 @@ const CitasSection = () => {
     );
   };
 
-  const FormContent = () => (
-    <div className="space-y-5 p-4">
-      <div className="space-y-2">
-        <Label>Fecha</Label>
-        <Input
-          type="date"
-          value={formData.date}
-          onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
-          className="h-12"
-        />
-      </div>
+  const FormContent = () => {
+    const isClientSelected = !!formData.clientId;
+    const canSelectTime = formData.agent && formData.date;
+    
+    return (
+      <div className="space-y-6 p-4">
+        {/* Step indicator for calendar click flow */}
+        {isFromCalendarClick && (
+          <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
+            <CalendarIcon className="w-5 h-5 text-blue-600" />
+            <span className="text-sm text-blue-700">
+              Fecha seleccionada: <strong>{new Date(formData.date + 'T12:00:00').toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' })}</strong>
+            </span>
+          </div>
+        )}
 
-      <div className="space-y-2">
-        <Label>Hora</Label>
-        <Select value={formData.time} onValueChange={(v) => setFormData(prev => ({ ...prev, time: v }))}>
-          <SelectTrigger className="h-12">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00"].map(t => (
-              <SelectItem key={t} value={t}>{t}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+        {/* Client Search Section - Primary Action */}
+        <div className="relative">
+          <div className={cn(
+            "p-4 rounded-xl border-2 transition-all",
+            !isClientSelected ? "border-champagne-gold bg-champagne-gold/5" : "border-green-300 bg-green-50"
+          )}>
+            <div className="flex items-center gap-2 mb-3">
+              <div className={cn(
+                "p-2 rounded-lg",
+                !isClientSelected ? "bg-champagne-gold/20" : "bg-green-100"
+              )}>
+                <Search className={cn("w-5 h-5", !isClientSelected ? "text-champagne-gold" : "text-green-600")} />
+              </div>
+              <div>
+                <Label className="text-base font-semibold text-midnight">
+                  {!isClientSelected ? "1. Buscar Cliente" : "Cliente Seleccionado"}
+                </Label>
+                <p className="text-xs text-foreground/60">Busca por nombre o matrícula</p>
+              </div>
+            </div>
+            
+            <div className="relative">
+              <Input
+                value={clientSearch}
+                onChange={(e) => {
+                  setClientSearch(e.target.value);
+                  if (formData.clientId) {
+                    setFormData(prev => ({ ...prev, clientId: "", client: "", agent: "" }));
+                  }
+                }}
+                onFocus={() => setIsClientSearchFocused(true)}
+                onBlur={() => setTimeout(() => setIsClientSearchFocused(false), 200)}
+                placeholder="Ej: María García o CLI-2024-001"
+                className="h-12 pr-10"
+              />
+              {isClientSelected && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <Badge className="bg-green-100 text-green-700">✓ Seleccionado</Badge>
+                </div>
+              )}
+            </div>
+            
+            {/* Client search results dropdown */}
+            {isClientSearchFocused && filteredClients.length > 0 && (
+              <div className="absolute left-0 right-0 mt-2 z-50 bg-white border border-border rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                {filteredClients.map((client) => (
+                  <button
+                    key={client.id}
+                    onClick={() => handleSelectClient(client)}
+                    className="w-full px-4 py-3 text-left hover:bg-champagne-gold/10 transition-colors border-b border-border/30 last:border-b-0"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-midnight">{client.name}</p>
+                        <p className="text-sm text-foreground/60">{client.email}</p>
+                      </div>
+                      <div className="text-right">
+                        <Badge variant="outline" className="text-xs font-mono">{client.matricula}</Badge>
+                        <p className="text-xs text-foreground/50 mt-1">Agente: {client.assignedAgent}</p>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+            
+            {isClientSearchFocused && clientSearch && filteredClients.length === 0 && (
+              <div className="absolute left-0 right-0 mt-2 z-50 bg-white border border-border rounded-xl shadow-lg p-4">
+                <p className="text-center text-foreground/60 text-sm">No se encontraron clientes</p>
+              </div>
+            )}
+          </div>
+        </div>
 
-      <div className="space-y-2">
-        <Label>Tipo de Cita</Label>
-        <Select value={formData.typeId} onValueChange={(v) => setFormData(prev => ({ ...prev, typeId: v }))}>
-          <SelectTrigger className="h-12">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {appointmentTypes.map(t => (
-              <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+        {/* Agent Section */}
+        <div className={cn(
+          "p-4 rounded-xl border transition-all",
+          !isClientSelected ? "border-border/30 bg-muted/20 opacity-60" : "border-border bg-white"
+        )}>
+          <div className="flex items-center gap-2 mb-3">
+            <div className="p-2 rounded-lg bg-muted/30">
+              <Users className="w-5 h-5 text-champagne-gold" />
+            </div>
+            <Label className="text-base font-semibold text-midnight">2. Agente Asignado</Label>
+          </div>
+          
+          <Select 
+            value={formData.agent} 
+            onValueChange={(v) => setFormData(prev => ({ ...prev, agent: v, time: "" }))}
+            disabled={!isClientSelected}
+          >
+            <SelectTrigger className="h-12">
+              <SelectValue placeholder="Seleccionar agente" />
+            </SelectTrigger>
+            <SelectContent>
+              {agents.map(a => (
+                <SelectItem key={a} value={a}>{a}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          
+          {isClientSelected && formData.agent && (
+            <p className="text-xs text-green-600 mt-2 flex items-center gap-1">
+              <span>✓</span> Agente por defecto del cliente
+            </p>
+          )}
+        </div>
 
-      <div className="space-y-2">
-        <Label>Cliente</Label>
-        <Input
-          value={formData.client}
-          onChange={(e) => setFormData(prev => ({ ...prev, client: e.target.value }))}
-          placeholder="Nombre del cliente"
-          className="h-12"
-        />
-      </div>
+        {/* Date & Time Section */}
+        <div className={cn(
+          "p-4 rounded-xl border transition-all",
+          !isClientSelected ? "border-border/30 bg-muted/20 opacity-60" : "border-border bg-white"
+        )}>
+          <div className="flex items-center gap-2 mb-3">
+            <div className="p-2 rounded-lg bg-muted/30">
+              <Clock className="w-5 h-5 text-champagne-gold" />
+            </div>
+            <Label className="text-base font-semibold text-midnight">3. Fecha y Hora</Label>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Date Input */}
+            <div className="space-y-2">
+              <Label className="text-sm text-foreground/70">Fecha</Label>
+              <Input
+                type="date"
+                value={formData.date}
+                onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value, time: "" }))}
+                className="h-12"
+                disabled={!isClientSelected || isFromCalendarClick}
+              />
+            </div>
+            
+            {/* Time Selection */}
+            <div className="space-y-2">
+              <Label className="text-sm text-foreground/70">Hora</Label>
+              {canSelectTime ? (
+                <Select 
+                  value={formData.time} 
+                  onValueChange={(v) => setFormData(prev => ({ ...prev, time: v }))}
+                >
+                  <SelectTrigger className="h-12">
+                    <SelectValue placeholder="Seleccionar hora" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableTimeSlots.map(({ time, available }) => (
+                      <SelectItem 
+                        key={time} 
+                        value={time}
+                        disabled={!available}
+                        className={cn(!available && "opacity-50")}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span>{time}</span>
+                          {!available && (
+                            <Badge variant="outline" className="text-xs bg-red-50 text-red-600 border-red-200">
+                              Ocupado
+                            </Badge>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="h-12 flex items-center px-3 bg-muted/30 rounded-md border border-border/50">
+                  <span className="text-sm text-foreground/50">Selecciona agente y fecha primero</span>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          {canSelectTime && getUnavailableSlots.size > 0 && (
+            <div className="mt-3 p-3 bg-amber-50 rounded-lg border border-amber-200 flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-amber-700">
+                Algunos horarios no están disponibles porque el agente ya tiene citas programadas. 
+                Duración considerada: {formData.duration} min.
+              </p>
+            </div>
+          )}
+        </div>
 
-      <div className="space-y-2">
-        <Label>Propiedad</Label>
-        <Select value={formData.property} onValueChange={(v) => setFormData(prev => ({ ...prev, property: v }))}>
-          <SelectTrigger className="h-12">
-            <SelectValue placeholder="Seleccionar propiedad" />
-          </SelectTrigger>
-          <SelectContent>
-            {properties.map(p => (
-              <SelectItem key={p} value={p}>{p}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+        {/* Additional Details Section */}
+        <div className={cn(
+          "p-4 rounded-xl border transition-all",
+          !isClientSelected ? "border-border/30 bg-muted/20 opacity-60" : "border-border bg-white"
+        )}>
+          <div className="flex items-center gap-2 mb-3">
+            <div className="p-2 rounded-lg bg-muted/30">
+              <Tag className="w-5 h-5 text-champagne-gold" />
+            </div>
+            <Label className="text-base font-semibold text-midnight">4. Detalles de la Cita</Label>
+          </div>
+          
+          <div className="space-y-4">
+            {/* Appointment Type */}
+            <div className="space-y-2">
+              <Label className="text-sm text-foreground/70">Tipo de Cita</Label>
+              <Select 
+                value={formData.typeId} 
+                onValueChange={handleTypeChange}
+                disabled={!isClientSelected}
+              >
+                <SelectTrigger className="h-12">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {appointmentTypes.map(t => (
+                    <SelectItem key={t.id} value={t.id}>
+                      <div className="flex items-center gap-2">
+                        <Badge className={cn(t.color, "text-xs")}>{t.name}</Badge>
+                        <span className="text-xs text-foreground/50">({t.defaultDuration} min)</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-      <div className="space-y-2">
-        <Label>Agente Asignado</Label>
-        <Select value={formData.agent} onValueChange={(v) => setFormData(prev => ({ ...prev, agent: v }))}>
-          <SelectTrigger className="h-12">
-            <SelectValue placeholder="Seleccionar agente" />
-          </SelectTrigger>
-          <SelectContent>
-            {agents.map(a => (
-              <SelectItem key={a} value={a}>{a}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+            {/* Duration */}
+            <div className="space-y-2">
+              <Label className="text-sm text-foreground/70">Duración Aproximada</Label>
+              <Select 
+                value={String(formData.duration)} 
+                onValueChange={(v) => setFormData(prev => ({ ...prev, duration: parseInt(v), time: "" }))}
+                disabled={!isClientSelected}
+              >
+                <SelectTrigger className="h-12">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {DURATION_OPTIONS.map(d => (
+                    <SelectItem key={d.value} value={String(d.value)}>{d.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-      <div className="space-y-2">
-        <Label>Notas (Opcional)</Label>
-        <Input
-          value={formData.notes}
-          onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-          placeholder="Notas adicionales..."
-          className="h-12"
-        />
+            {/* Property */}
+            <div className="space-y-2">
+              <Label className="text-sm text-foreground/70">Propiedad</Label>
+              <Select 
+                value={formData.property} 
+                onValueChange={(v) => setFormData(prev => ({ ...prev, property: v }))}
+                disabled={!isClientSelected}
+              >
+                <SelectTrigger className="h-12">
+                  <SelectValue placeholder="Seleccionar propiedad" />
+                </SelectTrigger>
+                <SelectContent>
+                  {properties.map(p => (
+                    <SelectItem key={p} value={p}>{p}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Notes */}
+            <div className="space-y-2">
+              <Label className="text-sm text-foreground/70">Notas (Opcional)</Label>
+              <Textarea
+                value={formData.notes}
+                onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                placeholder="Notas adicionales sobre la cita..."
+                className="min-h-[80px] resize-none"
+                disabled={!isClientSelected}
+              />
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const todayAppointments = appointments.filter(apt => apt.date === "2026-01-14");
 
@@ -338,7 +711,7 @@ const CitasSection = () => {
           <h1 className="text-2xl md:text-3xl font-bold text-midnight">Calendario de Citas</h1>
           <p className="text-foreground/60">Vista maestra de todas las citas</p>
         </div>
-        <Button variant="gold" className="gap-2" onClick={() => { setEditingId(null); setFormData(emptyAppointment); setIsFormOpen(true); }}>
+        <Button variant="gold" className="gap-2" onClick={handleNewAppointment}>
           <Plus className="w-4 h-4" />
           Nueva Cita
         </Button>
@@ -446,6 +819,7 @@ const CitasSection = () => {
                   <div className="flex items-center gap-4">
                     <div className="text-center">
                       <p className="text-lg font-bold text-champagne-gold">{apt.time}</p>
+                      <p className="text-xs text-foreground/50">{apt.duration} min</p>
                     </div>
                     <div>
                       <p className="font-medium text-midnight">{apt.client}</p>
@@ -489,29 +863,38 @@ const CitasSection = () => {
             <DrawerHeader className="border-b border-border/30">
               <DrawerTitle>{editingId ? "Editar Cita" : "Nueva Cita"}</DrawerTitle>
             </DrawerHeader>
-            <div className="overflow-y-auto">
+            <div className="overflow-y-auto flex-1">
               <FormContent />
             </div>
             <DrawerFooter className="border-t border-border/30">
-              <Button variant="gold" onClick={handleSave} className="w-full h-12">
+              <Button 
+                variant="gold" 
+                onClick={handleSave} 
+                className="w-full h-12"
+                disabled={!formData.clientId || !formData.date || !formData.time || !formData.agent}
+              >
                 <Save className="w-4 h-4 mr-2" />
-                Guardar
+                Guardar Cita
               </Button>
             </DrawerFooter>
           </DrawerContent>
         </Drawer>
       ) : (
         <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>{editingId ? "Editar Cita" : "Nueva Cita"}</DialogTitle>
+              <DialogTitle className="text-xl">{editingId ? "Editar Cita" : "Nueva Cita"}</DialogTitle>
             </DialogHeader>
             <FormContent />
-            <DialogFooter>
+            <DialogFooter className="gap-2">
               <Button variant="outline" onClick={() => setIsFormOpen(false)}>Cancelar</Button>
-              <Button variant="gold" onClick={handleSave}>
+              <Button 
+                variant="gold" 
+                onClick={handleSave}
+                disabled={!formData.clientId || !formData.date || !formData.time || !formData.agent}
+              >
                 <Save className="w-4 h-4 mr-2" />
-                Guardar
+                Guardar Cita
               </Button>
             </DialogFooter>
           </DialogContent>
