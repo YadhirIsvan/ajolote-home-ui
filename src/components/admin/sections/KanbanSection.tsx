@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, DragEvent } from "react";
 import { 
   ChevronLeft, 
   ChevronRight,
@@ -8,13 +8,13 @@ import {
   Clock,
   ArrowRight,
   ArrowLeft,
-  Eye
+  GripVertical
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from "@/components/ui/drawer";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -115,6 +115,8 @@ const KanbanSection = () => {
   const [activeColumnIndex, setActiveColumnIndex] = useState(0);
   const [selectedItem, setSelectedItem] = useState<{ item: KanbanItem; columnId: string } | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [draggedItem, setDraggedItem] = useState<{ item: KanbanItem; sourceColumnId: string } | null>(null);
+  const [dragOverColumnId, setDragOverColumnId] = useState<string | null>(null);
 
   const handleSwipe = (direction: "left" | "right") => {
     if (direction === "right" && activeColumnIndex < columns.length - 1) {
@@ -152,6 +154,61 @@ const KanbanSection = () => {
     toast.success(`Movido a ${columns[newIndex].title}`);
   };
 
+  // Drag and Drop Handlers
+  const handleDragStart = (e: DragEvent<HTMLDivElement>, item: KanbanItem, columnId: string) => {
+    setDraggedItem({ item, sourceColumnId: columnId });
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", item.id);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedItem(null);
+    setDragOverColumnId(null);
+  };
+
+  const handleDragOver = (e: DragEvent<HTMLDivElement>, columnId: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (dragOverColumnId !== columnId) {
+      setDragOverColumnId(columnId);
+    }
+  };
+
+  const handleDragLeave = () => {
+    setDragOverColumnId(null);
+  };
+
+  const handleDrop = (e: DragEvent<HTMLDivElement>, targetColumnId: string) => {
+    e.preventDefault();
+    
+    if (!draggedItem) return;
+    
+    const { item, sourceColumnId } = draggedItem;
+    
+    if (sourceColumnId === targetColumnId) {
+      setDraggedItem(null);
+      setDragOverColumnId(null);
+      return;
+    }
+
+    const newColumns = columns.map((col) => {
+      if (col.id === sourceColumnId) {
+        return { ...col, items: col.items.filter(i => i.id !== item.id) };
+      }
+      if (col.id === targetColumnId) {
+        return { ...col, items: [...col.items, { ...item, daysInStage: 0 }] };
+      }
+      return col;
+    });
+
+    const targetColumn = columns.find(c => c.id === targetColumnId);
+    setColumns(newColumns);
+    toast.success(`${item.client} movido a ${targetColumn?.title}`);
+    
+    setDraggedItem(null);
+    setDragOverColumnId(null);
+  };
+
   const getCurrentColumnName = () => {
     if (!selectedItem) return "";
     return columns.find(c => c.id === selectedItem.columnId)?.title || "";
@@ -169,14 +226,24 @@ const KanbanSection = () => {
     return currentIndex > 0;
   };
 
-  const KanbanCard = ({ item, columnId }: { item: KanbanItem; columnId: string }) => (
+  const KanbanCard = ({ item, columnId, draggable = true }: { item: KanbanItem; columnId: string; draggable?: boolean }) => (
     <Card 
-      className="border-border/30 bg-white hover:border-champagne-gold/50 hover:shadow-md transition-all cursor-pointer"
+      className={cn(
+        "border-border/30 bg-white hover:border-champagne-gold/50 hover:shadow-md transition-all cursor-pointer group",
+        draggable && "cursor-grab active:cursor-grabbing",
+        draggedItem?.item.id === item.id && "opacity-50 scale-95"
+      )}
       onClick={() => handleItemClick(item, columnId)}
+      draggable={draggable}
+      onDragStart={(e) => handleDragStart(e, item, columnId)}
+      onDragEnd={handleDragEnd}
     >
       <CardContent className="p-4">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
+            {draggable && (
+              <GripVertical className="w-4 h-4 text-foreground/30 group-hover:text-champagne-gold transition-colors" />
+            )}
             <User className="w-4 h-4 text-champagne-gold" />
             <span className="font-semibold text-midnight text-sm">{item.client}</span>
           </div>
@@ -279,7 +346,7 @@ const KanbanSection = () => {
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-midnight">Kanban Global</h1>
-          <p className="text-foreground/60">Vista de flujos de trabajo</p>
+          <p className="text-foreground/60">Vista de flujos de trabajo • Arrastra para mover</p>
         </div>
 
         {/* Column Selector */}
@@ -334,7 +401,7 @@ const KanbanSection = () => {
             </div>
           ) : (
             currentColumn.items.map((item) => (
-              <KanbanCard key={item.id} item={item} columnId={currentColumn.id} />
+              <KanbanCard key={item.id} item={item} columnId={currentColumn.id} draggable={false} />
             ))
           )}
         </div>
@@ -352,19 +419,25 @@ const KanbanSection = () => {
     );
   }
 
-  // Desktop: Full Kanban View
+  // Desktop: Full Kanban View with Drag & Drop
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl md:text-3xl font-bold text-midnight">Kanban Global</h1>
-        <p className="text-foreground/60">Vista de flujos de trabajo</p>
+        <p className="text-foreground/60">Vista de flujos de trabajo • Arrastra las tarjetas para mover leads entre etapas</p>
       </div>
 
       {/* Kanban Board */}
       <div className="overflow-x-auto pb-4">
         <div className="flex gap-4 min-w-max">
           {columns.map((column) => (
-            <div key={column.id} className="w-64 flex-shrink-0">
+            <div 
+              key={column.id} 
+              className="w-64 flex-shrink-0"
+              onDragOver={(e) => handleDragOver(e, column.id)}
+              onDragLeave={handleDragLeave}
+              onDrop={(e) => handleDrop(e, column.id)}
+            >
               {/* Column Header */}
               <div className={cn(
                 "flex items-center justify-between p-3 rounded-t-xl text-white",
@@ -377,10 +450,20 @@ const KanbanSection = () => {
               </div>
 
               {/* Column Content */}
-              <div className="bg-muted/30 border border-t-0 border-border/30 rounded-b-xl p-3 space-y-3 min-h-[400px]">
+              <div className={cn(
+                "bg-muted/30 border border-t-0 border-border/30 rounded-b-xl p-3 space-y-3 min-h-[400px] transition-all duration-200",
+                dragOverColumnId === column.id && "bg-champagne-gold/10 border-champagne-gold/50 ring-2 ring-champagne-gold/30"
+              )}>
                 {column.items.length === 0 ? (
-                  <div className="flex items-center justify-center h-24 text-sm text-foreground/40 italic">
-                    Sin elementos
+                  <div className={cn(
+                    "flex flex-col items-center justify-center h-24 text-sm text-foreground/40 italic border-2 border-dashed rounded-lg transition-colors",
+                    dragOverColumnId === column.id ? "border-champagne-gold bg-champagne-gold/5" : "border-transparent"
+                  )}>
+                    {dragOverColumnId === column.id ? (
+                      <span className="text-champagne-gold font-medium">Soltar aquí</span>
+                    ) : (
+                      <span>Sin elementos</span>
+                    )}
                   </div>
                 ) : (
                   column.items.map((item) => (

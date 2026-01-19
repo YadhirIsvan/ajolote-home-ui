@@ -5,9 +5,11 @@ import {
   Calendar, 
   Shuffle,
   UserCircle,
-  Settings,
+  Kanban,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  History,
+  BarChart3
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -19,7 +21,9 @@ export type AdminTab =
   | "citas" 
   | "asignar" 
   | "clientes" 
-  | "kanban";
+  | "kanban"
+  | "historial"
+  | "insights";
 
 interface AdminTabsNavigationProps {
   activeTab: AdminTab;
@@ -32,7 +36,9 @@ const tabs: { id: AdminTab; label: string; icon: React.ComponentType<any> }[] = 
   { id: "citas", label: "Citas", icon: Calendar },
   { id: "asignar", label: "Asignar", icon: Shuffle },
   { id: "clientes", label: "Clientes", icon: UserCircle },
-  { id: "kanban", label: "Kanban", icon: Settings },
+  { id: "kanban", label: "Kanban", icon: Kanban },
+  { id: "historial", label: "Historial", icon: History },
+  { id: "insights", label: "Insights", icon: BarChart3 },
 ];
 
 const AdminTabsNavigation = ({ activeTab, onTabChange }: AdminTabsNavigationProps) => {

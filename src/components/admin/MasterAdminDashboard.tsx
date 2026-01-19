@@ -18,6 +18,8 @@ import CitasSection from "./sections/CitasSection";
 import AsignarSection from "./sections/AsignarSection";
 import ClientesSection from "./sections/ClientesSection";
 import KanbanSection from "./sections/KanbanSection";
+import HistorialSection from "./sections/HistorialSection";
+import InsightsSection from "./sections/InsightsSection";
 import ajoloteLogo from "@/assets/ajolote-logo.png";
 
 interface MasterAdminDashboardProps {
@@ -27,7 +29,6 @@ interface MasterAdminDashboardProps {
 const MasterAdminDashboard = ({ onLogout }: MasterAdminDashboardProps) => {
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState<AdminTab>("propiedades");
-  const [isNavCollapsed, setIsNavCollapsed] = useState(false);
 
   const renderSection = () => {
     switch (activeTab) {
@@ -43,6 +44,10 @@ const MasterAdminDashboard = ({ onLogout }: MasterAdminDashboardProps) => {
         return <ClientesSection />;
       case "kanban":
         return <KanbanSection />;
+      case "historial":
+        return <HistorialSection />;
+      case "insights":
+        return <InsightsSection />;
       default:
         return <PropiedadesSection />;
     }
