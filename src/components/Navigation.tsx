@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Home, Search, Menu, X, User, CreditCard } from "lucide-react";
-import ajoloteLogo from "@/assets/ajolote-logo.png";
+import vakantaLogo from "@/assets/vakanta-logo.png";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -23,10 +23,9 @@ const Navigation = () => {
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 group">
-            <img src={ajoloteLogo} alt="Vy Cite" className="w-9 h-9 transition-transform group-hover:scale-105" />
-            <span className="text-xl font-bold text-primary">Vy Cite</span>
-          </Link>
+           <Link to="/" className="flex items-center gap-2 group">
+             <img src={vakantaLogo} alt="Vakanta" className="h-10 transition-transform group-hover:scale-105" />
+           </Link>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-6">
@@ -65,11 +64,10 @@ const Navigation = () => {
               <div className="flex flex-col h-full">
                 {/* Mobile Header */}
                 <div className="flex items-center justify-between p-4 border-b border-border">
-                  <Link to="/" className="flex items-center gap-2" onClick={() => setIsOpen(false)}>
-                    <img src={ajoloteLogo} alt="Vy Cite" className="w-8 h-8" />
-                    <span className="text-lg font-bold text-primary">Vy Cite</span>
-                  </Link>
-                </div>
+                   <Link to="/" className="flex items-center gap-2" onClick={() => setIsOpen(false)}>
+                     <img src={vakantaLogo} alt="Vakanta" className="h-9" />
+                   </Link>
+                 </div>
 
                 {/* Mobile Links */}
                 <div className="flex-1 py-4">

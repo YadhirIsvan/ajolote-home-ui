@@ -20,7 +20,7 @@ import ClientesSection from "./sections/ClientesSection";
 import KanbanSection from "./sections/KanbanSection";
 import HistorialSection from "./sections/HistorialSection";
 import InsightsSection from "./sections/InsightsSection";
-import ajoloteLogo from "@/assets/ajolote-logo.png";
+import vakantaLogo from "@/assets/vakanta-logo.png";
 
 interface MasterAdminDashboardProps {
   onLogout: () => void;
@@ -60,10 +60,9 @@ const MasterAdminDashboard = ({ onLogout }: MasterAdminDashboardProps) => {
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-2 group">
-              <img src={ajoloteLogo} alt="Vy Cite" className="w-9 h-9 transition-transform group-hover:scale-105" />
-              <span className="text-xl font-bold text-primary">Vy Cite</span>
-            </Link>
+             <Link to="/" className="flex items-center gap-2 group">
+               <img src={vakantaLogo} alt="Vakanta" className="h-10 transition-transform group-hover:scale-105" />
+             </Link>
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-6">
