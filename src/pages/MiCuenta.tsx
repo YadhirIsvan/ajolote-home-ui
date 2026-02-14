@@ -7,12 +7,18 @@ import { Button } from "@/components/ui/button";
 import ClientDashboard from "@/components/dashboard/ClientDashboard";
 import AgentDashboard from "@/components/dashboard/AgentDashboard";
 import MasterAdminDashboard from "@/components/admin/MasterAdminDashboard";
+import ClientConfigScreen from "@/components/dashboard/ClientConfigScreen";
+import ClientVentas from "@/components/dashboard/ClientVentas";
+import ClientCompras from "@/components/dashboard/ClientCompras";
+
+type ClientSubView = "dashboard" | "config" | "ventas" | "compras";
 
 const MiCuenta = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showRoleSelector, setShowRoleSelector] = useState(false);
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
+  const [clientSubView, setClientSubView] = useState<ClientSubView>("dashboard");
 
   const handleLoginSuccess = () => {
     setShowAuthModal(false);
@@ -22,12 +28,16 @@ const MiCuenta = () => {
   const handleRoleSelect = (role: UserRole) => {
     setSelectedRole(role);
     setIsAuthenticated(true);
+    setClientSubView("dashboard");
   };
 
   const handleLogout = () => {
     setIsAuthenticated(false);
     setSelectedRole(null);
+    setClientSubView("dashboard");
   };
+
+  const isClientAuth = isAuthenticated && selectedRole === "cliente";
 
   // Login Gate
   if (!isAuthenticated) {
@@ -37,7 +47,6 @@ const MiCuenta = () => {
 
         <div className="pt-24 pb-16">
           <div className="container mx-auto px-6 max-w-lg">
-            {/* Login Gate */}
             <div className="text-center py-16">
               <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-champagne-gold/10 flex items-center justify-center">
                 <User className="w-10 h-10 text-champagne-gold" />
@@ -71,52 +80,66 @@ const MiCuenta = () => {
     );
   }
 
-  // Role Icons
-  const roleIcons = {
-    cliente: User,
-    agente: Briefcase,
-    admin: Shield,
-  };
-
-  const roleLabels = {
-    cliente: "Cliente",
-    agente: "Agente",
-    admin: "Administrador",
-  };
-
+  const roleIcons = { cliente: User, agente: Briefcase, admin: Shield };
+  const roleLabels = { cliente: "Cliente", agente: "Agente", admin: "Administrador" };
   const RoleIcon = selectedRole ? roleIcons[selectedRole] : User;
 
-  // Authenticated Dashboard
+  // Client sub-view rendering
+  const renderClientContent = () => {
+    switch (clientSubView) {
+      case "config":
+        return <ClientConfigScreen onBack={() => setClientSubView("dashboard")} />;
+      case "ventas":
+        return <ClientVentas onBack={() => setClientSubView("dashboard")} />;
+      case "compras":
+        return <ClientCompras onBack={() => setClientSubView("dashboard")} />;
+      default:
+        return (
+          <ClientDashboard
+            onLogout={handleLogout}
+            onNavigateVentas={() => setClientSubView("ventas")}
+            onNavigateCompras={() => setClientSubView("compras")}
+          />
+        );
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white">
-      <Navigation />
+      <Navigation
+        isClientAuthenticated={isClientAuth}
+        onLogout={handleLogout}
+        onNavigateConfig={() => setClientSubView("config")}
+      />
 
       <div className="pt-20 md:pt-24 pb-16">
         <div className="container mx-auto px-4 md:px-6 max-w-7xl">
-          {/* Header - Hidden on mobile for agent/admin (they have sticky headers) */}
-          <div className={`text-center mb-8 md:mb-12 ${selectedRole !== "cliente" ? "hidden md:block" : ""}`}>
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-champagne-gold/10 text-champagne-gold text-sm font-medium mb-4">
-              <RoleIcon className="w-4 h-4" />
-              <span>{selectedRole ? roleLabels[selectedRole] : ""}</span>
+          {/* Header - hide on sub-views and for agent/admin mobile */}
+          {clientSubView === "dashboard" && (
+            <div className={`text-center mb-8 md:mb-12 ${selectedRole !== "cliente" ? "hidden md:block" : ""}`}>
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-champagne-gold/10 text-champagne-gold text-sm font-medium mb-4">
+                <RoleIcon className="w-4 h-4" />
+                <span>{selectedRole ? roleLabels[selectedRole] : ""}</span>
+              </div>
+              <h1 className="text-2xl md:text-4xl font-bold text-midnight mb-2 md:mb-4">
+                {selectedRole === "admin"
+                  ? "Panel de Administración"
+                  : selectedRole === "agente"
+                  ? "Panel del Agente"
+                  : "Mi Cuenta"}
+              </h1>
+              <p className="text-sm md:text-lg text-foreground/60 max-w-xl mx-auto">
+                {selectedRole === "admin"
+                  ? "Control total de la plataforma"
+                  : selectedRole === "agente"
+                  ? "Gestiona tus propiedades y prospectos"
+                  : "Gestiona tu perfil, crédito y propiedades en un solo lugar"}
+              </p>
             </div>
-            <h1 className="text-2xl md:text-4xl font-bold text-midnight mb-2 md:mb-4">
-              {selectedRole === "admin"
-                ? "Panel de Administración"
-                : selectedRole === "agente"
-                ? "Panel del Agente"
-                : "Mi Cuenta"}
-            </h1>
-            <p className="text-sm md:text-lg text-foreground/60 max-w-xl mx-auto">
-              {selectedRole === "admin"
-                ? "Control total de la plataforma"
-                : selectedRole === "agente"
-                ? "Gestiona tus propiedades y prospectos"
-                : "Gestiona tu perfil, crédito y propiedades en un solo lugar"}
-            </p>
-          </div>
+          )}
 
           {/* Role-Specific Dashboard */}
-          {selectedRole === "cliente" && <ClientDashboard onLogout={handleLogout} />}
+          {selectedRole === "cliente" && renderClientContent()}
           {selectedRole === "agente" && <AgentDashboard onLogout={handleLogout} />}
           {selectedRole === "admin" && <MasterAdminDashboard onLogout={handleLogout} />}
         </div>
