@@ -62,36 +62,47 @@ const MiniProgressBar = ({ currentStep }: { currentStep: number }) => (
 );
 
 const FullProgressStepper = ({ currentStep }: { currentStep: number }) => (
-  <div className="flex items-center justify-between mb-8">
-    {progressSteps.map((label, i) => {
-      const done = i < currentStep;
-      const active = i === currentStep;
-      return (
-        <div key={i} className="flex flex-col items-center flex-1 relative">
-          {i > 0 && (
+  <div className="relative mb-8">
+    {/* Background connector line */}
+    <div className="absolute top-5 left-0 right-0 h-1 bg-muted/40 rounded-full mx-[12%]" />
+    {/* Filled connector line */}
+    <div
+      className="absolute top-5 left-0 h-1 bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full mx-[12%] transition-all duration-500"
+      style={{ width: `${Math.max(0, ((currentStep) / (progressSteps.length - 1)) * 76)}%` }}
+    />
+
+    <div className="flex items-start justify-between relative">
+      {progressSteps.map((label, i) => {
+        const done = i < currentStep;
+        const active = i === currentStep;
+        return (
+          <div key={i} className="flex flex-col items-center flex-1">
             <div
-              className={`absolute top-3 -left-1/2 w-full h-0.5 ${
-                done ? "bg-emerald-500" : "bg-muted"
+              className={`relative z-10 w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 shadow-sm ${
+                done
+                  ? "bg-gradient-to-br from-emerald-400 to-emerald-600 text-white shadow-emerald-200 shadow-md"
+                  : active
+                  ? "border-[3px] border-emerald-500 bg-background text-emerald-600 shadow-emerald-100 shadow-md animate-pulse"
+                  : "border-2 border-muted bg-background text-muted-foreground"
               }`}
-            />
-          )}
-          <div
-            className={`relative z-10 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border-2 ${
-              done
-                ? "bg-emerald-500 border-emerald-500 text-white"
-                : active
-                ? "border-emerald-500 bg-background text-emerald-600"
-                : "border-muted bg-background text-muted-foreground"
-            }`}
-          >
-            {i + 1}
+            >
+              {done ? (
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              ) : (
+                i + 1
+              )}
+            </div>
+            <span className={`text-[10px] sm:text-xs mt-2 text-center leading-tight max-w-[80px] ${
+              done ? "text-emerald-600 font-semibold" : active ? "text-emerald-600 font-semibold" : "text-muted-foreground"
+            }`}>
+              {label}
+            </span>
           </div>
-          <span className={`text-[10px] sm:text-xs mt-1.5 text-center leading-tight ${done || active ? "text-emerald-600 font-medium" : "text-muted-foreground"}`}>
-            {label}
-          </span>
-        </div>
-      );
-    })}
+        );
+      })}
+    </div>
   </div>
 );
 
