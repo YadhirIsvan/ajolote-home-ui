@@ -34,15 +34,12 @@ const step2Schema = z.object({
   expectedPrice: z.string().optional(),
 });
 
-const step3Schema = z.object({
-  fullName: z.string().trim().min(2, "Ingresa tu nombre completo").max(100, "Nombre muy largo"),
-  phone: z.string().trim().min(10, "Ingresa un teléfono válido").max(15, "Teléfono muy largo").regex(/^[0-9+\-\s()]+$/, "Solo números y símbolos válidos"),
-  email: z.string().trim().email("Ingresa un correo válido").max(255, "Correo muy largo"),
-});
-
 interface SellerLeadFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** "add" mode hides contact step and shows "Agregar" as final button */
+  mode?: "default" | "add";
+  onPropertyAdded?: (data: Record<string, string>) => void;
 }
 
 const propertyTypes = [
@@ -63,7 +60,7 @@ const locations = [
   "Otra",
 ];
 
-const SellerLeadForm = ({ open, onOpenChange }: SellerLeadFormProps) => {
+const SellerLeadForm = ({ open, onOpenChange, mode = "default", onPropertyAdded }: SellerLeadFormProps) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -81,7 +78,7 @@ const SellerLeadForm = ({ open, onOpenChange }: SellerLeadFormProps) => {
     email: "",
   });
 
-  const totalSteps = 3;
+  const totalSteps = 2;
   const progressPercentage = (currentStep / totalSteps) * 100;
 
   const updateFormData = (field: string, value: string) => {
@@ -105,12 +102,6 @@ const SellerLeadForm = ({ open, onOpenChange }: SellerLeadFormProps) => {
           bedrooms: formData.bedrooms,
           bathrooms: formData.bathrooms,
           expectedPrice: formData.expectedPrice,
-        });
-      } else if (step === 3) {
-        step3Schema.parse({
-          fullName: formData.fullName,
-          phone: formData.phone,
-          email: formData.email,
         });
       }
       setErrors({});
@@ -146,8 +137,9 @@ const SellerLeadForm = ({ open, onOpenChange }: SellerLeadFormProps) => {
   };
 
   const handleSubmit = () => {
-    // Here you would typically send the data to your backend
-    // For now, we just show the success state
+    if (mode === "add" && onPropertyAdded) {
+      onPropertyAdded(formData);
+    }
     setIsSubmitted(true);
   };
 
@@ -210,10 +202,9 @@ const SellerLeadForm = ({ open, onOpenChange }: SellerLeadFormProps) => {
               <div className="text-sm text-[hsl(var(--champagne-gold))] font-medium mb-1">
                 Paso {currentStep} de {totalSteps}
               </div>
-              <DialogTitle className="text-2xl font-bold text-primary">
+            <DialogTitle className="text-2xl font-bold text-primary">
                 {currentStep === 1 && "La Propiedad"}
                 {currentStep === 2 && "Detalles"}
-                {currentStep === 3 && "Contacto"}
               </DialogTitle>
             </DialogHeader>
 
@@ -384,67 +375,6 @@ const SellerLeadForm = ({ open, onOpenChange }: SellerLeadFormProps) => {
               </div>
             )}
 
-            {/* Step 3: Contact */}
-            {currentStep === 3 && (
-              <div className="space-y-6">
-                {/* Full Name */}
-                <div>
-                  <Label className="text-sm font-medium text-primary mb-3 block">
-                    Nombre completo
-                  </Label>
-                  <Input
-                    type="text"
-                    placeholder="Tu nombre"
-                    value={formData.fullName}
-                    onChange={(e) => updateFormData("fullName", e.target.value)}
-                    className="h-12 rounded-xl border-border focus:border-[hsl(var(--champagne-gold))] focus-visible:ring-[hsl(var(--champagne-gold))]"
-                    maxLength={100}
-                  />
-                  {errors.fullName && (
-                    <p className="text-destructive text-sm mt-2">{errors.fullName}</p>
-                  )}
-                </div>
-
-                {/* Phone */}
-                <div>
-                  <Label className="text-sm font-medium text-primary mb-3 block">
-                    Teléfono / WhatsApp
-                  </Label>
-                  <Input
-                    type="tel"
-                    inputMode="tel"
-                    placeholder="Ej: 272 123 4567"
-                    value={formData.phone}
-                    onChange={(e) => updateFormData("phone", e.target.value)}
-                    className="h-12 rounded-xl border-border focus:border-[hsl(var(--champagne-gold))] focus-visible:ring-[hsl(var(--champagne-gold))]"
-                    maxLength={15}
-                  />
-                  {errors.phone && (
-                    <p className="text-destructive text-sm mt-2">{errors.phone}</p>
-                  )}
-                </div>
-
-                {/* Email */}
-                <div>
-                  <Label className="text-sm font-medium text-primary mb-3 block">
-                    Correo electrónico
-                  </Label>
-                  <Input
-                    type="email"
-                    inputMode="email"
-                    placeholder="tu@email.com"
-                    value={formData.email}
-                    onChange={(e) => updateFormData("email", e.target.value)}
-                    className="h-12 rounded-xl border-border focus:border-[hsl(var(--champagne-gold))] focus-visible:ring-[hsl(var(--champagne-gold))]"
-                    maxLength={255}
-                  />
-                  {errors.email && (
-                    <p className="text-destructive text-sm mt-2">{errors.email}</p>
-                  )}
-                </div>
-              </div>
-            )}
-
             {/* Navigation Buttons */}
             <div className="flex gap-4 mt-8">
               {currentStep > 1 && (
@@ -466,7 +396,7 @@ const SellerLeadForm = ({ open, onOpenChange }: SellerLeadFormProps) => {
                 }`}
               >
                 {currentStep === totalSteps ? (
-                  "Enviar mi propiedad"
+                  mode === "add" ? "Agregar" : "Enviar mi propiedad"
                 ) : (
                   <>
                     Siguiente
