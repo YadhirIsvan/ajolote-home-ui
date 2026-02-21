@@ -282,7 +282,7 @@ const SellerFlow = () => {
           {/* Video Player */}
           <AspectRatio ratio={16 / 9}>
             <iframe
-              src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1"
+              src="https://www.youtube.com/embed/MKG_6BqnhpI?autoplay=1&rel=0"
               title="Video de presentación"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen

@@ -63,8 +63,8 @@ const PropertyDetail = () => {
     hasVideoTour: true,
     hasFloorPlan: true,
     coordinates: {
-      lat: 18.8496,
-      lng: -97.1006,
+      lat: 18.91583,
+      lng: -96.98977,
     },
     nearbyPOIs: [
       { icon: "school", label: "5 min de Escuelas" },
@@ -279,16 +279,15 @@ const PropertyDetail = () => {
             <h3 className="text-lg font-semibold text-primary mb-3">Ubicación Exacta</h3>
             <div className="rounded-2xl overflow-hidden shadow-medium">
               <iframe
-                src={`https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3780.7!2d${property.coordinates.lng}!3d${property.coordinates.lat}!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTjCsDUwJzU4LjYiTiA5N8KwMDYnMDIuMiJX!5e0!3m2!1ses!2smx!4v1699999999999!5m2!1ses!2smx`}
-                width="100%"
-                height="250"
-                style={{ border: 0 }}
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                className="w-full"
-                title="Ubicación de la propiedad"
-              />
+  key={`${property.coordinates.lat}-${property.coordinates.lng}`}
+  src={`https://www.google.com/maps?q=${property.coordinates.lat},${property.coordinates.lng}&z=16&output=embed`}
+  width="100%"
+  height="250"
+  style={{ border: 0 }}
+  loading="lazy"
+  className="w-full"
+  title="Ubicación de la propiedad"
+/>
             </div>
             {/* Nearby POIs */}
             <div className="grid grid-cols-2 gap-2 mt-3">
@@ -451,16 +450,15 @@ const PropertyDetail = () => {
                   <h3 className="text-xl font-semibold text-primary mb-4">Ubicación Exacta</h3>
                   <div className="rounded-2xl overflow-hidden shadow-medium">
                     <iframe
-                      src={`https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3780.7!2d${property.coordinates.lng}!3d${property.coordinates.lat}!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTjCsDUwJzU4LjYiTiA5N8KwMDYnMDIuMiJX!5e0!3m2!1ses!2smx!4v1699999999999!5m2!1ses!2smx`}
-                      width="100%"
-                      height="350"
-                      style={{ border: 0 }}
-                      allowFullScreen
-                      loading="lazy"
-                      referrerPolicy="no-referrer-when-downgrade"
-                      className="w-full"
-                      title="Ubicación de la propiedad"
-                    />
+                    key={`${property.coordinates.lat}-${property.coordinates.lng}`}
+                    src={`https://www.google.com/maps?q=${property.coordinates.lat},${property.coordinates.lng}&z=16&output=embed`}
+                    width="100%"
+                    height="250"
+                    style={{ border: 0 }}
+                    loading="lazy"
+                    className="w-full"
+                    title="Ubicación de la propiedad"
+                  />
                   </div>
                   {/* Nearby POIs */}
                   <div className="grid grid-cols-4 gap-3 mt-4">
