@@ -47,6 +47,27 @@ interface RecentActivityItem {
   time: number;
 }
 
+const DEFAULT_VENTAS_RESPONSE: PropertiesSaleResponse = {
+  propertiesAmount: 2,
+  totalViews: 209,
+  interestedAmount: 11,
+  totalValue: 7000000,
+  properties: [
+    { id: 1, title: "Casa en Querétaro", address: "Col. Juriquilla, Querétaro", price: "$4,200,000", status: "Publicada", views: 142, interested: 8, daysListed: 15, image: "/placeholder.svg", trend: 12, progressStep: 3 },
+    { id: 2, title: "Departamento en CDMX", address: "Col. Roma Norte, CDMX", price: "$2,800,000", status: "En revisión", views: 0, interested: 0, daysListed: 5, image: "/placeholder.svg", trend: 0, progressStep: 1 },
+  ],
+};
+
+const DEFAULT_COMPRAS: PropertyBuySummary[] = [
+  { id: 1, title: "Casa en Polanco", address: "Col. Polanco, CDMX", price: "$12,500,000", image: "/placeholder.svg", status: "En proceso", agent_name: "María López", overallProgress: "50%", processStage: "Documentos verificados", fileNames: [] },
+];
+
+const DEFAULT_ACTIVITY: RecentActivityItem[] = [
+  { name: "Score Legal Generado", descripction: "Casa en Querétaro - Score: 98/100", time: 2 },
+  { name: "Crédito Pre-aprobado", descripction: "Monto: $8,500,000 MXN", time: 5 },
+  { name: "Propiedad Agregada", descripction: "Departamento en CDMX", time: 7 },
+];
+
 const fetchPropertiesSale = async (): Promise<PropertiesSaleResponse> => {
   const res = await fetch(`${API_BASE}/api/user/properties-sale/`);
   if (!res.ok) throw new Error("Error al cargar propiedades en venta");
@@ -76,17 +97,17 @@ const ClientDashboard = ({ onLogout, onNavigateVentas, onNavigateCompras }: Clie
 
   const { data: ventasData, isLoading: ventasLoading } = useQuery({
     queryKey: ["properties-sale"],
-    queryFn: fetchPropertiesSale,
+    queryFn: () => fetchPropertiesSale().catch(() => DEFAULT_VENTAS_RESPONSE),
   });
 
   const { data: comprasData, isLoading: comprasLoading } = useQuery({
     queryKey: ["properties-buys"],
-    queryFn: fetchPropertiesBuys,
+    queryFn: () => fetchPropertiesBuys().catch(() => DEFAULT_COMPRAS),
   });
 
   const { data: activityData, isLoading: activityLoading } = useQuery({
     queryKey: ["recent-activity"],
-    queryFn: fetchRecentActivity,
+    queryFn: () => fetchRecentActivity().catch(() => DEFAULT_ACTIVITY),
   });
 
   const ventasList = Array.isArray(ventasData) ? ventasData : ventasData?.properties ?? [];

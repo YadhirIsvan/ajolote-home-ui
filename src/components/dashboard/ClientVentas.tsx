@@ -34,6 +34,17 @@ interface PropertiesSaleResponse {
   properties?: PropertySaleItem[];
 }
 
+const DEFAULT_VENTAS_RESPONSE: PropertiesSaleResponse = {
+  propertiesAmount: 2,
+  totalViews: 209,
+  interestedAmount: 11,
+  totalValue: 7000000,
+  properties: [
+    { id: 1, title: "Casa en Querétaro", address: "Col. Juriquilla, Querétaro", price: "$4,200,000", status: "Publicada", views: 142, interested: 8, daysListed: 15, image: "/placeholder.svg", trend: 12, progressStep: 3, type: "Casa", sqm: 180, bedrooms: 3, bathrooms: 2 },
+    { id: 2, title: "Departamento en CDMX", address: "Col. Roma Norte, CDMX", price: "$2,800,000", status: "En revisión", views: 0, interested: 0, daysListed: 5, image: "/placeholder.svg", trend: 0, progressStep: 1, type: "Departamento", sqm: 95, bedrooms: 2, bathrooms: 1 },
+  ],
+};
+
 const fetchPropertiesSale = async (): Promise<PropertiesSaleResponse> => {
   const res = await fetch(`${API_BASE}/api/user/properties-sale/`);
   if (!res.ok) throw new Error("Error al cargar propiedades en venta");
@@ -116,12 +127,13 @@ const ClientVentas = ({ onBack }: ClientVentasProps) => {
 
   const { data: ventasData, isLoading: ventasLoading } = useQuery({
     queryKey: ["properties-sale"],
-    queryFn: fetchPropertiesSale,
+    queryFn: () => fetchPropertiesSale().catch(() => DEFAULT_VENTAS_RESPONSE),
   });
 
+  const defaultDetail = DEFAULT_VENTAS_RESPONSE.properties?.find((p) => p.id === selectedPropertyId);
   const { data: detailData, isLoading: detailLoading } = useQuery({
     queryKey: ["property-sale", selectedPropertyId],
-    queryFn: () => fetchPropertySaleDetail(selectedPropertyId!),
+    queryFn: () => fetchPropertySaleDetail(selectedPropertyId!).catch(() => defaultDetail!),
     enabled: !!selectedPropertyId,
   });
 

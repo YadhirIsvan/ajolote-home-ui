@@ -19,6 +19,17 @@ interface UserProfile {
   Offers: boolean;
 }
 
+const DEFAULT_PROFILE: UserProfile = {
+  Name: "Juan Díaz",
+  PhoneNumber: 5551234567,
+  Email: "juan.diaz@email.com",
+  City: "CDMX",
+  NewProperties: true,
+  PriceUpdates: true,
+  AppointmentReminders: false,
+  Offers: false,
+};
+
 const fetchUserProfile = async (): Promise<UserProfile> => {
   const res = await fetch(`${API_BASE}/api/user/profile`);
   if (!res.ok) throw new Error("Error al cargar perfil");
@@ -34,7 +45,7 @@ const ClientConfigScreen = ({ onBack }: ClientConfigScreenProps) => {
 
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ["user-profile"],
-    queryFn: fetchUserProfile,
+    queryFn: () => fetchUserProfile().catch(() => DEFAULT_PROFILE),
   });
 
   const phone = profile?.PhoneNumber ?? profile?.PhoneMunber ?? 0;

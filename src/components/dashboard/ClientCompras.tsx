@@ -26,6 +26,26 @@ interface PropertyFileItem {
   size: number;
 }
 
+const DEFAULT_COMPRAS: PropertyBuyItem[] = [
+  {
+    id: 1,
+    title: "Casa en Polanco",
+    address: "Col. Polanco, CDMX",
+    price: "$12,500,000",
+    image: "/placeholder.svg",
+    status: "En proceso",
+    agent_name: "María López",
+    overallProgress: "33%",
+    processStage: "Documentos verificados",
+    fileNames: [],
+  },
+];
+
+const DEFAULT_FILES: PropertyFileItem[] = [
+  { name: "identificacion_oficial.pdf", mimeType: "application/pdf", size: 204800 },
+  { name: "comprobante_domicilio.pdf", mimeType: "application/pdf", size: 153600 },
+];
+
 const fetchPropertiesBuys = async (): Promise<PropertyBuyItem[]> => {
   const res = await fetch(`${API_BASE}/api/user/properties-buys/`);
   if (!res.ok) throw new Error("Error al cargar compras en proceso");
@@ -67,7 +87,7 @@ const ClientCompras = ({ onBack }: ClientComprasProps) => {
 
   const { data: comprasList = [], isLoading: comprasLoading } = useQuery({
     queryKey: ["properties-buys"],
-    queryFn: fetchPropertiesBuys,
+    queryFn: () => fetchPropertiesBuys().catch(() => DEFAULT_COMPRAS),
   });
 
   const singleProperty = comprasList.length === 1 ? comprasList[0] : null;
@@ -75,7 +95,7 @@ const ClientCompras = ({ onBack }: ClientComprasProps) => {
 
   const { data: filesData = [], isLoading: filesLoading } = useQuery({
     queryKey: ["property-files", viewingDetailId],
-    queryFn: () => fetchPropertyFiles(viewingDetailId!),
+    queryFn: () => fetchPropertyFiles(viewingDetailId!).catch(() => DEFAULT_FILES),
     enabled: !!viewingDetailId,
   });
 

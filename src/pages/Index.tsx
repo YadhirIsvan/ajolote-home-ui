@@ -5,6 +5,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import Navigation from "@/components/Navigation";
 import PropertyCard from "@/components/PropertyCard";
 import { Search, Shield, TrendingUp, Clock } from "lucide-react";
+import property1 from "@/assets/property-1.jpg";
+import property2 from "@/assets/property-2.jpg";
+import property3 from "@/assets/property-3.jpg";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "";
 
@@ -31,6 +34,15 @@ interface PropertyListItem {
   type: string;
   state: string;
 }
+
+const DEFAULT_PROPERTIES: PropertyListItem[] = [
+  { id: 1, image: property1, price: "$4,500,000", priceNum: 4500000, title: "Casa Moderna en Zona Residencial", address: "Orizaba, Veracruz", beds: 3, baths: 2, sqm: 180, type: "casa", state: "nueva" },
+  { id: 2, image: property2, price: "$6,800,000", priceNum: 6800000, title: "Departamento de Lujo con Vista Panorámica", address: "Córdoba, Veracruz", beds: 2, baths: 2, sqm: 145, type: "departamento", state: "preventa" },
+  { id: 3, image: property3, price: "$12,500,000", priceNum: 12500000, title: "Villa con Jardín Amplio", address: "Fortín, Veracruz", beds: 4, baths: 3, sqm: 320, type: "casa", state: "usada" },
+  { id: 4, image: property1, price: "$3,200,000", priceNum: 3200000, title: "Casa Colonial Restaurada", address: "Peñuela, Veracruz", beds: 4, baths: 3, sqm: 220, type: "casa", state: "usada" },
+  { id: 5, image: property2, price: "$5,900,000", priceNum: 5900000, title: "Penthouse Contemporáneo", address: "Amatlán, Veracruz", beds: 3, baths: 3, sqm: 200, type: "departamento", state: "nueva" },
+  { id: 6, image: property3, price: "$8,500,000", priceNum: 8500000, title: "Residencia con Alberca", address: "Río Blanco, Veracruz", beds: 5, baths: 4, sqm: 380, type: "casa", state: "preventa" },
+];
 
 const fetchProperties = async (params: {
   zone?: string;
@@ -71,7 +83,13 @@ const Index = () => {
       offset: 0,
     })
       .then(setProperties)
-      .catch((e) => setError(e instanceof Error ? e.message : "Error desconocido"))
+      .catch(() => {
+        const fallback = selectedZone
+          ? DEFAULT_PROPERTIES.filter((p) => p.address.includes(selectedZone))
+          : DEFAULT_PROPERTIES;
+        setProperties(fallback);
+        setError(null);
+      })
       .finally(() => setLoading(false));
   }, [selectedZone]);
 
