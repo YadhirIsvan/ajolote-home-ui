@@ -3,6 +3,27 @@ import { ArrowLeft, User, Bell, Shield, ChevronRight, Camera } from "lucide-reac
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useQuery } from "@tanstack/react-query";
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "";
+
+interface UserProfile {
+  Name: string;
+  PhoneMunber?: number;
+  PhoneNumber?: number;
+  Email: string;
+  City: string;
+  NewProperties: boolean;
+  PriceUpdates: boolean;
+  AppointmentReminders: boolean;
+  Offers: boolean;
+}
+
+const fetchUserProfile = async (): Promise<UserProfile> => {
+  const res = await fetch(`${API_BASE}/api/user/profile`);
+  if (!res.ok) throw new Error("Error al cargar perfil");
+  return res.json();
+};
 
 interface ClientConfigScreenProps {
   onBack: () => void;
@@ -10,6 +31,13 @@ interface ClientConfigScreenProps {
 
 const ClientConfigScreen = ({ onBack }: ClientConfigScreenProps) => {
   const [activeTab, setActiveTab] = useState("datos");
+
+  const { data: profile, isLoading: profileLoading } = useQuery({
+    queryKey: ["user-profile"],
+    queryFn: fetchUserProfile,
+  });
+
+  const phone = profile?.PhoneNumber ?? profile?.PhoneMunber ?? 0;
 
   return (
     <div className="space-y-6">
@@ -26,7 +54,7 @@ const ClientConfigScreen = ({ onBack }: ClientConfigScreenProps) => {
       <div className="flex items-center gap-4 mb-2">
         <div className="relative">
           <div className="w-20 h-20 rounded-full bg-gradient-to-br from-champagne-gold to-champagne-gold-dark flex items-center justify-center text-white text-2xl font-bold shadow-lg">
-            JD
+            {profile ? (profile.Name || "?").slice(0, 2).toUpperCase() : "?"}
           </div>
           <button className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-white border-2 border-champagne-gold/30 flex items-center justify-center shadow-md hover:scale-110 transition-transform">
             <Camera className="w-3.5 h-3.5 text-champagne-gold" />
@@ -61,21 +89,24 @@ const ClientConfigScreen = ({ onBack }: ClientConfigScreenProps) => {
             {/* Datos */}
             <TabsContent value="datos" className="p-6 pt-5 m-0">
               <div className="space-y-5">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {[
-                    { label: "Nombre completo", value: "Juan Díaz" },
-                    { label: "Correo electrónico", value: "juan.diaz@email.com" },
-                    { label: "Teléfono", value: "+52 555 123 4567" },
-                    { label: "Ciudad", value: "CDMX" },
-                  ].map((field) => (
-                    <div key={field.label} className="space-y-1.5">
-                      <label className="text-xs font-medium text-foreground/50 uppercase tracking-wider">{field.label}</label>
-                      <div className="px-4 py-3 bg-muted/20 rounded-xl text-sm font-medium text-midnight border border-border/20">
-                        {field.value}
+                {profileLoading && <p className="text-sm text-foreground/50">Cargando perfil...</p>}
+                {!profileLoading && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {[
+                      { label: "Nombre completo", value: profile?.Name ?? "-" },
+                      { label: "Correo electrónico", value: profile?.Email ?? "-" },
+                      { label: "Teléfono", value: phone ? `+52 ${phone}` : "-" },
+                      { label: "Ciudad", value: profile?.City ?? "-" },
+                    ].map((field) => (
+                      <div key={field.label} className="space-y-1.5">
+                        <label className="text-xs font-medium text-foreground/50 uppercase tracking-wider">{field.label}</label>
+                        <div className="px-4 py-3 bg-muted/20 rounded-xl text-sm font-medium text-midnight border border-border/20">
+                          {field.value}
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
                 <Button variant="gold" className="w-full sm:w-auto mt-2">
                   Editar Perfil
                 </Button>
@@ -85,22 +116,24 @@ const ClientConfigScreen = ({ onBack }: ClientConfigScreenProps) => {
             {/* Alertas */}
             <TabsContent value="alertas" className="p-6 pt-5 m-0">
               <div className="space-y-3">
-                {[
-                  { label: "Nuevas propiedades", enabled: true },
-                  { label: "Actualizaciones de precio", enabled: true },
-                  { label: "Recordatorios de citas", enabled: false },
-                  { label: "Ofertas y promociones", enabled: false },
-                ].map((item) => (
-                  <div key={item.label} className="flex items-center justify-between p-4 bg-muted/20 rounded-xl border border-border/10">
-                    <div className="flex items-center gap-3">
-                      <Bell className={`w-4 h-4 ${item.enabled ? "text-champagne-gold" : "text-foreground/30"}`} />
-                      <span className="text-sm font-medium text-midnight">{item.label}</span>
+                {profileLoading && <p className="text-sm text-foreground/50">Cargando...</p>}
+                {!profileLoading &&
+                  [
+                    { label: "Nuevas propiedades", enabled: profile?.NewProperties ?? false },
+                    { label: "Actualizaciones de precio", enabled: profile?.PriceUpdates ?? false },
+                    { label: "Recordatorios de citas", enabled: profile?.AppointmentReminders ?? false },
+                    { label: "Ofertas y promociones", enabled: profile?.Offers ?? false },
+                  ].map((item) => (
+                    <div key={item.label} className="flex items-center justify-between p-4 bg-muted/20 rounded-xl border border-border/10">
+                      <div className="flex items-center gap-3">
+                        <Bell className={`w-4 h-4 ${item.enabled ? "text-champagne-gold" : "text-foreground/30"}`} />
+                        <span className="text-sm font-medium text-midnight">{item.label}</span>
+                      </div>
+                      <div className={`w-11 h-6 rounded-full relative cursor-pointer transition-colors ${item.enabled ? "bg-champagne-gold" : "bg-muted/50"}`}>
+                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all ${item.enabled ? "right-1" : "left-1"}`} />
+                      </div>
                     </div>
-                    <div className={`w-11 h-6 rounded-full relative cursor-pointer transition-colors ${item.enabled ? "bg-champagne-gold" : "bg-muted/50"}`}>
-                      <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all ${item.enabled ? "right-1" : "left-1"}`} />
-                    </div>
-                  </div>
-                ))}
+                  ))}
               </div>
             </TabsContent>
 

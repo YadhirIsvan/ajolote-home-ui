@@ -1,52 +1,56 @@
 import { useState } from "react";
-import { ArrowLeft, Home, MapPin, Eye, Calendar, TrendingUp, MoreVertical, Bed, Bath, Maximize } from "lucide-react";
+import { ArrowLeft, Home, MapPin, Eye, Calendar, TrendingUp } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import SellerLeadForm from "@/components/SellerLeadForm";
+import { useQuery } from "@tanstack/react-query";
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "";
+
+interface PropertySaleItem {
+  id: number;
+  title: string;
+  address: string;
+  price: string;
+  status: string;
+  views: number;
+  interested: number;
+  daysListed: number;
+  image: string;
+  trend: number;
+  progressStep: number;
+  type?: string;
+  sqm?: number;
+  bedrooms?: number;
+  bathrooms?: number;
+}
+
+interface PropertiesSaleResponse {
+  propertiesAmount?: number;
+  totalViews?: number;
+  interestedAmount?: number;
+  totalValue?: number;
+  properties?: PropertySaleItem[];
+}
+
+const fetchPropertiesSale = async (): Promise<PropertiesSaleResponse> => {
+  const res = await fetch(`${API_BASE}/api/user/properties-sale/`);
+  if (!res.ok) throw new Error("Error al cargar propiedades en venta");
+  return res.json();
+};
+
+const fetchPropertySaleDetail = async (id: number): Promise<PropertySaleItem> => {
+  const res = await fetch(`${API_BASE}/api/user/property-sale/${id}`);
+  if (!res.ok) throw new Error("Error al cargar detalle de propiedad");
+  return res.json();
+};
 
 interface ClientVentasProps {
   onBack: () => void;
 }
 
 const progressSteps = ["Registrar propiedad", "Aprobar estado", "Marketing", "Vendida"];
-
-const mockVentas = [
-  {
-    id: 1,
-    title: "Casa en Querétaro",
-    address: "Col. Juriquilla, Querétaro",
-    price: "$4,200,000",
-    status: "Publicada" as const,
-    views: 142,
-    interested: 8,
-    daysListed: 15,
-    image: "/placeholder.svg",
-    trend: "+12% visitas",
-    progressStep: 3,
-    type: "Casa",
-    sqm: 180,
-    bedrooms: 3,
-    bathrooms: 2,
-  },
-  {
-    id: 2,
-    title: "Departamento en CDMX",
-    address: "Col. Roma Norte, CDMX",
-    price: "$2,800,000",
-    status: "En revisión" as const,
-    views: 0,
-    interested: 0,
-    daysListed: 5,
-    image: "/placeholder.svg",
-    trend: "",
-    progressStep: 1,
-    type: "Departamento",
-    sqm: 95,
-    bedrooms: 2,
-    bathrooms: 1,
-  },
-];
 
 const MiniProgressBar = ({ currentStep }: { currentStep: number }) => (
   <div className="flex items-center gap-1 mt-3">
@@ -107,18 +111,36 @@ const FullProgressStepper = ({ currentStep }: { currentStep: number }) => (
 );
 
 const ClientVentas = ({ onBack }: ClientVentasProps) => {
-  const [selectedProperty, setSelectedProperty] = useState<typeof mockVentas[0] | null>(null);
+  const [selectedPropertyId, setSelectedPropertyId] = useState<number | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
 
+  const { data: ventasData, isLoading: ventasLoading } = useQuery({
+    queryKey: ["properties-sale"],
+    queryFn: fetchPropertiesSale,
+  });
+
+  const { data: detailData, isLoading: detailLoading } = useQuery({
+    queryKey: ["property-sale", selectedPropertyId],
+    queryFn: () => fetchPropertySaleDetail(selectedPropertyId!),
+    enabled: !!selectedPropertyId,
+  });
+
+  const ventasList = Array.isArray(ventasData) ? ventasData : (ventasData?.properties ?? []) as PropertySaleItem[];
+  const ventasSummary = !Array.isArray(ventasData) && ventasData ? ventasData : null;
+  const selectedProperty = selectedPropertyId
+    ? (detailData ?? ventasList.find((p) => p.id === selectedPropertyId))
+    : null;
+
   // Detail View
-  if (selectedProperty) {
-    const prop = selectedProperty;
+  if (selectedPropertyId && selectedProperty) {
+    const prop = selectedProperty as PropertySaleItem;
     const isPublished = prop.status === "Publicada";
+    const trendStr = prop.trend != null ? (prop.trend >= 0 ? `+${prop.trend}% visitas` : `${prop.trend}% visitas`) : "";
 
     return (
       <div className="space-y-6">
         <button
-          onClick={() => setSelectedProperty(null)}
+          onClick={() => setSelectedPropertyId(null)}
           className="flex items-center gap-2 text-sm text-foreground/60 hover:text-champagne-gold transition-colors group"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
@@ -169,7 +191,7 @@ const ClientVentas = ({ onBack }: ClientVentasProps) => {
                     { label: "Precio", value: prop.price },
                     { label: "Visitas", value: String(prop.views) },
                     { label: "Días publicada", value: `${prop.daysListed} días` },
-                    { label: "Tendencia", value: prop.trend },
+                    { label: "Tendencia", value: trendStr },
                     { label: "Interesados", value: String(prop.interested) },
                   ].map((item) => (
                     <div key={item.label} className="flex justify-between items-center py-2 border-b border-border/10 last:border-0">
@@ -200,7 +222,9 @@ const ClientVentas = ({ onBack }: ClientVentasProps) => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-midnight">Mis Propiedades en Venta</h1>
-          <p className="text-sm text-foreground/60 mt-1">{mockVentas.length} propiedades activas</p>
+          <p className="text-sm text-foreground/60 mt-1">
+            {ventasLoading ? "Cargando..." : `${ventasList.length} propiedades activas`}
+          </p>
         </div>
         <Button variant="gold" size="sm" onClick={() => setIsFormOpen(true)}>
           <Home className="w-4 h-4 mr-2" />
@@ -227,13 +251,16 @@ const ClientVentas = ({ onBack }: ClientVentasProps) => {
 
       {/* Property Cards */}
       <div className="space-y-4">
-        {mockVentas.map((prop) => {
+        {ventasLoading ? (
+          <p className="text-sm text-foreground/50">Cargando propiedades...</p>
+        ) : (
+          ventasList.map((prop) => {
           const isPublished = prop.status === "Publicada";
           return (
             <Card
               key={prop.id}
               className="border border-border/20 bg-white rounded-2xl overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
-              onClick={() => setSelectedProperty(prop)}
+              onClick={() => setSelectedPropertyId(prop.id)}
             >
               <CardContent className="p-0">
                 <div className="flex flex-col sm:flex-row">
@@ -298,7 +325,8 @@ const ClientVentas = ({ onBack }: ClientVentasProps) => {
               </CardContent>
             </Card>
           );
-        })}
+        })
+        )}
       </div>
 
       {/* Add Property Form */}

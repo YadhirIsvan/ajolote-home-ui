@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -35,9 +35,32 @@ import {
   Hospital,
   Train,
 } from "lucide-react";
-import property1 from "@/assets/property-1.jpg";
-import property2 from "@/assets/property-2.jpg";
-import property3 from "@/assets/property-3.jpg";
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "";
+
+interface PropertyDetailData {
+  id: number;
+  images: string[];
+  price: string;
+  title: string;
+  address: string;
+  beds: number;
+  baths: number;
+  sqm: number;
+  verified: boolean;
+  status: string;
+  description: string;
+  video_id?: string;
+  video_img?: string;
+  coordinates: { lat: number; lng: number };
+  "nearby-places"?: { icon: string; label: string }[];
+  agent: { name: string; photo: string; phone: number; email: string };
+}
+
+const fetchPropertyDetail = async (id: number): Promise<PropertyDetailData> => {
+  const res = await fetch(`${API_BASE}/api/properties/${id}/`);
+  if (!res.ok) throw new Error("Error al cargar la propiedad");
+  return res.json();
+};
 
 const PropertyDetail = () => {
   const { id } = useParams();
@@ -45,40 +68,24 @@ const PropertyDetail = () => {
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [property, setProperty] = useState<PropertyDetailData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Mock data - en producción vendría de una API
-  const property = {
-    id: 1,
-    images: [property1, property2, property3, property1, property2],
-    price: "$4,500,000",
-    title: "Casa Moderna en Zona Residencial Premium",
-    location: "Orizaba, Veracruz",
-    beds: 3,
-    baths: 2,
-    area: 180,
-    verified: true,
-    status: "Disponible",
-    description:
-      "Hermosa casa de diseño contemporáneo en una de las zonas más exclusivas de Orizaba. Cuenta con amplios espacios, jardín privado, y acabados de primera calidad. Perfecta para familias que buscan confort y seguridad. La propiedad incluye cocina integral de granito, pisos de mármol en áreas comunes, sistema de seguridad inteligente, y estacionamiento para 2 vehículos. Ubicada cerca de escuelas, hospitales y centros comerciales.",
-    hasVideoTour: true,
-    hasFloorPlan: true,
-    coordinates: {
-      lat: 18.91583,
-      lng: -96.98977,
-    },
-    nearbyPOIs: [
-      { icon: "school", label: "5 min de Escuelas" },
-      { icon: "shopping", label: "10 min de Centros Comerciales" },
-      { icon: "hospital", label: "8 min de Hospitales" },
-      { icon: "transport", label: "3 min de Transporte" },
-    ],
-    agent: {
-      name: "María González",
-      photo: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=face",
-      phone: "+52 272 123 4567",
-      email: "maria@vycite.com",
-    },
-  };
+  useEffect(() => {
+    const numId = id ? parseInt(id, 10) : NaN;
+    if (isNaN(numId)) {
+      setError("ID de propiedad inválido");
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    fetchPropertyDetail(numId)
+      .then(setProperty)
+      .catch((e) => setError(e instanceof Error ? e.message : "Error desconocido"))
+      .finally(() => setLoading(false));
+  }, [id]);
 
   const getPOIIcon = (iconType: string) => {
     switch (iconType) {
@@ -105,7 +112,25 @@ const PropertyDetail = () => {
     "6:00 PM",
   ];
 
-  const truncatedDescription = property.description.slice(0, 150) + "...";
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-muted-foreground">Cargando propiedad...</p>
+      </div>
+    );
+  }
+  if (error || !property) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-destructive">{error || "Propiedad no encontrada"}</p>
+      </div>
+    );
+  }
+
+  const nearbyPOIs = property["nearby-places"] || [];
+  const hasVideoTour = !!(property.video_id || property.video_img);
+  const truncatedDescription = property.description ? property.description.slice(0, 150) + "..." : "";
+  const displayImages = property.images?.length ? property.images : ["/placeholder.svg"];
 
   const handleConfirmAppointment = () => {
     if (selectedDate && selectedTime) {
@@ -168,7 +193,7 @@ const PropertyDetail = () => {
             </div>
             <div className="flex items-center gap-1 text-muted-foreground mt-1">
               <MapPin className="w-4 h-4" />
-              <span className="text-sm">{property.location}</span>
+              <span className="text-sm">{property.address}</span>
             </div>
           </div>
 
@@ -176,7 +201,7 @@ const PropertyDetail = () => {
           <div className="px-4 mb-4">
             <Carousel className="w-full">
               <CarouselContent>
-                {property.images.map((image, index) => (
+                {displayImages.map((image, index) => (
                   <CarouselItem key={index}>
                     <div className="aspect-[4/3] rounded-2xl overflow-hidden shadow-medium">
                       <img
@@ -212,13 +237,12 @@ const PropertyDetail = () => {
               </div>
               <div className="flex items-center gap-2">
                 <Maximize className="w-5 h-5 text-primary" />
-                <span className="text-sm font-medium text-primary">{property.area}m²</span>
+                <span className="text-sm font-medium text-primary">{property.sqm}m²</span>
               </div>
             </div>
           </div>
 
           {/* Video Tour - Moved up per mobile order */}
-          {property.hasVideoTour && (
             <div className="px-4 mb-6">
               <h3 className="text-lg font-semibold text-primary mb-3">Recorrido Virtual</h3>
               <div className="aspect-video bg-primary/5 rounded-2xl relative overflow-hidden shadow-medium">
@@ -234,7 +258,6 @@ const PropertyDetail = () => {
                 </div>
               </div>
             </div>
-          )}
 
           {/* Description */}
           <div className="px-4 mb-6">
@@ -259,7 +282,7 @@ const PropertyDetail = () => {
           </div>
 
           {/* Floor Plan */}
-          {property.hasFloorPlan && (
+          {false && (
             <div className="px-4 mb-6">
               <h3 className="text-lg font-semibold text-primary mb-3">Planos</h3>
               <div className="aspect-[4/3] bg-muted/50 rounded-2xl flex items-center justify-center border-2 border-dashed border-border">
@@ -291,7 +314,7 @@ const PropertyDetail = () => {
             </div>
             {/* Nearby POIs */}
             <div className="grid grid-cols-2 gap-2 mt-3">
-              {property.nearbyPOIs.map((poi, index) => (
+              {nearbyPOIs.map((poi, index) => (
                 <div
                   key={index}
                   className="flex items-center gap-2 bg-muted/50 rounded-xl px-3 py-2.5 text-sm"
@@ -342,12 +365,12 @@ const PropertyDetail = () => {
             <div className="grid grid-cols-4 grid-rows-2 gap-3 h-[500px] mb-8">
               <div className="col-span-2 row-span-2 rounded-2xl overflow-hidden shadow-medium">
                 <img
-                  src={property.images[0]}
+                  src={displayImages[0]}
                   alt={property.title}
                   className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
                 />
               </div>
-              {property.images.slice(1, 5).map((image, index) => (
+              {displayImages.slice(1, 5).map((image, index) => (
                 <div key={index} className="rounded-2xl overflow-hidden shadow-soft">
                   <img
                     src={image}
@@ -375,7 +398,7 @@ const PropertyDetail = () => {
                   </div>
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <MapPin className="w-5 h-5" />
-                    <span>{property.location}</span>
+                    <span>{property.address}</span>
                   </div>
                 </div>
 
@@ -400,7 +423,7 @@ const PropertyDetail = () => {
                   <div className="flex items-center gap-3">
                     <Maximize className="w-6 h-6 text-primary" />
                     <div>
-                      <p className="font-semibold text-primary">{property.area}m²</p>
+                      <p className="font-semibold text-primary">{property.sqm}m²</p>
                       <p className="text-xs text-muted-foreground">Área Total</p>
                     </div>
                   </div>
@@ -413,12 +436,12 @@ const PropertyDetail = () => {
                 </div>
 
                 {/* Video Tour */}
-                {property.hasVideoTour && (
+                {hasVideoTour && (
                   <div>
                     <h3 className="text-xl font-semibold text-primary mb-4">Recorrido Virtual</h3>
                     <div className="aspect-video bg-primary/5 rounded-2xl relative overflow-hidden shadow-medium">
                       <img
-                        src={property.images[0]}
+                        src={property.video_img || displayImages[0]}
                         alt="Video thumbnail"
                         className="w-full h-full object-cover"
                       />
@@ -432,7 +455,7 @@ const PropertyDetail = () => {
                 )}
 
                 {/* Floor Plan */}
-                {property.hasFloorPlan && (
+                {false && (
                   <div>
                     <h3 className="text-xl font-semibold text-primary mb-4">Planos</h3>
                     <div className="aspect-[16/9] bg-muted/50 rounded-2xl flex items-center justify-center border-2 border-dashed border-border">
@@ -462,7 +485,7 @@ const PropertyDetail = () => {
                   </div>
                   {/* Nearby POIs */}
                   <div className="grid grid-cols-4 gap-3 mt-4">
-                    {property.nearbyPOIs.map((poi, index) => (
+                    {nearbyPOIs.map((poi, index) => (
                       <div
                         key={index}
                         className="flex items-center gap-2 bg-muted/50 rounded-xl px-4 py-3 text-sm"

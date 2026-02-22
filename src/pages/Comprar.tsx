@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -7,9 +7,46 @@ import { Checkbox } from "@/components/ui/checkbox";
 import Navigation from "@/components/Navigation";
 import PropertyCard, { PropertyStatus } from "@/components/PropertyCard";
 import { SlidersHorizontal, X } from "lucide-react";
-import property1 from "@/assets/property-1.jpg";
-import property2 from "@/assets/property-2.jpg";
-import property3 from "@/assets/property-3.jpg";
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "";
+
+interface PropertyListItem {
+  id: number;
+  image: string;
+  price: string;
+  priceNum: number;
+  title: string;
+  address: string;
+  beds: number;
+  baths: number;
+  sqm: number;
+  type: string;
+  state: string;
+}
+
+const fetchProperties = async (params: {
+  zone?: string;
+  type?: string;
+  state?: string;
+  amenities?: string[];
+  limit?: number;
+  offset?: number;
+}): Promise<PropertyListItem[]> => {
+  const searchParams = new URLSearchParams();
+  if (params.zone) searchParams.set("zone", params.zone);
+  if (params.type) searchParams.set("type", params.type);
+  if (params.state) searchParams.set("state", params.state);
+  if (params.amenities?.length) {
+    params.amenities.forEach((a) => searchParams.append("amenities", a));
+  }
+  if (params.limit != null) searchParams.set("limit", String(params.limit));
+  if (params.offset != null) searchParams.set("offset", String(params.offset));
+
+  const url = `${API_BASE}/api/properties${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("Error al cargar propiedades");
+  return res.json();
+};
 
 const zones = [
   "Todas las zonas",
@@ -45,204 +82,11 @@ const propertyStates = [
   { value: "usada", label: "Usada" },
 ];
 
-interface Property {
-  id: number;
-  image: string;
-  price: string;
-  priceNum: number;
-  title: string;
-  location: string;
-  beds: number;
-  baths: number;
-  area: number;
-  status: PropertyStatus;
-  type: string;
-  amenities: string[];
-  state: string;
-}
-
-const allProperties: Property[] = [
-  {
-    id: 1,
-    image: property1,
-    price: "$4,500,000",
-    priceNum: 4500000,
-    title: "Casa Moderna en Zona Residencial",
-    location: "Orizaba, Veracruz",
-    beds: 3,
-    baths: 2,
-    area: 180,
-    status: "disponible",
-    type: "casa",
-    amenities: ["pool", "security", "garden"],
-    state: "nueva",
-  },
-  {
-    id: 2,
-    image: property2,
-    price: "$6,800,000",
-    priceNum: 6800000,
-    title: "Departamento de Lujo con Vista Panorámica",
-    location: "Córdoba, Veracruz",
-    beds: 2,
-    baths: 2,
-    area: 145,
-    status: "preventa",
-    type: "departamento",
-    amenities: ["security", "gym", "parking"],
-    state: "preventa",
-  },
-  {
-    id: 3,
-    image: property3,
-    price: "$12,500,000",
-    priceNum: 12500000,
-    title: "Villa con Jardín Amplio",
-    location: "Fortín, Veracruz",
-    beds: 4,
-    baths: 3,
-    area: 320,
-    status: "oportunidad",
-    type: "casa",
-    amenities: ["pool", "security", "garden", "parking"],
-    state: "usada",
-  },
-  {
-    id: 4,
-    image: property1,
-    price: "$3,200,000",
-    priceNum: 3200000,
-    title: "Casa Colonial Restaurada",
-    location: "Peñuela, Veracruz",
-    beds: 4,
-    baths: 3,
-    area: 220,
-    status: "disponible",
-    type: "casa",
-    amenities: ["garden", "parking"],
-    state: "usada",
-  },
-  {
-    id: 5,
-    image: property2,
-    price: "$5,900,000",
-    priceNum: 5900000,
-    title: "Penthouse Contemporáneo",
-    location: "Amatlán, Veracruz",
-    beds: 3,
-    baths: 3,
-    area: 200,
-    status: "disponible",
-    type: "departamento",
-    amenities: ["security", "gym", "parking"],
-    state: "nueva",
-  },
-  {
-    id: 6,
-    image: property3,
-    price: "$8,500,000",
-    priceNum: 8500000,
-    title: "Residencia con Alberca",
-    location: "Río Blanco, Veracruz",
-    beds: 5,
-    baths: 4,
-    area: 380,
-    status: "preventa",
-    type: "casa",
-    amenities: ["pool", "security", "garden", "parking", "gym"],
-    state: "preventa",
-  },
-  {
-    id: 7,
-    image: property1,
-    price: "$2,800,000",
-    priceNum: 2800000,
-    title: "Departamento en Torre Premium",
-    location: "Nogales, Veracruz",
-    beds: 2,
-    baths: 2,
-    area: 120,
-    status: "oportunidad",
-    type: "departamento",
-    amenities: ["security", "gym"],
-    state: "usada",
-  },
-  {
-    id: 8,
-    image: property2,
-    price: "$7,200,000",
-    priceNum: 7200000,
-    title: "Casa Minimalista con Jardín",
-    location: "Orizaba, Veracruz",
-    beds: 3,
-    baths: 2,
-    area: 250,
-    status: "disponible",
-    type: "casa",
-    amenities: ["garden", "security", "parking"],
-    state: "nueva",
-  },
-  {
-    id: 9,
-    image: property3,
-    price: "$15,000,000",
-    priceNum: 15000000,
-    title: "Mansion con Vista Panorámica",
-    location: "Córdoba, Veracruz",
-    beds: 6,
-    baths: 5,
-    area: 500,
-    status: "disponible",
-    type: "casa",
-    amenities: ["pool", "security", "garden", "parking", "gym"],
-    state: "nueva",
-  },
-  {
-    id: 10,
-    image: property1,
-    price: "$4,100,000",
-    priceNum: 4100000,
-    title: "Loft Industrial Remodelado",
-    location: "Fortín, Veracruz",
-    beds: 2,
-    baths: 1,
-    area: 140,
-    status: "oportunidad",
-    type: "departamento",
-    amenities: ["parking"],
-    state: "usada",
-  },
-  {
-    id: 11,
-    image: property2,
-    price: "$9,500,000",
-    priceNum: 9500000,
-    title: "Casa en Condominio Exclusivo",
-    location: "Orizaba, Veracruz",
-    beds: 4,
-    baths: 3,
-    area: 300,
-    status: "preventa",
-    type: "casa",
-    amenities: ["pool", "security", "garden", "parking"],
-    state: "preventa",
-  },
-  {
-    id: 12,
-    image: property3,
-    price: "$5,600,000",
-    priceNum: 5600000,
-    title: "Residencia Ecológica",
-    location: "Amatlán, Veracruz",
-    beds: 3,
-    baths: 2,
-    area: 190,
-    status: "disponible",
-    type: "casa",
-    amenities: ["garden", "security"],
-    state: "nueva",
-  },
-];
+const mapStateToStatus = (state: string): PropertyStatus => {
+  if (state === "preventa") return "preventa";
+  if (state === "usada") return "oportunidad";
+  return "disponible";
+};
 
 const Comprar = () => {
   const [selectedZone, setSelectedZone] = useState<string>("Todas las zonas");
@@ -251,6 +95,25 @@ const Comprar = () => {
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
   const [selectedState, setSelectedState] = useState<string>("all");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [properties, setProperties] = useState<PropertyListItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+    fetchProperties({
+      zone: selectedZone === "Todas las zonas" ? undefined : selectedZone,
+      type: selectedType === "all" ? undefined : selectedType,
+      state: selectedState === "all" ? undefined : selectedState,
+      amenities: selectedAmenities.length > 0 ? selectedAmenities : undefined,
+      limit: 50,
+      offset: 0,
+    })
+      .then(setProperties)
+      .catch((e) => setError(e instanceof Error ? e.message : "Error desconocido"))
+      .finally(() => setLoading(false));
+  }, [selectedZone, selectedType, selectedState, selectedAmenities]);
 
   const formatPrice = (value: number) => {
     return new Intl.NumberFormat("es-MX", {
@@ -274,14 +137,9 @@ const Comprar = () => {
     setSelectedState("all");
   };
 
-  const filteredProperties = allProperties.filter((property) => {
-    const matchesZone = selectedZone === "Todas las zonas" || property.location.includes(selectedZone);
+  const filteredProperties = properties.filter((property) => {
     const matchesPrice = property.priceNum >= priceRange[0] && property.priceNum <= priceRange[1];
-    const matchesType = selectedType === "all" || property.type === selectedType;
-    const matchesState = selectedState === "all" || property.state === selectedState;
-    const matchesAmenities =
-      selectedAmenities.length === 0 || selectedAmenities.every((a) => property.amenities.includes(a));
-    return matchesZone && matchesPrice && matchesType && matchesState && matchesAmenities;
+    return matchesPrice;
   });
 
   const activeFiltersCount = [
@@ -422,7 +280,11 @@ const Comprar = () => {
 
             {/* Property Grid */}
             <div className="flex-1">
-              {filteredProperties.length === 0 ? (
+              {loading ? (
+                <div className="text-center py-16 text-muted-foreground">Cargando propiedades...</div>
+              ) : error ? (
+                <div className="text-center py-16 text-destructive">{error}</div>
+              ) : filteredProperties.length === 0 ? (
                 <div className="text-center py-16">
                   <p className="text-muted-foreground mb-4">No se encontraron propiedades con estos filtros</p>
                   <Button variant="gold-outline" onClick={clearFilters}>
@@ -438,11 +300,11 @@ const Comprar = () => {
                       image={property.image}
                       price={property.price}
                       title={property.title}
-                      location={property.location}
+                      location={property.address}
                       beds={property.beds}
                       baths={property.baths}
-                      area={property.area}
-                      status={property.status}
+                      area={property.sqm}
+                      status={mapStateToStatus(property.state)}
                     />
                   ))}
                 </div>

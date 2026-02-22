@@ -1,17 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Navigation from "@/components/Navigation";
 import PropertyCard from "@/components/PropertyCard";
 import { Search, Shield, TrendingUp, Clock } from "lucide-react";
-import property1 from "@/assets/property-1.jpg";
-import property2 from "@/assets/property-2.jpg";
-import property3 from "@/assets/property-3.jpg";
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "";
 
 const zones = [
   "Orizaba",
-  "Córdoba", 
+  "Córdoba",
   "Fortín",
   "Peñuela",
   "Amatlán",
@@ -19,81 +18,64 @@ const zones = [
   "Nogales",
 ];
 
+interface PropertyListItem {
+  id: number;
+  image: string;
+  price: string;
+  priceNum: number;
+  title: string;
+  address: string;
+  beds: number;
+  baths: number;
+  sqm: number;
+  type: string;
+  state: string;
+}
+
+const fetchProperties = async (params: {
+  zone?: string;
+  type?: string;
+  state?: string;
+  amenities?: string[];
+  limit?: number;
+  offset?: number;
+}): Promise<PropertyListItem[]> => {
+  const searchParams = new URLSearchParams();
+  if (params.zone) searchParams.set("zone", params.zone);
+  if (params.type) searchParams.set("type", params.type);
+  if (params.state) searchParams.set("state", params.state);
+  if (params.amenities?.length) {
+    params.amenities.forEach((a) => searchParams.append("amenities", a));
+  }
+  if (params.limit != null) searchParams.set("limit", String(params.limit));
+  if (params.offset != null) searchParams.set("offset", String(params.offset));
+
+  const url = `${API_BASE}/api/properties${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("Error al cargar propiedades");
+  return res.json();
+};
+
 const Index = () => {
   const [selectedZone, setSelectedZone] = useState<string>("");
+  const [properties, setProperties] = useState<PropertyListItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const featuredProperties = [
-    {
-      id: 1,
-      image: property1,
-      price: "$4,500,000",
-      title: "Casa Moderna en Zona Residencial",
-      location: "Orizaba, Veracruz",
-      beds: 3,
-      baths: 2,
-      area: 180,
-      score: 98,
-    },
-    {
-      id: 2,
-      image: property2,
-      price: "$6,800,000",
-      title: "Departamento de Lujo con Vista Panorámica",
-      location: "Córdoba, Veracruz",
-      beds: 2,
-      baths: 2,
-      area: 145,
-      score: 95,
-    },
-    {
-      id: 3,
-      image: property3,
-      price: "$12,500,000",
-      title: "Villa con Jardín Amplio",
-      location: "Fortín, Veracruz",
-      beds: 4,
-      baths: 3,
-      area: 320,
-      score: 97,
-    },
-    {
-      id: 4,
-      image: property1,
-      price: "$3,200,000",
-      title: "Casa Colonial Restaurada",
-      location: "Peñuela, Veracruz",
-      beds: 4,
-      baths: 3,
-      area: 220,
-      score: 96,
-    },
-    {
-      id: 5,
-      image: property2,
-      price: "$5,900,000",
-      title: "Penthouse Contemporáneo",
-      location: "Amatlán, Veracruz",
-      beds: 3,
-      baths: 3,
-      area: 200,
-      score: 94,
-    },
-    {
-      id: 6,
-      image: property3,
-      price: "$8,500,000",
-      title: "Residencia con Alberca",
-      location: "Río Blanco, Veracruz",
-      beds: 5,
-      baths: 4,
-      area: 380,
-      score: 99,
-    },
-  ];
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+    fetchProperties({
+      zone: selectedZone || undefined,
+      limit: 20,
+      offset: 0,
+    })
+      .then(setProperties)
+      .catch((e) => setError(e instanceof Error ? e.message : "Error desconocido"))
+      .finally(() => setLoading(false));
+  }, [selectedZone]);
 
-  const filteredProperties = selectedZone
-    ? featuredProperties.filter((p) => p.location.includes(selectedZone))
-    : featuredProperties;
+  const filteredProperties = properties;
 
   return (
     <div className="min-h-screen bg-background">
@@ -176,11 +158,27 @@ const Index = () => {
           </div>
 
           {/* Property Grid - 1 col mobile, 3 col desktop */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProperties.map((property) => (
-              <PropertyCard key={property.id} {...property} />
-            ))}
-          </div>
+          {loading ? (
+            <div className="text-center py-12 text-muted-foreground">Cargando propiedades...</div>
+          ) : error ? (
+            <div className="text-center py-12 text-destructive">{error}</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredProperties.map((property) => (
+                <PropertyCard
+                  key={property.id}
+                  id={property.id}
+                  image={property.image}
+                  price={property.price}
+                  title={property.title}
+                  location={property.address}
+                  beds={property.beds}
+                  baths={property.baths}
+                  area={property.sqm}
+                />
+              ))}
+            </div>
+          )}
 
           {/* View All CTA */}
           <div className="text-center mt-10">

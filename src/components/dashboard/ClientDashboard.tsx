@@ -1,8 +1,69 @@
-import { useState } from "react";
-import { User, CreditCard, Home, ShoppingCart, Bell, Shield, ChevronRight, TrendingUp } from "lucide-react";
+import { User, CreditCard, Home, ShoppingCart, Bell, ChevronRight, TrendingUp } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "";
+
+interface PropertySaleSummary {
+  id: number;
+  title: string;
+  address: string;
+  price: string;
+  status: string;
+  views: number;
+  interested: number;
+  daysListed: number;
+  image: string;
+  trend: number;
+  progressStep: number;
+}
+
+interface PropertiesSaleResponse {
+  propertiesAmount?: number;
+  totalViews?: number;
+  interestedAmount?: number;
+  totalValue?: number;
+  properties?: PropertySaleSummary[];
+}
+
+interface PropertyBuySummary {
+  id: number;
+  title: string;
+  address: string;
+  price: string;
+  image: string;
+  status: string;
+  agent_name: string;
+  overallProgress: string;
+  processStage: string;
+  fileNames: string[];
+}
+
+interface RecentActivityItem {
+  name: string;
+  descripction: string;
+  time: number;
+}
+
+const fetchPropertiesSale = async (): Promise<PropertiesSaleResponse> => {
+  const res = await fetch(`${API_BASE}/api/user/properties-sale/`);
+  if (!res.ok) throw new Error("Error al cargar propiedades en venta");
+  return res.json();
+};
+
+const fetchPropertiesBuys = async (): Promise<PropertyBuySummary[]> => {
+  const res = await fetch(`${API_BASE}/api/user/properties-buys/`);
+  if (!res.ok) throw new Error("Error al cargar compras en proceso");
+  return res.json();
+};
+
+const fetchRecentActivity = async (): Promise<RecentActivityItem[]> => {
+  const res = await fetch(`${API_BASE}/api/user/recent-activity`);
+  if (!res.ok) throw new Error("Error al cargar actividad reciente");
+  return res.json();
+};
 
 interface ClientDashboardProps {
   onLogout: () => void;
@@ -12,6 +73,25 @@ interface ClientDashboardProps {
 
 const ClientDashboard = ({ onLogout, onNavigateVentas, onNavigateCompras }: ClientDashboardProps) => {
   const navigate = useNavigate();
+
+  const { data: ventasData, isLoading: ventasLoading } = useQuery({
+    queryKey: ["properties-sale"],
+    queryFn: fetchPropertiesSale,
+  });
+
+  const { data: comprasData, isLoading: comprasLoading } = useQuery({
+    queryKey: ["properties-buys"],
+    queryFn: fetchPropertiesBuys,
+  });
+
+  const { data: activityData, isLoading: activityLoading } = useQuery({
+    queryKey: ["recent-activity"],
+    queryFn: fetchRecentActivity,
+  });
+
+  const ventasList = Array.isArray(ventasData) ? ventasData : ventasData?.properties ?? [];
+  const ventasSummary = !Array.isArray(ventasData) ? ventasData : null;
+  const comprasList = Array.isArray(comprasData) ? comprasData : [];
 
   return (
     <div className="space-y-6">
@@ -62,36 +142,31 @@ const ClientDashboard = ({ onLogout, onNavigateVentas, onNavigateCompras }: Clie
           <CardContent className="p-6">
             <h3 className="text-lg font-semibold text-midnight mb-4">Actividad Reciente</h3>
             <div className="space-y-3">
-              <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-champagne-gold/5 to-transparent rounded-xl border border-champagne-gold/10">
-                <div className="p-2 bg-champagne-gold/10 rounded-lg flex-shrink-0">
-                  <CreditCard className="w-4 h-4 text-champagne-gold" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-midnight text-sm">Score Legal Generado</p>
-                  <p className="text-xs text-foreground/50 truncate">Casa en Querétaro - Score: 98/100</p>
-                </div>
-                <span className="text-xs text-foreground/40 whitespace-nowrap">2 días</span>
-              </div>
-              <div className="flex items-center gap-3 p-3 bg-muted/10 rounded-xl border border-border/10">
-                <div className="p-2 bg-green-50 rounded-lg flex-shrink-0">
-                  <TrendingUp className="w-4 h-4 text-green-600" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-midnight text-sm">Crédito Pre-aprobado</p>
-                  <p className="text-xs text-foreground/50 truncate">Monto: $8,500,000 MXN</p>
-                </div>
-                <span className="text-xs text-foreground/40 whitespace-nowrap">5 días</span>
-              </div>
-              <div className="flex items-center gap-3 p-3 bg-muted/10 rounded-xl border border-border/10">
-                <div className="p-2 bg-blue-50 rounded-lg flex-shrink-0">
-                  <Home className="w-4 h-4 text-blue-600" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-midnight text-sm">Propiedad Agregada</p>
-                  <p className="text-xs text-foreground/50 truncate">Departamento en CDMX</p>
-                </div>
-                <span className="text-xs text-foreground/40 whitespace-nowrap">1 sem</span>
-              </div>
+              {activityLoading ? (
+                <p className="text-sm text-foreground/50">Cargando...</p>
+              ) : activityData?.length ? (
+                activityData.map((item, i) => (
+                  <div
+                    key={i}
+                    className={`flex items-center gap-3 p-3 rounded-xl border ${
+                      i === 0 ? "bg-gradient-to-r from-champagne-gold/5 to-transparent border-champagne-gold/10" : "bg-muted/10 border-border/10"
+                    }`}
+                  >
+                    <div className={`p-2 rounded-lg flex-shrink-0 ${i === 0 ? "bg-champagne-gold/10" : "bg-muted/30"}`}>
+                      <CreditCard className={`w-4 h-4 ${i === 0 ? "text-champagne-gold" : "text-foreground/60"}`} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-midnight text-sm">{item.name}</p>
+                      <p className="text-xs text-foreground/50 truncate">{item.descripction}</p>
+                    </div>
+                    <span className="text-xs text-foreground/40 whitespace-nowrap">
+                      {item.time === 1 ? "1 día" : item.time < 7 ? `${item.time} días` : `${Math.floor(item.time / 7)} sem`}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-foreground/50">No hay actividad reciente</p>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -105,19 +180,25 @@ const ClientDashboard = ({ onLogout, onNavigateVentas, onNavigateCompras }: Clie
                 <div className="p-2.5 rounded-xl bg-blue-50">
                   <Home className="w-5 h-5 text-blue-600" />
                 </div>
-                <span className="text-xs font-medium px-2 py-1 rounded-full bg-blue-50 text-blue-600">2 activas</span>
+                <span className="text-xs font-medium px-2 py-1 rounded-full bg-blue-50 text-blue-600">
+                  {ventasLoading ? "..." : ventasList.length} activas
+                </span>
               </div>
               <h3 className="text-lg font-semibold text-midnight mb-2">En Venta</h3>
               <p className="text-sm text-foreground/60 mb-4">Propiedades que estás vendiendo actualmente</p>
               <div className="space-y-2 mb-4">
-                <div className="flex items-center justify-between p-2.5 bg-muted/20 rounded-lg text-sm">
-                  <span className="text-midnight">Casa en Querétaro</span>
-                  <span className="text-champagne-gold font-medium">$4.2M</span>
-                </div>
-                <div className="flex items-center justify-between p-2.5 bg-muted/20 rounded-lg text-sm">
-                  <span className="text-midnight">Depto en CDMX</span>
-                  <span className="text-champagne-gold font-medium">$2.8M</span>
-                </div>
+                {ventasLoading ? (
+                  <p className="text-sm text-foreground/50">Cargando...</p>
+                ) : ventasList.length ? (
+                  (ventasList as PropertySaleSummary[]).slice(0, 3).map((p) => (
+                    <div key={p.id} className="flex items-center justify-between p-2.5 bg-muted/20 rounded-lg text-sm">
+                      <span className="text-midnight truncate">{p.title}</span>
+                      <span className="text-champagne-gold font-medium shrink-0 ml-2">{p.price}</span>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-foreground/50">No tienes propiedades en venta</p>
+                )}
               </div>
               <Button
                 variant="outline"
@@ -137,23 +218,36 @@ const ClientDashboard = ({ onLogout, onNavigateVentas, onNavigateCompras }: Clie
                 <div className="p-2.5 rounded-xl bg-emerald-50">
                   <ShoppingCart className="w-5 h-5 text-emerald-600" />
                 </div>
-                <span className="text-xs font-medium px-2 py-1 rounded-full bg-emerald-50 text-emerald-600">1 en proceso</span>
+                <span className="text-xs font-medium px-2 py-1 rounded-full bg-emerald-50 text-emerald-600">
+                  {comprasLoading ? "..." : comprasList.length} en proceso
+                </span>
               </div>
               <h3 className="text-lg font-semibold text-midnight mb-2">Proceso de Compra</h3>
               <p className="text-sm text-foreground/60 mb-4">Propiedades que estás adquiriendo</p>
               <div className="space-y-2 mb-4">
-                <div className="p-3 bg-muted/20 rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-midnight font-medium">Casa en Polanco</span>
-                    <span className="text-champagne-gold font-medium text-sm">$12.5M</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 h-1.5 bg-muted/30 rounded-full overflow-hidden">
-                      <div className="h-full bg-emerald-500 rounded-full" style={{ width: "60%" }}></div>
-                    </div>
-                    <span className="text-xs text-foreground/50">60%</span>
-                  </div>
-                </div>
+                {comprasLoading ? (
+                  <p className="text-sm text-foreground/50">Cargando...</p>
+                ) : comprasList.length ? (
+                  comprasList.slice(0, 2).map((p) => {
+                    const progressNum = parseInt(p.overallProgress?.replace(/%/g, "") || "0", 10);
+                    return (
+                      <div key={p.id} className="p-3 bg-muted/20 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm text-midnight font-medium truncate">{p.title}</span>
+                          <span className="text-champagne-gold font-medium text-sm shrink-0 ml-2">{p.price}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 h-1.5 bg-muted/30 rounded-full overflow-hidden">
+                            <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${progressNum}%` }}></div>
+                          </div>
+                          <span className="text-xs text-foreground/50">{p.overallProgress}</span>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <p className="text-sm text-foreground/50">No tienes compras en proceso</p>
+                )}
               </div>
               <Button
                 variant="outline"
