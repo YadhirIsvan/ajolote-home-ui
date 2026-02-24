@@ -3,7 +3,7 @@ import { ArrowLeft, Home, MapPin, Eye, Calendar, TrendingUp } from "lucide-react
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import SellerLeadForm from "@/components/SellerLeadForm";
+import SellerLeadForm from "@/sell/components/SellerLeadForm";
 import { useQuery } from "@tanstack/react-query";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "";

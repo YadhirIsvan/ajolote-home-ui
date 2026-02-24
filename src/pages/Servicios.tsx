@@ -1,4 +1,4 @@
-import Navigation from "@/components/Navigation";
+import Navigation from "@/shared/components/custom/Navigation";
 import { Card } from "@/components/ui/card";
 import { AlertCircle, CheckCircle, Clock, FileText, MessageCircle, Shield } from "lucide-react";
 

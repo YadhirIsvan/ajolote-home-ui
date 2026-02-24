@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Home, Search, Menu, X, User, CreditCard, Settings, LogOut, ChevronDown } from "lucide-react";
+import { Home, Search, Menu, User, CreditCard, Settings, LogOut, ChevronDown } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import vakantaLogo from "@/assets/vakanta-logo.png";
 

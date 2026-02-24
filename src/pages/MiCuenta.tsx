@@ -1,15 +1,10 @@
 import { useState } from "react";
 import { User, Briefcase, Shield } from "lucide-react";
-import Navigation from "@/components/Navigation";
-import AuthModal from "@/components/AuthModal";
-import RoleSelector, { UserRole } from "@/components/RoleSelector";
+import Navigation from "@/shared/components/custom/Navigation";
+import AuthModal from "@/myAccount/shared/components/AuthModal";
+import RoleSelector, { UserRole } from "@/myAccount/shared/components/RoleSelector";
 import { Button } from "@/components/ui/button";
-import ClientDashboard from "@/components/dashboard/ClientDashboard";
-import AgentDashboard from "@/components/dashboard/AgentDashboard";
-import MasterAdminDashboard from "@/components/admin/MasterAdminDashboard";
-import ClientConfigScreen from "@/components/dashboard/ClientConfigScreen";
-import ClientVentas from "@/components/dashboard/ClientVentas";
-import ClientCompras from "@/components/dashboard/ClientCompras";
+import MyAccountRouter from "@/myAccount/router/my-account.router";
 
 type ClientSubView = "dashboard" | "config" | "ventas" | "compras";
 
@@ -39,7 +34,6 @@ const MiCuenta = () => {
 
   const isClientAuth = isAuthenticated && selectedRole === "cliente";
 
-  // Login Gate
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-white">
@@ -84,26 +78,6 @@ const MiCuenta = () => {
   const roleLabels = { cliente: "Cliente", agente: "Agente", admin: "Administrador" };
   const RoleIcon = selectedRole ? roleIcons[selectedRole] : User;
 
-  // Client sub-view rendering
-  const renderClientContent = () => {
-    switch (clientSubView) {
-      case "config":
-        return <ClientConfigScreen onBack={() => setClientSubView("dashboard")} />;
-      case "ventas":
-        return <ClientVentas onBack={() => setClientSubView("dashboard")} />;
-      case "compras":
-        return <ClientCompras onBack={() => setClientSubView("dashboard")} />;
-      default:
-        return (
-          <ClientDashboard
-            onLogout={handleLogout}
-            onNavigateVentas={() => setClientSubView("ventas")}
-            onNavigateCompras={() => setClientSubView("compras")}
-          />
-        );
-    }
-  };
-
   return (
     <div className="min-h-screen bg-white">
       <Navigation
@@ -114,9 +88,12 @@ const MiCuenta = () => {
 
       <div className="pt-20 md:pt-24 pb-16">
         <div className="container mx-auto px-4 md:px-6 max-w-7xl">
-          {/* Header - hide on sub-views and for agent/admin mobile */}
           {clientSubView === "dashboard" && (
-            <div className={`text-center mb-8 md:mb-12 ${selectedRole !== "cliente" ? "hidden md:block" : ""}`}>
+            <div
+              className={`text-center mb-8 md:mb-12 ${
+                selectedRole !== "cliente" ? "hidden md:block" : ""
+              }`}
+            >
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-champagne-gold/10 text-champagne-gold text-sm font-medium mb-4">
                 <RoleIcon className="w-4 h-4" />
                 <span>{selectedRole ? roleLabels[selectedRole] : ""}</span>
@@ -138,10 +115,13 @@ const MiCuenta = () => {
             </div>
           )}
 
-          {/* Role-Specific Dashboard */}
-          {selectedRole === "cliente" && renderClientContent()}
-          {selectedRole === "agente" && <AgentDashboard onLogout={handleLogout} />}
-          {selectedRole === "admin" && <MasterAdminDashboard onLogout={handleLogout} />}
+          {selectedRole && (
+            <MyAccountRouter
+              role={selectedRole}
+              onLogout={handleLogout}
+              onNavigateConfig={() => setClientSubView("config")}
+            />
+          )}
         </div>
       </div>
     </div>
