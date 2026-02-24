@@ -1,130 +1,93 @@
-import { useState } from "react";
 import { User, Briefcase, Shield } from "lucide-react";
 import Navigation from "@/shared/components/custom/Navigation";
-import AuthModal from "@/myAccount/shared/components/AuthModal";
-import RoleSelector, { UserRole } from "@/myAccount/shared/components/RoleSelector";
-import { Button } from "@/components/ui/button";
+import AuthGuard from "@/auth/guardian/AuthGuard";
+import { useAuth } from "@/auth/hooks/use-auth.hook";
 import MyAccountRouter from "@/myAccount/router/my-account.router";
 
 type ClientSubView = "dashboard" | "config" | "ventas" | "compras";
+import { useState } from "react";
+
+const roleIcons = { cliente: User, agente: Briefcase, admin: Shield };
+const roleLabels = { cliente: "Cliente", agente: "Agente", admin: "Administrador" };
 
 const MiCuenta = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [showRoleSelector, setShowRoleSelector] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
+  const {
+    isAuthenticated,
+    selectedRole,
+    showAuthModal,
+    showRoleSelector,
+    openAuthModal,
+    closeAuthModal,
+    closeRoleSelector,
+    handleLoginSuccess,
+    handleRoleSelect,
+    handleLogout,
+  } = useAuth();
+
   const [clientSubView, setClientSubView] = useState<ClientSubView>("dashboard");
 
-  const handleLoginSuccess = () => {
-    setShowAuthModal(false);
-    setShowRoleSelector(true);
-  };
-
-  const handleRoleSelect = (role: UserRole) => {
-    setSelectedRole(role);
-    setIsAuthenticated(true);
-    setClientSubView("dashboard");
-  };
-
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    setSelectedRole(null);
-    setClientSubView("dashboard");
-  };
-
   const isClientAuth = isAuthenticated && selectedRole === "cliente";
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-white">
-        <Navigation />
-
-        <div className="pt-24 pb-16">
-          <div className="container mx-auto px-6 max-w-lg">
-            <div className="text-center py-16">
-              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-champagne-gold/10 flex items-center justify-center">
-                <User className="w-10 h-10 text-champagne-gold" />
-              </div>
-              <h1 className="text-3xl font-bold text-midnight mb-4">Mi Cuenta</h1>
-              <p className="text-foreground/60 mb-8 max-w-md mx-auto">
-                Inicia sesión para gestionar tu perfil, propiedades y más
-              </p>
-              <Button
-                onClick={() => setShowAuthModal(true)}
-                className="h-14 px-10 bg-champagne-gold hover:bg-champagne-gold-dark text-white font-semibold text-lg rounded-lg shadow-md hover:shadow-lg transition-all"
-              >
-                Iniciar Sesión
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        <AuthModal
-          isOpen={showAuthModal}
-          onClose={() => setShowAuthModal(false)}
-          onLoginSuccess={handleLoginSuccess}
-        />
-
-        <RoleSelector
-          isOpen={showRoleSelector}
-          onClose={() => setShowRoleSelector(false)}
-          onRoleSelect={handleRoleSelect}
-        />
-      </div>
-    );
-  }
-
-  const roleIcons = { cliente: User, agente: Briefcase, admin: Shield };
-  const roleLabels = { cliente: "Cliente", agente: "Agente", admin: "Administrador" };
   const RoleIcon = selectedRole ? roleIcons[selectedRole] : User;
 
   return (
-    <div className="min-h-screen bg-white">
-      <Navigation
-        isClientAuthenticated={isClientAuth}
-        onLogout={handleLogout}
-        onNavigateConfig={() => setClientSubView("config")}
-      />
+    <AuthGuard
+      isAuthenticated={isAuthenticated}
+      selectedRole={selectedRole}
+      showAuthModal={showAuthModal}
+      showRoleSelector={showRoleSelector}
+      onOpenAuthModal={openAuthModal}
+      onCloseAuthModal={closeAuthModal}
+      onCloseRoleSelector={closeRoleSelector}
+      onLoginSuccess={handleLoginSuccess}
+      onRoleSelect={handleRoleSelect}
+    >
+      <div className="min-h-screen bg-white">
+        <Navigation
+          isClientAuthenticated={isClientAuth}
+          onLogout={handleLogout}
+          onNavigateConfig={() => setClientSubView("config")}
+        />
 
-      <div className="pt-20 md:pt-24 pb-16">
-        <div className="container mx-auto px-4 md:px-6 max-w-7xl">
-          {clientSubView === "dashboard" && (
-            <div
-              className={`text-center mb-8 md:mb-12 ${
-                selectedRole !== "cliente" ? "hidden md:block" : ""
-              }`}
-            >
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-champagne-gold/10 text-champagne-gold text-sm font-medium mb-4">
-                <RoleIcon className="w-4 h-4" />
-                <span>{selectedRole ? roleLabels[selectedRole] : ""}</span>
+        <div className="pt-20 md:pt-24 pb-16">
+          <div className="container mx-auto px-4 md:px-6 max-w-7xl">
+            {clientSubView === "dashboard" && (
+              <div
+                className={`text-center mb-8 md:mb-12 ${
+                  selectedRole !== "cliente" ? "hidden md:block" : ""
+                }`}
+              >
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-champagne-gold/10 text-champagne-gold text-sm font-medium mb-4">
+                  <RoleIcon className="w-4 h-4" />
+                  <span>{selectedRole ? roleLabels[selectedRole] : ""}</span>
+                </div>
+                <h1 className="text-2xl md:text-4xl font-bold text-midnight mb-2 md:mb-4">
+                  {selectedRole === "admin"
+                    ? "Panel de Administración"
+                    : selectedRole === "agente"
+                    ? "Panel del Agente"
+                    : "Mi Cuenta"}
+                </h1>
+                <p className="text-sm md:text-lg text-foreground/60 max-w-xl mx-auto">
+                  {selectedRole === "admin"
+                    ? "Control total de la plataforma"
+                    : selectedRole === "agente"
+                    ? "Gestiona tus propiedades y prospectos"
+                    : "Gestiona tu perfil, crédito y propiedades en un solo lugar"}
+                </p>
               </div>
-              <h1 className="text-2xl md:text-4xl font-bold text-midnight mb-2 md:mb-4">
-                {selectedRole === "admin"
-                  ? "Panel de Administración"
-                  : selectedRole === "agente"
-                  ? "Panel del Agente"
-                  : "Mi Cuenta"}
-              </h1>
-              <p className="text-sm md:text-lg text-foreground/60 max-w-xl mx-auto">
-                {selectedRole === "admin"
-                  ? "Control total de la plataforma"
-                  : selectedRole === "agente"
-                  ? "Gestiona tus propiedades y prospectos"
-                  : "Gestiona tu perfil, crédito y propiedades en un solo lugar"}
-              </p>
-            </div>
-          )}
+            )}
 
-          {selectedRole && (
-            <MyAccountRouter
-              role={selectedRole}
-              onLogout={handleLogout}
-              onNavigateConfig={() => setClientSubView("config")}
-            />
-          )}
+            {selectedRole && (
+              <MyAccountRouter
+                role={selectedRole}
+                onLogout={handleLogout}
+                onNavigateConfig={() => setClientSubView("config")}
+              />
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </AuthGuard>
   );
 };
 

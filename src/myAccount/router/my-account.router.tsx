@@ -1,7 +1,7 @@
 import ClientPage from "@/myAccount/client/pages/ClientPage";
 import AgentPage from "@/myAccount/agent/pages/AgentPage";
 import AdminPage from "@/myAccount/admin/pages/AdminPage";
-import type { UserRole } from "@/myAccount/shared/components/RoleSelector";
+import type { UserRole } from "@/auth/types/auth.types";
 
 interface MyAccountRouterProps {
   role: UserRole;
