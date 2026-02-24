@@ -1,6 +1,6 @@
 import ClientPage from "@/myAccount/client/pages/ClientPage";
-import AgentDashboard from "@/components/dashboard/AgentDashboard";
-import MasterAdminDashboard from "@/components/admin/MasterAdminDashboard";
+import AgentPage from "@/myAccount/agent/pages/AgentPage";
+import AdminPage from "@/myAccount/admin/pages/AdminPage";
 import type { UserRole } from "@/myAccount/shared/components/RoleSelector";
 
 interface MyAccountRouterProps {
@@ -9,18 +9,14 @@ interface MyAccountRouterProps {
   onNavigateConfig: () => void;
 }
 
-/**
- * Distributes rendering by authenticated role.
- * As agent/ and admin/ domains are migrated, their imports will be updated here.
- */
 const MyAccountRouter = ({ role, onLogout, onNavigateConfig }: MyAccountRouterProps) => {
   switch (role) {
     case "cliente":
       return <ClientPage onLogout={onLogout} onNavigateConfig={onNavigateConfig} />;
     case "agente":
-      return <AgentDashboard onLogout={onLogout} />;
+      return <AgentPage onLogout={onLogout} />;
     case "admin":
-      return <MasterAdminDashboard onLogout={onLogout} />;
+      return <AdminPage onLogout={onLogout} />;
     default:
       return null;
   }
