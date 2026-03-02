@@ -1,6 +1,12 @@
 import { authApi } from "@/auth/api/auth.api";
 import type { AuthTokens } from "@/auth/types/auth.types";
 
+export interface VerifyOtpExtra {
+  first_name?: string;
+  last_name?: string;
+  phone?: string;
+}
+
 export interface VerifyOtpResponse {
   success: boolean;
   message: string;
@@ -14,10 +20,11 @@ const DEFAULT_RESPONSE: VerifyOtpResponse = {
 
 export const verifyOtpAction = async (
   email: string,
-  token: string
+  token: string,
+  extra?: VerifyOtpExtra
 ): Promise<VerifyOtpResponse> => {
   try {
-    const { data } = await authApi.verifyOtp(email, token);
+    const { data } = await authApi.verifyOtp(email, token, extra);
     const authData = data as AuthTokens;
 
     localStorage.setItem("access_token", authData.access);
@@ -29,7 +36,14 @@ export const verifyOtpAction = async (
       message: "Autenticación exitosa.",
       data: authData,
     };
-  } catch {
-    return DEFAULT_RESPONSE;
+  } catch (error: unknown) {
+    const axiosError = error as {
+      response?: { data?: { error?: string; detail?: string } };
+    };
+    const msg =
+      axiosError.response?.data?.error ??
+      axiosError.response?.data?.detail ??
+      DEFAULT_RESPONSE.message;
+    return { success: false, message: msg };
   }
 };

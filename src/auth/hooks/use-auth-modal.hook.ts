@@ -17,6 +17,12 @@ export const useAuthModal = ({ onLoginSuccess, onClose }: UseAuthModalOptions) =
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  // Estado del flujo is_new_user
+  const [isNewUser, setIsNewUser] = useState(false);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [phone, setPhone] = useState("");
+
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     setError("");
@@ -27,13 +33,8 @@ export const useAuthModal = ({ onLoginSuccess, onClose }: UseAuthModalOptions) =
       localStorage.setItem("refresh_token", authData.refresh);
       localStorage.setItem("user", JSON.stringify(authData.user));
       onLoginSuccess();
-    } catch (err: unknown) {
-      const axiosError = err as { response?: { status?: number } };
-      if (axiosError.response?.status === 501) {
-        setError("Google Login no está disponible actualmente");
-      } else {
-        setError("Google Login no está disponible actualmente");
-      }
+    } catch {
+      setError("Google Login no está disponible actualmente");
     } finally {
       setIsLoading(false);
     }
@@ -49,13 +50,8 @@ export const useAuthModal = ({ onLoginSuccess, onClose }: UseAuthModalOptions) =
       localStorage.setItem("refresh_token", authData.refresh);
       localStorage.setItem("user", JSON.stringify(authData.user));
       onLoginSuccess();
-    } catch (err: unknown) {
-      const axiosError = err as { response?: { status?: number } };
-      if (axiosError.response?.status === 501) {
-        setError("Apple Login no está disponible actualmente");
-      } else {
-        setError("Apple Login no está disponible actualmente");
-      }
+    } catch {
+      setError("Apple Login no está disponible actualmente");
     } finally {
       setIsLoading(false);
     }
@@ -71,6 +67,7 @@ export const useAuthModal = ({ onLoginSuccess, onClose }: UseAuthModalOptions) =
     const result = await sendEmailOtpAction(email);
     setIsLoading(false);
     if (result.success) {
+      setIsNewUser(result.isNewUser);
       setStep("verify");
     } else {
       setError(result.message);
@@ -82,13 +79,26 @@ export const useAuthModal = ({ onLoginSuccess, onClose }: UseAuthModalOptions) =
       setError("El código debe tener al menos 4 dígitos");
       return;
     }
+    if (isNewUser && (!firstName.trim() || !lastName.trim())) {
+      setError("Nombre y apellido son obligatorios");
+      return;
+    }
     setIsLoading(true);
     setError("");
-    const result = await verifyOtpAction(email, token);
+
+    const extra = isNewUser
+      ? {
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
+          ...(phone.trim() ? { phone: phone.trim() } : {}),
+        }
+      : undefined;
+
+    const result = await verifyOtpAction(email, token, extra);
     setIsLoading(false);
     if (result.success) {
       setStep("success");
-      setTimeout(onLoginSuccess, 1000);
+      setTimeout(onLoginSuccess, 1500);
     } else {
       setError(result.message);
     }
@@ -97,7 +107,14 @@ export const useAuthModal = ({ onLoginSuccess, onClose }: UseAuthModalOptions) =
   const handleBack = () => {
     setError("");
     if (step === "email") setStep("options");
-    if (step === "verify") setStep("email");
+    if (step === "verify") {
+      setToken("");
+      setIsNewUser(false);
+      setFirstName("");
+      setLastName("");
+      setPhone("");
+      setStep("email");
+    }
   };
 
   const resetModal = () => {
@@ -105,6 +122,10 @@ export const useAuthModal = ({ onLoginSuccess, onClose }: UseAuthModalOptions) =
     setEmail("");
     setToken("");
     setError("");
+    setIsNewUser(false);
+    setFirstName("");
+    setLastName("");
+    setPhone("");
   };
 
   const handleOpenChange = (open: boolean) => {
@@ -124,6 +145,13 @@ export const useAuthModal = ({ onLoginSuccess, onClose }: UseAuthModalOptions) =
     setToken,
     error,
     isLoading,
+    isNewUser,
+    firstName,
+    setFirstName,
+    lastName,
+    setLastName,
+    phone,
+    setPhone,
     goToEmailStep,
     handleGoogleLogin,
     handleAppleLogin,

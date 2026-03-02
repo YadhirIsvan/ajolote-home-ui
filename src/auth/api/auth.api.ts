@@ -8,8 +8,12 @@ export const authApi = {
   sendEmailOtp: (email: string) =>
     axiosInstance.post("/auth/email/otp", { email }),
 
-  verifyOtp: (email: string, token: string) =>
-    axiosInstance.post("/auth/email/verify", { email, token }),
+  verifyOtp: (
+    email: string,
+    token: string,
+    extra?: { first_name?: string; last_name?: string; phone?: string }
+  ) =>
+    axiosInstance.post("/auth/email/verify", { email, token, ...extra }),
 
   loginWithGoogle: (idToken: string) =>
     axiosInstance.post("/auth/google", { idToken }),
