@@ -23,3 +23,15 @@ export interface AuthTokens {
   refresh: string;
   user: AuthUser;
 }
+
+export interface RegisterRequest {
+  email: string;
+  first_name: string;
+  last_name: string;
+  phone?: string;
+}
+
+export interface RegisterResponse {
+  message: string;
+  email: string;
+}

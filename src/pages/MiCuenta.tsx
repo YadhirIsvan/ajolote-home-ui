@@ -7,39 +7,33 @@ import MyAccountRouter from "@/myAccount/router/my-account.router";
 type ClientSubView = "dashboard" | "config" | "ventas" | "compras";
 import { useState } from "react";
 
-const roleIcons = { cliente: User, agente: Briefcase, admin: Shield };
-const roleLabels = { cliente: "Cliente", agente: "Agente", admin: "Administrador" };
+const roleIcons = { client: User, agent: Briefcase, admin: Shield };
+const roleLabels = { client: "Cliente", agent: "Agente", admin: "Administrador" };
 
 const MiCuenta = () => {
   const {
     isAuthenticated,
-    selectedRole,
+    role,
     showAuthModal,
-    showRoleSelector,
     openAuthModal,
     closeAuthModal,
-    closeRoleSelector,
     handleLoginSuccess,
-    handleRoleSelect,
     handleLogout,
   } = useAuth();
 
   const [clientSubView, setClientSubView] = useState<ClientSubView>("dashboard");
 
-  const isClientAuth = isAuthenticated && selectedRole === "cliente";
-  const RoleIcon = selectedRole ? roleIcons[selectedRole] : User;
+  const isClientAuth = isAuthenticated && role === "client";
+  const RoleIcon = role ? roleIcons[role] : User;
 
   return (
     <AuthGuard
       isAuthenticated={isAuthenticated}
-      selectedRole={selectedRole}
+      role={role}
       showAuthModal={showAuthModal}
-      showRoleSelector={showRoleSelector}
       onOpenAuthModal={openAuthModal}
       onCloseAuthModal={closeAuthModal}
-      onCloseRoleSelector={closeRoleSelector}
       onLoginSuccess={handleLoginSuccess}
-      onRoleSelect={handleRoleSelect}
     >
       <div className="min-h-screen bg-white">
         <Navigation
@@ -53,33 +47,33 @@ const MiCuenta = () => {
             {clientSubView === "dashboard" && (
               <div
                 className={`text-center mb-8 md:mb-12 ${
-                  selectedRole !== "cliente" ? "hidden md:block" : ""
+                  role !== "client" ? "hidden md:block" : ""
                 }`}
               >
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-champagne-gold/10 text-champagne-gold text-sm font-medium mb-4">
                   <RoleIcon className="w-4 h-4" />
-                  <span>{selectedRole ? roleLabels[selectedRole] : ""}</span>
+                  <span>{role ? roleLabels[role] : ""}</span>
                 </div>
                 <h1 className="text-2xl md:text-4xl font-bold text-midnight mb-2 md:mb-4">
-                  {selectedRole === "admin"
+                  {role === "admin"
                     ? "Panel de Administración"
-                    : selectedRole === "agente"
+                    : role === "agent"
                     ? "Panel del Agente"
                     : "Mi Cuenta"}
                 </h1>
                 <p className="text-sm md:text-lg text-foreground/60 max-w-xl mx-auto">
-                  {selectedRole === "admin"
+                  {role === "admin"
                     ? "Control total de la plataforma"
-                    : selectedRole === "agente"
+                    : role === "agent"
                     ? "Gestiona tus propiedades y prospectos"
                     : "Gestiona tu perfil, crédito y propiedades en un solo lugar"}
                 </p>
               </div>
             )}
 
-            {selectedRole && (
+            {role && (
               <MyAccountRouter
-                role={selectedRole}
+                role={role}
                 onLogout={handleLogout}
                 onNavigateConfig={() => setClientSubView("config")}
               />

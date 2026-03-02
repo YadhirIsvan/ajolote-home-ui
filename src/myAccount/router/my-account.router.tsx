@@ -11,9 +11,9 @@ interface MyAccountRouterProps {
 
 const MyAccountRouter = ({ role, onLogout, onNavigateConfig }: MyAccountRouterProps) => {
   switch (role) {
-    case "cliente":
+    case "client":
       return <ClientPage onLogout={onLogout} onNavigateConfig={onNavigateConfig} />;
-    case "agente":
+    case "agent":
       return <AgentPage onLogout={onLogout} />;
     case "admin":
       return <AdminPage onLogout={onLogout} />;

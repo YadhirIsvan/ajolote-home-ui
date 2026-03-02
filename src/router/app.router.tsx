@@ -7,6 +7,8 @@ import CreditFlow from "@/pages/CreditFlow";
 import Servicios from "@/pages/Servicios";
 import MiCuenta from "@/pages/MiCuenta";
 import NotFound from "@/pages/NotFound";
+import RegisterPage from "@/auth/pages/RegisterPage";
+import VerifyOtpPage from "@/auth/pages/VerifyOtpPage";
 
 const AppRouter = () => (
   <Routes>
@@ -17,6 +19,8 @@ const AppRouter = () => (
     <Route path="/credito" element={<CreditFlow />} />
     <Route path="/servicios" element={<Servicios />} />
     <Route path="/mi-cuenta" element={<MiCuenta />} />
+    <Route path="/auth/register" element={<RegisterPage />} />
+    <Route path="/auth/verify" element={<VerifyOtpPage />} />
     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
     <Route path="*" element={<NotFound />} />
   </Routes>

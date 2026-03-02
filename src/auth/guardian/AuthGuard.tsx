@@ -3,39 +3,30 @@ import LoginPage from "@/auth/pages/LoginPage";
 
 interface AuthGuardProps {
   isAuthenticated: boolean;
-  selectedRole: UserRole | null;
+  role: UserRole | null;
   showAuthModal: boolean;
-  showRoleSelector: boolean;
   onOpenAuthModal: () => void;
   onCloseAuthModal: () => void;
-  onCloseRoleSelector: () => void;
   onLoginSuccess: () => void;
-  onRoleSelect: (role: UserRole) => void;
   children: React.ReactNode;
 }
 
 const AuthGuard = ({
   isAuthenticated,
-  selectedRole,
+  role,
   showAuthModal,
-  showRoleSelector,
   onOpenAuthModal,
   onCloseAuthModal,
-  onCloseRoleSelector,
   onLoginSuccess,
-  onRoleSelect,
   children,
 }: AuthGuardProps) => {
-  if (!isAuthenticated || !selectedRole) {
+  if (!isAuthenticated || !role) {
     return (
       <LoginPage
         showAuthModal={showAuthModal}
-        showRoleSelector={showRoleSelector}
         onOpenAuthModal={onOpenAuthModal}
         onCloseAuthModal={onCloseAuthModal}
-        onCloseRoleSelector={onCloseRoleSelector}
         onLoginSuccess={onLoginSuccess}
-        onRoleSelect={onRoleSelect}
       />
     );
   }

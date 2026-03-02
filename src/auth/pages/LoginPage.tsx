@@ -2,27 +2,19 @@ import { User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navigation from "@/shared/components/custom/Navigation";
 import AuthModal from "@/auth/components/AuthModal";
-import RoleSelector from "@/auth/components/RoleSelector";
-import type { UserRole } from "@/auth/types/auth.types";
 
 interface LoginPageProps {
   showAuthModal: boolean;
-  showRoleSelector: boolean;
   onOpenAuthModal: () => void;
   onCloseAuthModal: () => void;
-  onCloseRoleSelector: () => void;
   onLoginSuccess: () => void;
-  onRoleSelect: (role: UserRole) => void;
 }
 
 const LoginPage = ({
   showAuthModal,
-  showRoleSelector,
   onOpenAuthModal,
   onCloseAuthModal,
-  onCloseRoleSelector,
   onLoginSuccess,
-  onRoleSelect,
 }: LoginPageProps) => {
   return (
     <div className="min-h-screen bg-white">
@@ -52,12 +44,6 @@ const LoginPage = ({
         isOpen={showAuthModal}
         onClose={onCloseAuthModal}
         onLoginSuccess={onLoginSuccess}
-      />
-
-      <RoleSelector
-        isOpen={showRoleSelector}
-        onClose={onCloseRoleSelector}
-        onRoleSelect={onRoleSelect}
       />
     </div>
   );
