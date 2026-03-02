@@ -37,76 +37,15 @@ interface KanbanColumn {
 }
 
 const initialColumns: KanbanColumn[] = [
-  {
-    id: "lead",
-    title: "Lead",
-    color: "bg-blue-500",
-    items: [
-      { id: "1", client: "María García", property: "Casa Polanco", agent: "Carlos M.", lastActivity: "Hace 2h", price: "$12.5M", daysInStage: 1 },
-      { id: "2", client: "Juan López", property: "Depto Roma", agent: "Laura S.", lastActivity: "Hace 1d", price: "$4.8M", daysInStage: 3 },
-    ],
-  },
-  {
-    id: "visita",
-    title: "Visita",
-    color: "bg-indigo-500",
-    items: [
-      { id: "3", client: "Ana Martínez", property: "Penthouse SF", agent: "Roberto D.", lastActivity: "Hace 3h", price: "$18.9M", daysInStage: 2 },
-    ],
-  },
-  {
-    id: "interes",
-    title: "Interés",
-    color: "bg-purple-500",
-    items: [
-      { id: "4", client: "Pedro Hernández", property: "Casa Coyoacán", agent: "Carlos M.", lastActivity: "Hace 5h", price: "$8.2M", daysInStage: 4 },
-      { id: "5", client: "Sofía Ruiz", property: "Loft Condesa", agent: "Ana M.", lastActivity: "Hace 1d", price: "$6.5M", daysInStage: 2 },
-    ],
-  },
-  {
-    id: "pre-aprob",
-    title: "Pre-Aprob",
-    color: "bg-champagne-gold",
-    items: [
-      { id: "6", client: "Carlos Mendez", property: "Casa Polanco", agent: "Laura S.", lastActivity: "Hace 2d", price: "$12.5M", daysInStage: 7 },
-    ],
-  },
-  {
-    id: "avaluo",
-    title: "Avalúo",
-    color: "bg-orange-500",
-    items: [],
-  },
-  {
-    id: "credito",
-    title: "Crédito",
-    color: "bg-amber-500",
-    items: [
-      { id: "7", client: "Roberto Silva", property: "Depto Roma", agent: "Roberto D.", lastActivity: "Hace 3d", price: "$4.8M", daysInStage: 10 },
-    ],
-  },
-  {
-    id: "docs",
-    title: "Docs Finales",
-    color: "bg-teal-500",
-    items: [],
-  },
-  {
-    id: "escrituras",
-    title: "Escrituras",
-    color: "bg-emerald-500",
-    items: [
-      { id: "8", client: "Laura Pérez", property: "Penthouse SF", agent: "Carlos M.", lastActivity: "Hace 1d", price: "$18.9M", daysInStage: 5 },
-    ],
-  },
-  {
-    id: "cerrado",
-    title: "Cerrado",
-    color: "bg-green-600",
-    items: [
-      { id: "9", client: "Miguel Torres", property: "Casa Coyoacán", agent: "Ana M.", lastActivity: "Hace 5d", price: "$8.2M", daysInStage: 0 },
-    ],
-  },
+  { id: "lead",       title: "Lead",        color: "bg-blue-500",         items: [] },
+  { id: "visita",     title: "Visita",      color: "bg-indigo-500",       items: [] },
+  { id: "interes",    title: "Interés",     color: "bg-purple-500",       items: [] },
+  { id: "pre-aprob",  title: "Pre-Aprob",   color: "bg-champagne-gold",   items: [] },
+  { id: "avaluo",     title: "Avalúo",      color: "bg-orange-500",       items: [] },
+  { id: "credito",    title: "Crédito",     color: "bg-amber-500",        items: [] },
+  { id: "docs",       title: "Docs Finales",color: "bg-teal-500",         items: [] },
+  { id: "escrituras", title: "Escrituras",  color: "bg-emerald-500",      items: [] },
+  { id: "cerrado",    title: "Cerrado",     color: "bg-green-600",        items: [] },
 ];
 
 const KanbanSection = () => {
