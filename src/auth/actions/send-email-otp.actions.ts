@@ -6,12 +6,6 @@ export interface SendEmailOtpResponse {
   isNewUser: boolean;
 }
 
-const DEFAULT_RESPONSE: SendEmailOtpResponse = {
-  success: false,
-  message: "Error al enviar el código. Intenta de nuevo.",
-  isNewUser: false,
-};
-
 export const sendEmailOtpAction = async (
   email: string
 ): Promise<SendEmailOtpResponse> => {
@@ -24,17 +18,35 @@ export const sendEmailOtpAction = async (
     };
   } catch (error: unknown) {
     const axiosError = error as {
-      response?: { status?: number; data?: { error?: string } };
+      response?: { status?: number; data?: { error?: string; detail?: string } };
+      message?: string;
     };
-    if (axiosError.response?.status === 429) {
+
+    // Sin respuesta del servidor = error de red o CORS
+    if (!axiosError.response) {
       return {
         success: false,
         isNewUser: false,
-        message:
-          axiosError.response.data?.error ??
-          "Demasiados intentos. Intenta en 60 segundos.",
+        message: "No se pudo conectar con el servidor. Verifica que el backend esté corriendo.",
       };
     }
-    return DEFAULT_RESPONSE;
+
+    const serverMsg =
+      axiosError.response.data?.error ??
+      axiosError.response.data?.detail;
+
+    if (axiosError.response.status === 429) {
+      return {
+        success: false,
+        isNewUser: false,
+        message: serverMsg ?? "Demasiados intentos. Espera un momento e intenta de nuevo.",
+      };
+    }
+
+    return {
+      success: false,
+      isNewUser: false,
+      message: serverMsg ?? "Error al enviar el código. Intenta de nuevo.",
+    };
   }
 };
