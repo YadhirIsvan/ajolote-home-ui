@@ -17,3 +17,220 @@ export type AdminSection =
   | "asignar"
   | "clientes"
   | "kanban";
+
+// ─── Paginated wrapper ───────────────────────────────────────────────────────
+export interface Paginated<T> {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: T[];
+}
+
+// ─── Propiedades ─────────────────────────────────────────────────────────────
+export interface AdminProperty {
+  id: number;
+  title: string;
+  address: string;
+  price: string;
+  currency: string;
+  property_type: string;
+  listing_type: string;
+  status: string;
+  is_featured: boolean;
+  is_verified: boolean;
+  is_active: boolean;
+  image: string | null;
+  agent: { id: number; name: string } | null;
+  documents_count: number;
+  created_at: string;
+}
+
+// ─── Agentes ─────────────────────────────────────────────────────────────────
+export interface AdminAgent {
+  id: number;
+  membership_id: number;
+  name: string;
+  email: string;
+  phone: string;
+  avatar: string | null;
+  zone: string;
+  bio: string;
+  score: string;
+  properties_count: number;
+  sales_count: number;
+  leads_count: number;
+  active_leads: number;
+}
+
+// ─── Horarios ────────────────────────────────────────────────────────────────
+export interface AgentScheduleBreak {
+  id: number;
+  break_type: string;
+  name: string;
+  start_time: string;
+  end_time: string;
+}
+
+export interface AgentSchedule {
+  id: number;
+  name: string;
+  monday: boolean;
+  tuesday: boolean;
+  wednesday: boolean;
+  thursday: boolean;
+  friday: boolean;
+  saturday: boolean;
+  sunday: boolean;
+  start_time: string;
+  end_time: string;
+  has_lunch_break: boolean;
+  lunch_start: string | null;
+  lunch_end: string | null;
+  valid_from: string;
+  valid_until: string | null;
+  is_active: boolean;
+  priority: number;
+  breaks: AgentScheduleBreak[];
+}
+
+// ─── Citas ───────────────────────────────────────────────────────────────────
+export interface AdminAppointment {
+  id: number;
+  matricula: string;
+  scheduled_date: string;
+  scheduled_time: string;
+  duration_minutes: number;
+  status: string;
+  client_name: string;
+  client_email: string;
+  client_phone: string;
+  property: { id: number; title: string };
+  agent: { id: number; name: string };
+}
+
+// ─── Asignaciones ────────────────────────────────────────────────────────────
+export interface AdminAssignmentProperty {
+  id: number;
+  title: string;
+  property_type: string;
+}
+
+export interface AdminAssignmentAgent {
+  membership_id: number;
+  name: string;
+  is_visible: boolean;
+}
+
+export interface AdminAssignment {
+  property: AdminAssignmentProperty;
+  agents: AdminAssignmentAgent[];
+}
+
+export interface AdminAssignmentsResponse {
+  unassigned_properties: AdminAssignmentProperty[];
+  assignments: AdminAssignment[];
+}
+
+// ─── Clientes ────────────────────────────────────────────────────────────────
+export interface AdminClient {
+  id: number;
+  membership_id: number;
+  name: string;
+  email: string;
+  phone: string;
+  avatar: string | null;
+  city: string;
+  purchase_processes_count: number;
+  sale_processes_count: number;
+  date_joined: string;
+}
+
+// ─── Pipeline de compra ──────────────────────────────────────────────────────
+export type PurchaseProcessStatus =
+  | "lead"
+  | "visita"
+  | "interes"
+  | "pre_aprobacion"
+  | "avaluo"
+  | "credito"
+  | "docs_finales"
+  | "escrituras"
+  | "cerrado";
+
+export interface AdminPurchaseProcess {
+  id: number;
+  status: PurchaseProcessStatus;
+  overall_progress: number;
+  client: { id: number; name: string; avatar: string | null };
+  property: { id: number; title: string; image: string | null };
+  agent: { id: number; name: string };
+  created_at: string;
+  updated_at: string;
+}
+
+// ─── Pipeline de venta ───────────────────────────────────────────────────────
+export type SaleProcessStatus =
+  | "contacto_inicial"
+  | "evaluacion"
+  | "valuacion"
+  | "presentacion"
+  | "firma_contrato"
+  | "marketing"
+  | "publicacion";
+
+export interface AdminSaleProcess {
+  id: number;
+  status: SaleProcessStatus;
+  property: { id: number; title: string; image: string | null };
+  client: { id: number; name: string };
+  agent: { id: number; name: string };
+  created_at: string;
+  updated_at: string;
+}
+
+// ─── Seller Leads ─────────────────────────────────────────────────────────────
+export type SellerLeadStatus =
+  | "new"
+  | "contacted"
+  | "visit_scheduled"
+  | "converted"
+  | "discarded";
+
+export interface AdminSellerLead {
+  id: number;
+  full_name: string;
+  email: string;
+  phone: string;
+  property_type: string;
+  location: string;
+  expected_price: string;
+  status: SellerLeadStatus;
+  assigned_agent: { id: number; name: string } | null;
+  created_at: string;
+}
+
+// ─── Historial ────────────────────────────────────────────────────────────────
+export interface AdminSaleHistoryItem {
+  id: number;
+  property: { title: string; property_type: string; zone: string };
+  client: { name: string };
+  agent: { name: string };
+  sale_price: string;
+  payment_method: string;
+  closed_at: string;
+}
+
+// ─── Insights ─────────────────────────────────────────────────────────────────
+export interface AdminInsights {
+  period: string;
+  sales_by_month: { month: string; count: number; total_amount: string }[];
+  distribution_by_type: { property_type: string; count: number; percentage: number }[];
+  activity_by_zone: { zone: string; views: number; leads: number; sales: number }[];
+  top_agents: { id: number; name: string; sales_count: number; leads_count: number; score: string }[];
+  summary: {
+    total_properties: number;
+    total_sales: number;
+    total_revenue: string;
+    active_leads: number;
+  };
+}

@@ -35,10 +35,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 
-import property1 from "@/assets/property-1.jpg";
-import property2 from "@/assets/property-2.jpg";
-import property3 from "@/assets/property-3.jpg";
-
 // Types
 interface PropertyDocument {
   id: string;
@@ -72,98 +68,6 @@ interface Property {
   submittedAt: string;
 }
 
-// Mock data
-const mockProperties: Property[] = [
-  {
-    id: "1",
-    title: "Casa en Polanco",
-    type: "casa",
-    location: "Miguel Hidalgo",
-    state: "CDMX",
-    address: "Av. Presidente Masaryk 123, Polanco V Sección",
-    price: "12500000",
-    image: property1,
-    status: "activa",
-    bedrooms: 4,
-    bathrooms: 3,
-    sqm: 320,
-    agent: "Carlos Mendoza",
-    documents: [
-      { id: "d1", name: "Escrituras.pdf", type: "legal", uploadedAt: "2026-01-10" },
-    ],
-    description: "Hermosa casa con acabados de lujo en una de las zonas más exclusivas de la ciudad.",
-    yearBuilt: 2020,
-    parkingSpots: 3,
-    features: ["Jardín", "Alberca", "Gym"],
-    submittedAt: "2026-01-08",
-  },
-  {
-    id: "2",
-    title: "Departamento Roma Norte",
-    type: "departamento",
-    location: "Cuauhtémoc",
-    state: "CDMX",
-    address: "Calle Durango 45, Roma Norte",
-    price: "4800000",
-    image: property2,
-    status: "pendiente",
-    bedrooms: 2,
-    bathrooms: 2,
-    sqm: 120,
-    agent: null,
-    documents: [],
-    description: "Moderno departamento en el corazón de la Roma Norte.",
-    yearBuilt: 2022,
-    parkingSpots: 1,
-    features: ["Roof Garden", "Gym"],
-    submittedAt: "2026-01-14",
-  },
-  {
-    id: "3",
-    title: "Terreno en Cuernavaca",
-    type: "terreno",
-    location: "Cuernavaca",
-    state: "Morelos",
-    address: "Km 85 Carretera México-Cuernavaca",
-    price: "3200000",
-    image: property3,
-    status: "pendiente",
-    bedrooms: 0,
-    bathrooms: 0,
-    sqm: 1500,
-    agent: null,
-    documents: [],
-    description: "Terreno con excelente ubicación y vistas panorámicas.",
-    yearBuilt: 0,
-    parkingSpots: 0,
-    features: ["Vista Panorámica", "Acceso Pavimentado"],
-    submittedAt: "2026-01-12",
-  },
-  {
-    id: "4",
-    title: "Local Comercial Santa Fe",
-    type: "local",
-    location: "Cuajimalpa",
-    state: "CDMX",
-    address: "Centro Comercial Santa Fe, Local 234",
-    price: "8500000",
-    image: property1,
-    status: "activa",
-    bedrooms: 0,
-    bathrooms: 1,
-    sqm: 85,
-    agent: "Laura Sánchez",
-    documents: [
-      { id: "d2", name: "Contrato_Arrendamiento.pdf", type: "legal", uploadedAt: "2026-01-05" },
-    ],
-    description: "Local comercial en zona de alto tráfico.",
-    yearBuilt: 2018,
-    parkingSpots: 2,
-    features: ["Alto Tráfico", "Seguridad 24/7"],
-    submittedAt: "2026-01-02",
-  },
-];
-
 const emptyProperty: Omit<Property, "id" | "documents" | "submittedAt"> = {
   title: "",
   type: "casa",
@@ -171,7 +75,7 @@ const emptyProperty: Omit<Property, "id" | "documents" | "submittedAt"> = {
   state: "",
   address: "",
   price: "",
-  image: property1,
+  image: "",
   status: "pendiente",
   bedrooms: 1,
   bathrooms: 1,
@@ -207,7 +111,7 @@ const mexicanStates = [
 
 const PropiedadesSection = () => {
   const isMobile = useIsMobile();
-  const [properties, setProperties] = useState<Property[]>(mockProperties);
+  const [properties, setProperties] = useState<Property[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState<PropertyType | "all">("all");
   const [filterStatus, setFilterStatus] = useState<"pendiente" | "activa" | "all">("all");

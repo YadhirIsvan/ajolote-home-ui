@@ -13,7 +13,7 @@ interface LeadDetailCardProps {
   lead: AgentLead;
   onBack: () => void;
   onUploadDocs: () => void;
-  onStageChange: (leadId: string, newStage: number, note: string) => void;
+  onStageChange: (leadId: number, newStage: number, note: string) => void;
 }
 
 const interestConfig = {

@@ -9,55 +9,58 @@ export interface PropertiesSaleResult {
   summary: Omit<PropertiesSaleResponse, "properties"> | null;
 }
 
-const DEFAULT_RESPONSE: PropertiesSaleResponse = {
-  propertiesAmount: 2,
-  totalViews: 209,
-  interestedAmount: 11,
-  totalValue: 7000000,
-  properties: [
-    {
-      id: 1,
-      title: "Casa en Querétaro",
-      address: "Col. Juriquilla, Querétaro",
-      price: "$4,200,000",
-      status: "Publicada",
-      views: 142,
-      interested: 8,
-      daysListed: 15,
-      image: "/placeholder.svg",
-      trend: 12,
-      progressStep: 3,
-    },
-    {
-      id: 2,
-      title: "Departamento en CDMX",
-      address: "Col. Roma Norte, CDMX",
-      price: "$2,800,000",
-      status: "En revisión",
-      views: 0,
-      interested: 0,
-      daysListed: 5,
-      image: "/placeholder.svg",
-      trend: 0,
-      progressStep: 1,
-    },
-  ],
-};
+interface BackendSaleResult {
+  id: number;
+  status: string;
+  progress_step: number;
+  views: number;
+  interested: number;
+  days_listed: number;
+  trend: string;
+  property: { id: number; title: string; address: string; price: string; image: string };
+  agent: { name: string };
+}
+
+interface BackendSalesResponse {
+  stats: {
+    total_properties: number;
+    total_views: number;
+    total_interested: number;
+    total_value: string;
+  };
+  results: BackendSaleResult[];
+}
+
+const mapSaleItem = (item: BackendSaleResult): PropertySaleSummary => ({
+  id: item.id,
+  title: item.property.title,
+  address: item.property.address,
+  price: item.property.price,
+  image: item.property.image ?? "",
+  status: item.status,
+  views: item.views,
+  interested: item.interested,
+  daysListed: item.days_listed,
+  trend: item.trend,
+  progressStep: item.progress_step,
+});
 
 export const getClientPropertiesSaleAction =
   async (): Promise<PropertiesSaleResult> => {
     try {
       const { data } = await clientApi.getPropertiesSale();
-      const raw = data as PropertiesSaleResponse | PropertySaleSummary[];
+      const raw = data as BackendSalesResponse;
 
-      if (Array.isArray(raw)) {
-        return { list: raw, summary: null };
-      }
+      const list = raw.results.map(mapSaleItem);
+      const summary: Omit<PropertiesSaleResponse, "properties"> = {
+        propertiesAmount: raw.stats.total_properties,
+        totalViews: raw.stats.total_views,
+        interestedAmount: raw.stats.total_interested,
+        totalValue: parseFloat(raw.stats.total_value),
+      };
 
-      const { properties = [], ...summaryRest } = raw;
-      return { list: properties, summary: summaryRest };
+      return { list, summary };
     } catch {
-      const { properties = [], ...summaryRest } = DEFAULT_RESPONSE;
-      return { list: properties, summary: summaryRest };
+      return { list: [], summary: null };
     }
   };

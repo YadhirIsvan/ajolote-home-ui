@@ -36,67 +36,23 @@ import {
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
-// Mock data for charts
-const monthlySalesData = [
-  { month: "Ene", ventas: 4, valor: 45.2 },
-  { month: "Feb", ventas: 3, valor: 32.1 },
-  { month: "Mar", ventas: 5, valor: 58.4 },
-  { month: "Abr", ventas: 6, valor: 72.3 },
-  { month: "May", ventas: 4, valor: 48.9 },
-  { month: "Jun", ventas: 7, valor: 89.2 },
-  { month: "Jul", ventas: 5, valor: 61.5 },
-  { month: "Ago", ventas: 8, valor: 98.7 },
-  { month: "Sep", ventas: 6, valor: 75.4 },
-  { month: "Oct", ventas: 7, valor: 82.1 },
-  { month: "Nov", ventas: 9, valor: 112.3 },
-  { month: "Dic", ventas: 5, valor: 63.8 },
-];
-
-const propertyTypeData = [
-  { name: "Casa", value: 35, color: "#C5A059" },
-  { name: "Departamento", value: 40, color: "#0F172A" },
-  { name: "Loft", value: 15, color: "#6366F1" },
-  { name: "Penthouse", value: 10, color: "#10B981" },
-];
-
-const zoneHeatMapData = [
-  { zone: "Polanco", sales: 15, value: 187.5, intensity: 100 },
-  { zone: "Santa Fe", sales: 12, value: 226.8, intensity: 80 },
-  { zone: "Condesa", sales: 10, value: 65.0, intensity: 67 },
-  { zone: "Roma", sales: 8, value: 38.4, intensity: 53 },
-  { zone: "Coyoacán", sales: 6, value: 49.2, intensity: 40 },
-  { zone: "Del Valle", sales: 5, value: 35.0, intensity: 33 },
-  { zone: "Nápoles", sales: 4, value: 28.8, intensity: 27 },
-];
-
-const topAgents = [
-  { name: "Carlos Mendoza", sales: 18, volume: "$142.5M", commission: "$1.425M", avatar: "CM" },
-  { name: "Laura Sánchez", sales: 15, volume: "$118.2M", commission: "$1.182M", avatar: "LS" },
-  { name: "Roberto Díaz", sales: 12, volume: "$95.8M", commission: "$958K", avatar: "RD" },
-  { name: "Ana Martínez", sales: 10, volume: "$78.4M", commission: "$784K", avatar: "AM" },
-  { name: "Miguel Torres", sales: 8, volume: "$62.1M", commission: "$621K", avatar: "MT" },
-];
-
-const auditLogs = [
-  { admin: "Admin Principal", action: "Cerró venta", property: "Casa Polanco", date: "2024-01-15 14:30", client: "Miguel Torres" },
-  { admin: "Admin Principal", action: "Aprobó documentos", property: "Penthouse SF", date: "2024-01-14 11:20", client: "Ana Ruiz" },
-  { admin: "Admin Secundario", action: "Cerró venta", property: "Depto Roma", date: "2024-01-12 16:45", client: "Roberto Silva" },
-  { admin: "Admin Principal", action: "Validó avalúo", property: "Loft Condesa", date: "2024-01-10 09:15", client: "Fernando López" },
-  { admin: "Admin Principal", action: "Cerró venta", property: "Casa Coyoacán", date: "2024-01-08 13:00", client: "Patricia Gómez" },
-];
-
 const InsightsSection = () => {
   const isMobile = useIsMobile();
   const [period, setPeriod] = useState("year");
 
-  // Stats calculations (mock)
+  const monthlySalesData: { month: string; ventas: number; valor: number }[] = [];
+  const propertyTypeData: { name: string; value: number; color: string }[] = [];
+  const zoneHeatMapData: { zone: string; sales: number; value: number; intensity: number }[] = [];
+  const topAgents: { name: string; sales: number; volume: string; commission: string; avatar: string }[] = [];
+  const auditLogs: { admin: string; action: string; property: string; date: string; client: string }[] = [];
+
   const stats = {
-    totalVolume: "$839.9M",
-    avgTicket: "$8.2M",
-    avgDaysToSell: 52,
-    totalCommissions: "$8.4M",
-    totalProperties: 69,
-    yearlyCommissions: "$8.4M"
+    totalVolume: "$0",
+    avgTicket: "$0",
+    avgDaysToSell: 0,
+    totalCommissions: "$0",
+    totalProperties: 0,
+    yearlyCommissions: "$0"
   };
 
   return (

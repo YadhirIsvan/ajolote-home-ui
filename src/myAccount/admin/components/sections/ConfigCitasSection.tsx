@@ -34,17 +34,10 @@ const colorOptions = [
   { value: "red", className: "bg-red-100 text-red-700 border-red-200" },
 ];
 
-const mockTypes: AppointmentType[] = [
-  { id: "1", name: "Primera Visita", duration: 60, color: "blue", description: "Primera visita del cliente a la propiedad" },
-  { id: "2", name: "Seguimiento", duration: 30, color: "green", description: "Llamada o visita de seguimiento" },
-  { id: "3", name: "Cierre de Contrato", duration: 90, color: "gold", description: "Firma de contrato de compraventa" },
-  { id: "4", name: "Entrega de Llaves", duration: 45, color: "purple", description: "Entrega oficial de la propiedad" },
-  { id: "5", name: "Avalúo", duration: 120, color: "orange", description: "Visita del valuador a la propiedad" },
-];
 
 const ConfigCitasSection = () => {
   const isMobile = useIsMobile();
-  const [types, setTypes] = useState<AppointmentType[]>(mockTypes);
+  const [types, setTypes] = useState<AppointmentType[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingType, setEditingType] = useState<AppointmentType | null>(null);
   const [formData, setFormData] = useState({

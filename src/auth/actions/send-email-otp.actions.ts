@@ -15,8 +15,22 @@ export const sendEmailOtpAction = async (
 ): Promise<SendEmailOtpResponse> => {
   try {
     const { data } = await authApi.sendEmailOtp(email);
-    return data as SendEmailOtpResponse;
-  } catch {
+    return {
+      success: true,
+      message: data.message ?? "Código enviado correctamente.",
+    };
+  } catch (error: unknown) {
+    const axiosError = error as {
+      response?: { status?: number; data?: { error?: string } };
+    };
+    if (axiosError.response?.status === 429) {
+      return {
+        success: false,
+        message:
+          axiosError.response.data?.error ??
+          "Demasiados intentos. Intenta en 60 segundos.",
+      };
+    }
     return DEFAULT_RESPONSE;
   }
 };

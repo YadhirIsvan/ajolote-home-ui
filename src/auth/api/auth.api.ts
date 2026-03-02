@@ -1,4 +1,4 @@
-import axiosInstance from "@/shared/api/axios.instance";
+import { axiosInstance } from "@/shared/api/axios.instance";
 
 export const authApi = {
   sendEmailOtp: (email: string) =>
@@ -13,7 +13,13 @@ export const authApi = {
   loginWithApple: (identityToken: string) =>
     axiosInstance.post("/auth/apple", { identityToken }),
 
-  logout: () => axiosInstance.post("/auth/logout"),
+  logout: () => {
+    const refresh = localStorage.getItem("refresh_token");
+    return axiosInstance.post("/auth/logout", { refresh });
+  },
 
-  refreshToken: () => axiosInstance.post("/auth/refresh"),
+  refreshToken: () => {
+    const refresh = localStorage.getItem("refresh_token");
+    return axiosInstance.post("/auth/refresh", { refresh });
+  },
 };

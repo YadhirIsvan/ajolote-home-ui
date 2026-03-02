@@ -1,51 +1,118 @@
-import buyApi, { ENDPOINTS } from "@/buy/api/buy.api";
+import { buyApi, ENDPOINTS } from "@/buy/api/buy.api";
 import type { PropertyDetailData } from "@/buy/types/property.types";
-import property1 from "@/assets/property-1.jpg";
-import property2 from "@/assets/property-2.jpg";
-import property3 from "@/assets/property-3.jpg";
 
 export interface GetPropertyDetailResponse {
   data: PropertyDetailData;
   fromFallback: boolean;
 }
 
-const FALLBACK_PROPERTY: PropertyDetailData = {
-  id: 1,
-  images: [property1, property2, property3, property1, property2],
-  price: "$4,500,000",
-  title: "Casa Moderna en Zona Residencial Premium",
-  address: "Orizaba, Veracruz",
-  beds: 3,
-  baths: 2,
-  sqm: 180,
-  verified: true,
-  status: "Disponible",
-  description:
-    "Hermosa casa de diseño contemporáneo en una de las zonas más exclusivas de Orizaba. Cuenta con amplios espacios, jardín privado, y acabados de primera calidad. Perfecta para familias que buscan confort y seguridad. La propiedad incluye cocina integral de granito, pisos de mármol en áreas comunes, sistema de seguridad inteligente, y estacionamiento para 2 vehículos. Ubicada cerca de escuelas, hospitales y centros comerciales.",
-  coordinates: { lat: 18.91583, lng: -96.98977 },
-  "nearby-places": [
-    { icon: "school", label: "5 min de Escuelas" },
-    { icon: "shopping", label: "10 min de Centros Comerciales" },
-    { icon: "hospital", label: "8 min de Hospitales" },
-    { icon: "transport", label: "3 min de Transporte" },
-  ],
-  agent: {
-    name: "María González",
-    photo: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=face",
-    phone: 2721234567,
-    email: "maria@vycite.com",
-  },
+interface BackendNearbyPlace {
+  name: string;
+  place_type: string;
+  distance_km: string;
+}
+
+interface BackendImage {
+  id: number;
+  image_url: string;
+  is_cover: boolean;
+  sort_order: number;
+}
+
+interface BackendPropertyDetail {
+  id: number;
+  title: string;
+  description: string;
+  price: string;
+  currency: string;
+  property_type: string;
+  property_condition: string;
+  status: string;
+  bedrooms: number;
+  bathrooms: number;
+  parking_spaces: number;
+  construction_sqm: string;
+  land_sqm: string;
+  address: string;
+  zone: string;
+  latitude: string;
+  longitude: string;
+  is_verified: boolean;
+  views: number;
+  days_listed: number;
+  interested: number;
+  images: BackendImage[];
+  amenities: { id: number; name: string; icon: string }[];
+  nearby_places: BackendNearbyPlace[];
+  video_id?: string;
+  video_thumbnail?: string;
+  agent: { name: string; photo: string; phone: string; email: string };
+  coordinates: { lat: number; lng: number };
+}
+
+const formatPrice = (raw: string): string => {
+  const num = parseFloat(raw);
+  return new Intl.NumberFormat("es-MX", {
+    style: "currency",
+    currency: "MXN",
+    maximumFractionDigits: 0,
+  }).format(num);
 };
+
+const mapDetail = (item: BackendPropertyDetail): PropertyDetailData => ({
+  id: item.id,
+  title: item.title,
+  description: item.description,
+  address: item.address,
+  price: formatPrice(item.price),
+  beds: item.bedrooms,
+  baths: item.bathrooms,
+  sqm: parseFloat(item.construction_sqm),
+  verified: item.is_verified,
+  status: item.status,
+  images: item.images
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .map((img) => img.image_url),
+  video_id: item.video_id,
+  video_img: item.video_thumbnail,
+  coordinates: item.coordinates,
+  "nearby-places": item.nearby_places.map((place) => ({
+    icon: place.place_type,
+    label: `${place.name} - ${parseFloat(place.distance_km).toFixed(1)} km`,
+  })),
+  agent: {
+    name: item.agent.name,
+    photo: item.agent.photo,
+    phone: item.agent.phone,
+    email: item.agent.email,
+  },
+});
 
 export const getPropertyDetailAction = async (
   id: number
 ): Promise<GetPropertyDetailResponse> => {
   try {
-    const { data } = await buyApi.get<PropertyDetailData>(ENDPOINTS.PROPERTY_DETAIL(id));
-    return { data, fromFallback: false };
+    const { data } = await buyApi.get<BackendPropertyDetail>(
+      ENDPOINTS.PROPERTY_DETAIL(id)
+    );
+    return { data: mapDetail(data), fromFallback: false };
   } catch {
     return {
-      data: { ...FALLBACK_PROPERTY, id },
+      data: {
+        id,
+        images: [],
+        price: "",
+        title: "Propiedad no encontrada",
+        address: "",
+        beds: 0,
+        baths: 0,
+        sqm: 0,
+        verified: false,
+        status: "",
+        description: "",
+        coordinates: { lat: 0, lng: 0 },
+        agent: { name: "", photo: "", phone: "", email: "" },
+      },
       fromFallback: true,
     };
   }

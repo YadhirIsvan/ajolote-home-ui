@@ -10,6 +10,11 @@ export interface PropertyListItem {
   sqm: number;
   type: string;
   state: string;
+  days_listed: number;
+  interested: number;
+  views: number;
+  is_featured: boolean;
+  is_verified: boolean;
 }
 
 export interface GetFeaturedPropertiesParams {

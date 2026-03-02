@@ -67,29 +67,8 @@ const appointmentTypes: AppointmentType[] = [
   { id: "5", name: "Avalúo", color: "bg-orange-100 text-orange-700", defaultDuration: 120 },
 ];
 
-// Mock clients data with matricula (internal ID)
-const mockClients: Client[] = [
-  { id: "1", name: "María García", matricula: "CLI-2024-001", assignedAgent: "Carlos Mendoza", phone: "555-123-4567", email: "maria@email.com" },
-  { id: "2", name: "Juan López", matricula: "CLI-2024-002", assignedAgent: "Laura Sánchez", phone: "555-234-5678", email: "juan@email.com" },
-  { id: "3", name: "Ana Martínez", matricula: "CLI-2024-003", assignedAgent: "Roberto Díaz", phone: "555-345-6789", email: "ana@email.com" },
-  { id: "4", name: "Pedro Hernández", matricula: "CLI-2024-004", assignedAgent: "Carlos Mendoza", phone: "555-456-7890", email: "pedro@email.com" },
-  { id: "5", name: "Sofía Ruiz", matricula: "CLI-2024-005", assignedAgent: "Laura Sánchez", phone: "555-567-8901", email: "sofia@email.com" },
-  { id: "6", name: "Carlos Mendez", matricula: "CLI-2024-006", assignedAgent: "Roberto Díaz", phone: "555-678-9012", email: "carlos@email.com" },
-  { id: "7", name: "Laura Torres", matricula: "CLI-2024-007", assignedAgent: "Ana Martínez", phone: "555-789-0123", email: "laura@email.com" },
-  { id: "8", name: "Miguel Ángel Rojas", matricula: "CLI-2024-008", assignedAgent: "Carlos Mendoza", phone: "555-890-1234", email: "miguel@email.com" },
-];
-
-const mockAppointments: Appointment[] = [
-  { id: "1", date: "2026-01-14", time: "10:00", client: "María García", clientId: "1", property: "Casa en Polanco", agent: "Carlos Mendoza", typeId: "1", duration: 60, notes: "" },
-  { id: "2", date: "2026-01-14", time: "14:00", client: "Juan López", clientId: "2", property: "Depto Roma Norte", agent: "Laura Sánchez", typeId: "2", duration: 45, notes: "" },
-  { id: "3", date: "2026-01-15", time: "11:00", client: "Ana Martínez", clientId: "3", property: "Penthouse Santa Fe", agent: "Roberto Díaz", typeId: "3", duration: 90, notes: "" },
-  { id: "4", date: "2026-01-16", time: "09:00", client: "Pedro Hernández", clientId: "4", property: "Casa en Polanco", agent: "Carlos Mendoza", typeId: "1", duration: 60, notes: "" },
-  { id: "5", date: "2026-01-17", time: "16:00", client: "Sofía Ruiz", clientId: "5", property: "Depto Roma Norte", agent: "Laura Sánchez", typeId: "4", duration: 30, notes: "" },
-  { id: "6", date: "2026-01-20", time: "10:00", client: "Carlos Mendez", clientId: "6", property: "Penthouse Santa Fe", agent: "Roberto Díaz", typeId: "2", duration: 45, notes: "" },
-];
-
-const agents = ["Carlos Mendoza", "Laura Sánchez", "Roberto Díaz", "Ana Martínez"];
-const properties = ["Casa en Polanco", "Depto Roma Norte", "Penthouse Santa Fe", "Casa en Coyoacán"];
+const agents: string[] = [];
+const properties: string[] = [];
 
 const MONTHS = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
 const WEEKDAYS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
@@ -130,8 +109,9 @@ const emptyFormData: FormData = {
 
 const CitasSection = () => {
   const isMobile = useIsMobile();
-  const [currentDate, setCurrentDate] = useState(new Date(2026, 0, 14));
-  const [appointments, setAppointments] = useState<Appointment[]>(mockAppointments);
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -165,11 +145,11 @@ const CitasSection = () => {
   const filteredClients = useMemo(() => {
     if (!clientSearch.trim()) return [];
     const searchLower = clientSearch.toLowerCase();
-    return mockClients.filter(c => 
-      c.name.toLowerCase().includes(searchLower) || 
+    return clients.filter(c =>
+      c.name.toLowerCase().includes(searchLower) ||
       c.matricula.toLowerCase().includes(searchLower)
     );
-  }, [clientSearch]);
+  }, [clientSearch, clients]);
 
   // Get unavailable time slots for a specific agent and date
   const getUnavailableSlots = useMemo(() => {
@@ -702,7 +682,8 @@ const CitasSection = () => {
     );
   };
 
-  const todayAppointments = appointments.filter(apt => apt.date === "2026-01-14");
+  const todayStr = new Date().toISOString().split("T")[0];
+  const todayAppointments = appointments.filter(apt => apt.date === todayStr);
 
   return (
     <div className="space-y-6">
@@ -750,7 +731,8 @@ const CitasSection = () => {
               }
 
               const dayAppointments = getAppointmentsForDay(day);
-              const isToday = day === 14 && month === 0 && year === 2026;
+              const now = new Date();
+              const isToday = day === now.getDate() && month === now.getMonth() && year === now.getFullYear();
 
               return (
                 <div

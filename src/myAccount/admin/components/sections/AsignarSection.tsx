@@ -27,10 +27,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-import property1 from "@/assets/property-1.jpg";
-import property2 from "@/assets/property-2.jpg";
-import property3 from "@/assets/property-3.jpg";
-
 interface Property {
   id: string;
   title: string;
@@ -50,25 +46,10 @@ interface Agent {
   status: "activo" | "inactivo";
 }
 
-const mockAgents: Agent[] = [
-  { id: "1", name: "Carlos Mendoza", avatar: "CM", properties: 3, status: "activo" },
-  { id: "2", name: "Laura Sánchez", avatar: "LS", properties: 2, status: "activo" },
-  { id: "3", name: "Roberto Díaz", avatar: "RD", properties: 4, status: "activo" },
-  { id: "4", name: "Ana Martínez", avatar: "AM", properties: 1, status: "activo" },
-];
-
-const initialProperties: Property[] = [
-  { id: "1", title: "Casa en Polanco", location: "Polanco, CDMX", price: "$12,500,000", image: property1, agent: "Carlos Mendoza", bedrooms: 4, bathrooms: 3 },
-  { id: "2", title: "Departamento Roma Norte", location: "Roma Norte, CDMX", price: "$4,800,000", image: property2, agent: null, bedrooms: 2, bathrooms: 2 },
-  { id: "3", title: "Penthouse Santa Fe", location: "Santa Fe, CDMX", price: "$18,900,000", image: property3, agent: "Laura Sánchez", bedrooms: 5, bathrooms: 4 },
-  { id: "4", title: "Casa en Coyoacán", location: "Coyoacán, CDMX", price: "$8,200,000", image: property1, agent: null, bedrooms: 3, bathrooms: 2 },
-  { id: "5", title: "Loft en Condesa", location: "Condesa, CDMX", price: "$6,500,000", image: property2, agent: null, bedrooms: 1, bathrooms: 1 },
-  { id: "6", title: "Casa en Pedregal", location: "Pedregal, CDMX", price: "$15,000,000", image: property3, agent: "Roberto Díaz", bedrooms: 5, bathrooms: 4 },
-];
-
 const AsignarSection = () => {
   const isMobile = useIsMobile();
-  const [properties, setProperties] = useState<Property[]>(initialProperties);
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [agents, setAgents] = useState<Agent[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [isTransferOpen, setIsTransferOpen] = useState(false);
@@ -148,7 +129,7 @@ const AsignarSection = () => {
                 <SelectValue placeholder="Asignar a..." />
               </SelectTrigger>
               <SelectContent>
-                {mockAgents.filter(a => a.status === "activo").map((agent) => (
+                {agents.filter(a => a.status === "activo").map((agent) => (
                   <SelectItem key={agent.id} value={agent.name}>
                     <div className="flex items-center gap-2">
                       <div className="w-6 h-6 rounded-full bg-champagne-gold text-white flex items-center justify-center text-xs">
@@ -165,7 +146,7 @@ const AsignarSection = () => {
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 min-w-0">
                 <div className="w-6 h-6 rounded-full bg-champagne-gold text-white flex items-center justify-center text-xs flex-shrink-0">
-                  {mockAgents.find(a => a.name === property.agent)?.avatar || "?"}
+                  {agents.find(a => a.name === property.agent)?.avatar || "?"}
                 </div>
                 <span className="text-xs md:text-sm text-midnight truncate">{property.agent}</span>
               </div>
@@ -223,7 +204,7 @@ const AsignarSection = () => {
         <div>
           <p className="text-sm font-medium text-midnight mb-3">Transferir a:</p>
           <div className="space-y-2">
-            {mockAgents
+            {agents
               .filter(a => a.name !== selectedProperty.agent && a.status === "activo")
               .map((agent) => (
                 <button
@@ -322,7 +303,7 @@ const AsignarSection = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {mockAgents.map((agent) => {
+            {agents.map((agent) => {
               const agentProperties = getAgentPropertyCount(agent.name);
               return (
                 <div 

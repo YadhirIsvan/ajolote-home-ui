@@ -1,9 +1,10 @@
 import { authApi } from "@/auth/api/auth.api";
+import type { AuthTokens } from "@/auth/types/auth.types";
 
 export interface VerifyOtpResponse {
   success: boolean;
-  accessToken?: string;
   message: string;
+  data?: AuthTokens;
 }
 
 const DEFAULT_RESPONSE: VerifyOtpResponse = {
@@ -17,7 +18,16 @@ export const verifyOtpAction = async (
 ): Promise<VerifyOtpResponse> => {
   try {
     const { data } = await authApi.verifyOtp(email, token);
-    return data as VerifyOtpResponse;
+    const authData = data as AuthTokens;
+
+    localStorage.setItem("access_token", authData.access);
+    localStorage.setItem("refresh_token", authData.refresh);
+
+    return {
+      success: true,
+      message: "Autenticación exitosa.",
+      data: authData,
+    };
   } catch {
     return DEFAULT_RESPONSE;
   }

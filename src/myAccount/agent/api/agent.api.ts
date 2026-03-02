@@ -1,15 +1,16 @@
-import axiosInstance from "@/shared/api/axios.instance";
+import { axiosInstance } from "@/shared/api/axios.instance";
 
 export const agentApi = {
-  getProperties: () =>
-    axiosInstance.get("/api/agent/properties"),
+  getDashboard: () => axiosInstance.get("/agent/dashboard"),
 
-  getAppointments: () =>
-    axiosInstance.get("/api/agent/appointments"),
+  getProperties: () => axiosInstance.get("/agent/properties"),
 
-  updateAppointmentStatus: (id: string, status: string) =>
-    axiosInstance.patch(`/api/agent/appointments/${id}`, { status }),
+  getPropertyLeads: (propertyId: number) =>
+    axiosInstance.get(`/agent/properties/${propertyId}/leads`),
 
-  getPropertyLeads: (propertyId: string) =>
-    axiosInstance.get(`/api/agent/properties/${propertyId}/leads`),
+  getAppointments: (params?: { status?: string; date?: string }) =>
+    axiosInstance.get("/agent/appointments", { params }),
+
+  updateAppointmentStatus: (id: number, status: string, notes?: string) =>
+    axiosInstance.patch(`/agent/appointments/${id}/status`, { status, notes }),
 };

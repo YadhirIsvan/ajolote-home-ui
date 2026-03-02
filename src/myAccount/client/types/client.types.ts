@@ -1,15 +1,20 @@
 export type ClientSubView = "dashboard" | "config" | "ventas" | "compras";
 
 export interface UserProfile {
-  Name: string;
-  PhoneMunber?: number;
-  PhoneNumber?: number;
-  Email: string;
-  City: string;
-  NewProperties: boolean;
-  PriceUpdates: boolean;
-  AppointmentReminders: boolean;
-  Offers: boolean;
+  id: number;
+  email: string;
+  first_name: string;
+  last_name: string;
+  phone: string;
+  avatar: string | null;
+  city: string;
+}
+
+export interface NotificationPreferences {
+  new_properties: boolean;
+  price_updates: boolean;
+  appointment_reminders: boolean;
+  offers: boolean;
 }
 
 export interface PropertySaleSummary {
@@ -17,28 +22,46 @@ export interface PropertySaleSummary {
   title: string;
   address: string;
   price: string;
+  image: string;
   status: string;
   views: number;
   interested: number;
   daysListed: number;
-  image: string;
-  trend: number;
+  trend: string;
   progressStep: number;
 }
 
-export interface PropertiesSaleResponse {
-  propertiesAmount?: number;
-  totalViews?: number;
-  interestedAmount?: number;
-  totalValue?: number;
-  properties?: PropertySaleSummary[];
+export interface SaleProcessAgent {
+  name: string;
+  phone: string;
+  email: string;
+}
+
+export interface SaleProcessStage {
+  name: string;
+  status: "completed" | "current" | "pending";
+  completed_at: string | null;
+}
+
+export interface SaleProcessHistoryEntry {
+  previous_status: string;
+  new_status: string;
+  changed_at: string;
+  notes: string;
 }
 
 export interface PropertySaleItem extends PropertySaleSummary {
-  type?: string;
-  sqm?: number;
-  bedrooms?: number;
-  bathrooms?: number;
+  agent?: SaleProcessAgent;
+  stages?: SaleProcessStage[];
+  history?: SaleProcessHistoryEntry[];
+}
+
+export interface PropertiesSaleResponse {
+  propertiesAmount: number;
+  totalViews: number;
+  interestedAmount: number;
+  totalValue: number;
+  properties: PropertySaleSummary[];
 }
 
 export interface PropertyBuySummary {
@@ -49,20 +72,23 @@ export interface PropertyBuySummary {
   image: string;
   status: string;
   agent_name: string;
-  overallProgress: string;
+  overallProgress: number;
   processStage: string;
-  fileNames: string[];
+  documents_count: number;
 }
 
 export interface PropertyFileItem {
+  id: number;
   name: string;
-  mimeType: string;
-  size: number;
+  file_url: string;
+  mime_type: string;
+  size_bytes: number;
+  document_stage: string;
 }
 
 export interface RecentActivityItem {
   name: string;
-  descripction: string;
+  description: string;
   time: number;
 }
 

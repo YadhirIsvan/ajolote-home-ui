@@ -12,8 +12,7 @@ import type { PropertyStatus } from "@/shared/components/custom/PropertyCard";
 export const BUY_PROPERTIES_QUERY_KEY = "buy-properties";
 
 const mapStateToStatus = (state: string): PropertyStatus => {
-  if (state === "preventa") return "preventa";
-  if (state === "usada") return "oportunidad";
+  if (state === "used") return "oportunidad";
   return "disponible";
 };
 

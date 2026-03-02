@@ -1,18 +1,39 @@
 import { clientApi } from "@/myAccount/client/api/client.api";
 import type { RecentActivityItem } from "@/myAccount/client/types/client.types";
 
-const DEFAULT_ACTIVITY: RecentActivityItem[] = [
-  { name: "Score Legal Generado", descripction: "Casa en Querétaro - Score: 98/100", time: 2 },
-  { name: "Crédito Pre-aprobado", descripction: "Monto: $8,500,000 MXN", time: 5 },
-  { name: "Propiedad Agregada", descripction: "Departamento en CDMX", time: 7 },
-];
+interface BackendActivityItem {
+  type: string;
+  description: string;
+  created_at: string;
+}
 
-export const getClientRecentActivityAction =
-  async (): Promise<RecentActivityItem[]> => {
-    try {
-      const { data } = await clientApi.getRecentActivity();
-      return Array.isArray(data) ? (data as RecentActivityItem[]) : DEFAULT_ACTIVITY;
-    } catch {
-      return DEFAULT_ACTIVITY;
-    }
-  };
+interface DashboardResponse {
+  recent_activity: BackendActivityItem[];
+}
+
+const hoursAgo = (isoDate: string): number =>
+  Math.max(
+    1,
+    Math.round((Date.now() - new Date(isoDate).getTime()) / 3_600_000)
+  );
+
+const humanizeType = (type: string): string =>
+  type
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+
+export const getClientRecentActivityAction = async (): Promise<
+  RecentActivityItem[]
+> => {
+  try {
+    const { data } = await clientApi.getDashboard();
+    const dashboard = data as DashboardResponse;
+    return (dashboard.recent_activity ?? []).map((item) => ({
+      name: humanizeType(item.type),
+      description: item.description,
+      time: hoursAgo(item.created_at),
+    }));
+  } catch {
+    return [];
+  }
+};

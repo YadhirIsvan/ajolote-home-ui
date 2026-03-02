@@ -17,15 +17,9 @@ interface AgentPropertyModalProps {
   property: AgentProperty | null;
 }
 
-const mockLeads: AgentLead[] = [
-  { id: "1", name: "María García", email: "maria@email.com", phone: "+52 55 1234 5678", stage: 4, lastContact: "Hace 2 días", interestLevel: "alta" },
-  { id: "2", name: "Carlos Rodríguez", email: "carlos@email.com", phone: "+52 55 8765 4321", stage: 2, lastContact: "Hace 1 semana", interestLevel: "media" },
-  { id: "3", name: "Ana Martínez", email: "ana@email.com", phone: "+52 55 1111 2222", stage: 6, lastContact: "Ayer", interestLevel: "alta" },
-];
-
 const AgentPropertyModal = ({ isOpen, onClose, property }: AgentPropertyModalProps) => {
   const [selectedLead, setSelectedLead] = useState<AgentLead | null>(null);
-  const [leads, setLeads] = useState<AgentLead[]>(mockLeads);
+  const [leads, setLeads] = useState<AgentLead[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const isMobile = useIsMobile();
 
@@ -43,7 +37,7 @@ const AgentPropertyModal = ({ isOpen, onClose, property }: AgentPropertyModalPro
     setIsDragging(false);
   };
 
-  const handleStageChange = (leadId: string, newStage: number, note: string) => {
+  const handleStageChange = (leadId: number, newStage: number, note: string) => {
     setLeads((prev) =>
       prev.map((lead) => (lead.id === leadId ? { ...lead, stage: newStage } : lead))
     );
@@ -212,36 +206,7 @@ const AgentPropertyModal = ({ isOpen, onClose, property }: AgentPropertyModalPro
 
                   <div className="space-y-3">
                     <h4 className="text-base font-semibold text-midnight">Documentos Subidos</h4>
-                    {[
-                      { name: "Escritura_Casa.pdf", date: "15 Ene 2024", size: "2.4 MB" },
-                      { name: "Avaluo_Certificado.pdf", date: "10 Ene 2024", size: "1.8 MB" },
-                      { name: "Fotos_Propiedad.zip", date: "08 Ene 2024", size: "15.2 MB" },
-                    ].map((doc, index) => (
-                      <Card key={index} className="border border-slate-100 shadow-sm">
-                        <CardContent className="p-4">
-                          <div className="flex items-center gap-3">
-                            <div className="p-3 bg-champagne-gold/10 rounded-xl flex-shrink-0">
-                              <FileText className="w-5 h-5 text-champagne-gold" />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="font-medium text-midnight text-sm truncate">
-                                {doc.name}
-                              </p>
-                              <p className="text-xs text-foreground/50 mt-0.5">
-                                {doc.date} • {doc.size}
-                              </p>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="flex-shrink-0 text-xs text-champagne-gold hover:text-champagne-gold-dark"
-                            >
-                              Descargar
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                    <p className="text-sm text-foreground/50 text-center py-4">Sin documentos subidos</p>
                   </div>
                 </div>
               </TabsContent>

@@ -1,44 +1,48 @@
 import { agentApi } from "@/myAccount/agent/api/agent.api";
 import type { AgentProperty } from "@/myAccount/agent/types/agent.types";
-import property1 from "@/assets/property-1.jpg";
-import property2 from "@/assets/property-2.jpg";
-import property3 from "@/assets/property-3.jpg";
 
-const DEFAULT_PROPERTIES: AgentProperty[] = [
-  {
-    id: "1",
-    title: "Casa en Polanco",
-    location: "Polanco, CDMX",
-    price: "$12,500,000",
-    image: property1,
-    leads: 5,
-    status: "Activa",
-  },
-  {
-    id: "2",
-    title: "Departamento en Roma Norte",
-    location: "Roma Norte, CDMX",
-    price: "$4,800,000",
-    image: property2,
-    leads: 3,
-    status: "Activa",
-  },
-  {
-    id: "3",
-    title: "Penthouse en Santa Fe",
-    location: "Santa Fe, CDMX",
-    price: "$18,900,000",
-    image: property3,
-    leads: 8,
-    status: "En negociación",
-  },
-];
+interface BackendAgentProperty {
+  id: number;
+  title: string;
+  address: string;
+  price: string;
+  property_type: string;
+  status: string;
+  image: string | null;
+  leads_count: number;
+  assigned_at: string;
+}
+
+interface BackendPaginatedResponse {
+  count: number;
+  results: BackendAgentProperty[];
+}
+
+const formatPrice = (raw: string): string => {
+  const num = parseFloat(raw);
+  return new Intl.NumberFormat("es-MX", {
+    style: "currency",
+    currency: "MXN",
+    maximumFractionDigits: 0,
+  }).format(num);
+};
+
+const mapItem = (item: BackendAgentProperty): AgentProperty => ({
+  id: item.id,
+  title: item.title,
+  location: item.address,
+  price: formatPrice(item.price),
+  image: item.image ?? "",
+  leads: item.leads_count,
+  status: item.status,
+});
 
 export const getAgentPropertiesAction = async (): Promise<AgentProperty[]> => {
   try {
     const { data } = await agentApi.getProperties();
-    return Array.isArray(data) ? (data as AgentProperty[]) : DEFAULT_PROPERTIES;
+    const raw = data as BackendPaginatedResponse;
+    return raw.results.map(mapItem);
   } catch {
-    return DEFAULT_PROPERTIES;
+    return [];
   }
 };

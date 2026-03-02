@@ -29,9 +29,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-import property1 from "@/assets/property-1.jpg";
-import property2 from "@/assets/property-2.jpg";
-
 interface ClientDocument {
   id: string;
   name: string;
@@ -69,44 +66,6 @@ const sellingStagesInfo = [
   { stage: "Publicación", duration: "1-2 días" },
 ];
 
-const mockClients: Client[] = [
-  {
-    id: "1",
-    name: "María García",
-    email: "maria@email.com",
-    phone: "+52 55 1234 5678",
-    avatar: "MG",
-    buyingProperties: [
-      { id: "b1", title: "Casa en Polanco", image: property1, stage: "Pre-Aprob", documents: [{ id: "d1", name: "INE.pdf", uploadedAt: "2026-01-10" }, { id: "d2", name: "Comprobante.pdf", uploadedAt: "2026-01-11" }] },
-    ],
-    sellingProperties: [
-      { id: "s1", title: "Depto Condesa", image: property2, stage: "Marketing", documents: [{ id: "d3", name: "Escrituras.pdf", uploadedAt: "2026-01-08" }] },
-    ],
-  },
-  {
-    id: "2",
-    name: "Juan López",
-    email: "juan@email.com",
-    phone: "+52 55 9876 5432",
-    avatar: "JL",
-    buyingProperties: [
-      { id: "b2", title: "Penthouse Santa Fe", image: property2, stage: "Visita", documents: [] },
-    ],
-    sellingProperties: [],
-  },
-  {
-    id: "3",
-    name: "Ana Martínez",
-    email: "ana@email.com",
-    phone: "+52 55 5555 1234",
-    avatar: "AM",
-    buyingProperties: [],
-    sellingProperties: [
-      { id: "s2", title: "Casa en Coyoacán", image: property1, stage: "Evaluación", documents: [{ id: "d4", name: "Escrituras.pdf", uploadedAt: "2026-01-05" }, { id: "d5", name: "Avalúo.pdf", uploadedAt: "2026-01-07" }] },
-    ],
-  },
-];
-
 const emptyClient: Omit<Client, "id" | "buyingProperties" | "sellingProperties" | "avatar"> = {
   name: "",
   email: "",
@@ -115,7 +74,7 @@ const emptyClient: Omit<Client, "id" | "buyingProperties" | "sellingProperties" 
 
 const ClientesSection = () => {
   const isMobile = useIsMobile();
-  const [clients, setClients] = useState<Client[]>(mockClients);
+  const [clients, setClients] = useState<Client[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);

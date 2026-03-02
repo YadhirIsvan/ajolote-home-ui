@@ -7,7 +7,7 @@ export const useClientConfig = () => {
     queryFn: getClientProfileAction,
   });
 
-  const phone = profile?.PhoneNumber ?? profile?.PhoneMunber ?? 0;
+  const phone = profile?.phone ?? "";
 
   return { profile, profileLoading, phone };
 };

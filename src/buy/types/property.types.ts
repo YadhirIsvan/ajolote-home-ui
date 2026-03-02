@@ -10,6 +10,11 @@ export interface BuyPropertyListItem {
   sqm: number;
   type: string;
   state: string;
+  days_listed: number;
+  interested: number;
+  views: number;
+  is_featured: boolean;
+  is_verified: boolean;
 }
 
 export interface PropertyDetailData {
@@ -28,7 +33,33 @@ export interface PropertyDetailData {
   video_img?: string;
   coordinates: { lat: number; lng: number };
   "nearby-places"?: { icon: string; label: string }[];
-  agent: { name: string; photo: string; phone: number; email: string };
+  agent: { name: string; photo: string; phone: string; email: string };
+}
+
+export interface AppointmentData {
+  date: string;
+  time: string;
+  name: string;
+  phone: string;
+  email: string;
+}
+
+export interface AppointmentResponse {
+  id: number;
+  matricula: string;
+  scheduled_date: string;
+  scheduled_time: string;
+  duration_minutes: number;
+  status: string;
+  property: { id: number; title: string };
+  agent: { name: string };
+}
+
+export interface AppointmentSlotsResponse {
+  date: string;
+  agent: { name: string };
+  available_slots: string[];
+  slot_duration_minutes: number;
 }
 
 export interface GetPropertiesParams {
@@ -36,6 +67,8 @@ export interface GetPropertiesParams {
   type?: string;
   state?: string;
   amenities?: string[];
+  price_min?: number;
+  price_max?: number;
   limit?: number;
   offset?: number;
 }

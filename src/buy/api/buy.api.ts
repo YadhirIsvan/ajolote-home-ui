@@ -1,10 +1,10 @@
-import axiosInstance from "@/shared/api/axios.instance";
-
-const buyApi = axiosInstance;
+import { axiosInstance } from "@/shared/api/axios.instance";
 
 export const ENDPOINTS = {
-  PROPERTIES: "/api/properties",
-  PROPERTY_DETAIL: (id: number) => `/api/properties/${id}/`,
+  PROPERTIES: "/public/properties",
+  PROPERTY_DETAIL: (id: number) => `/public/properties/${id}`,
+  SCHEDULE_APPOINTMENT: (id: number) => `/public/properties/${id}/appointment`,
+  APPOINTMENT_SLOTS: "/public/appointment/slots",
 } as const;
 
-export default buyApi;
+export const buyApi = axiosInstance;

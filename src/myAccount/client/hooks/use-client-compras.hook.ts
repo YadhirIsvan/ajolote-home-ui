@@ -14,8 +14,8 @@ const PROCESS_STEP_LABELS = [
   "Entrega de llaves",
 ];
 
-const buildStepsFromProgress = (progressStr: string): Step[] => {
-  const pct = parseInt(progressStr?.replace(/%/g, "") || "0", 10);
+const buildStepsFromProgress = (progress: number): Step[] => {
+  const pct = typeof progress === "number" ? progress : 0;
   return PROCESS_STEP_LABELS.map((label, i) => {
     const threshold = ((i + 1) / PROCESS_STEP_LABELS.length) * 100;
     const done = pct >= threshold;

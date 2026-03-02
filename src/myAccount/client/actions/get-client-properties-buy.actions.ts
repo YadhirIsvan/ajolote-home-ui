@@ -1,27 +1,41 @@
 import { clientApi } from "@/myAccount/client/api/client.api";
 import type { PropertyBuySummary } from "@/myAccount/client/types/client.types";
 
-const DEFAULT_COMPRAS: PropertyBuySummary[] = [
-  {
-    id: 1,
-    title: "Casa en Polanco",
-    address: "Col. Polanco, CDMX",
-    price: "$12,500,000",
-    image: "/placeholder.svg",
-    status: "En proceso",
-    agent_name: "María López",
-    overallProgress: "33%",
-    processStage: "Documentos verificados",
-    fileNames: [],
-  },
-];
+interface BackendPurchaseResult {
+  id: number;
+  status: string;
+  overall_progress: number;
+  process_stage: string;
+  documents_count: number;
+  property: { id: number; title: string; address: string; price: string; image: string };
+  agent: { name: string };
+}
+
+interface BackendPurchasesResponse {
+  count: number;
+  results: BackendPurchaseResult[];
+}
+
+const mapBuyItem = (item: BackendPurchaseResult): PropertyBuySummary => ({
+  id: item.id,
+  title: item.property.title,
+  address: item.property.address,
+  price: item.property.price,
+  image: item.property.image ?? "",
+  status: item.status,
+  agent_name: item.agent.name,
+  overallProgress: item.overall_progress,
+  processStage: item.process_stage,
+  documents_count: item.documents_count,
+});
 
 export const getClientPropertiesBuyAction =
   async (): Promise<PropertyBuySummary[]> => {
     try {
       const { data } = await clientApi.getPropertiesBuys();
-      return Array.isArray(data) ? (data as PropertyBuySummary[]) : DEFAULT_COMPRAS;
+      const raw = data as BackendPurchasesResponse;
+      return raw.results.map(mapBuyItem);
     } catch {
-      return DEFAULT_COMPRAS;
+      return [];
     }
   };

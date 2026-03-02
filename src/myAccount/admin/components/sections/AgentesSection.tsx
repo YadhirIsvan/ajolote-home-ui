@@ -65,77 +65,6 @@ const createDefaultSchedule = (): AgentSchedule => {
   return schedule;
 };
 
-const mockAgents: Agent[] = [
-  {
-    id: "1",
-    name: "Carlos Mendoza",
-    email: "carlos@ajolote.mx",
-    phone: "+52 55 1234 5678",
-    avatar: "CM",
-    properties: 8,
-    sales: 5,
-    status: "activo",
-    schedule: {
-      Lunes: [
-        { id: "1a", start: "09:00", end: "14:00", type: "work" }, 
-        { id: "1b", start: "14:00", end: "15:00", type: "lunch" }, 
-        { id: "1c", start: "15:00", end: "18:00", type: "work" }
-      ],
-      Martes: [
-        { id: "2a", start: "09:00", end: "14:00", type: "work" }, 
-        { id: "2b", start: "14:00", end: "15:00", type: "lunch" }, 
-        { id: "2c", start: "15:00", end: "18:00", type: "work" }
-      ],
-      Miércoles: [
-        { id: "3a", start: "09:00", end: "14:00", type: "work" }, 
-        { id: "3b", start: "14:00", end: "15:00", type: "lunch" }, 
-        { id: "3c", start: "15:00", end: "18:00", type: "work" }
-      ],
-      Jueves: [
-        { id: "4a", start: "09:00", end: "14:00", type: "work" }, 
-        { id: "4b", start: "14:00", end: "15:00", type: "lunch" }, 
-        { id: "4c", start: "15:00", end: "18:00", type: "work" }
-      ],
-      Viernes: [
-        { id: "5a", start: "09:00", end: "14:00", type: "work" }, 
-        { id: "5b", start: "14:00", end: "15:00", type: "lunch" }, 
-        { id: "5c", start: "15:00", end: "17:00", type: "work" }
-      ],
-      Sábado: [{ id: "6a", start: "10:00", end: "14:00", type: "work" }],
-      Domingo: [],
-    },
-  },
-  {
-    id: "2",
-    name: "Laura Sánchez",
-    email: "laura@ajolote.mx",
-    phone: "+52 55 9876 5432",
-    avatar: "LS",
-    properties: 5,
-    sales: 3,
-    status: "activo",
-    schedule: {
-      Lunes: [{ id: "7a", start: "10:00", end: "19:00", type: "work" }],
-      Martes: [{ id: "8a", start: "10:00", end: "19:00", type: "work" }],
-      Miércoles: [{ id: "9a", start: "10:00", end: "19:00", type: "work" }],
-      Jueves: [{ id: "10a", start: "10:00", end: "19:00", type: "work" }],
-      Viernes: [{ id: "11a", start: "10:00", end: "19:00", type: "work" }],
-      Sábado: [],
-      Domingo: [],
-    },
-  },
-  {
-    id: "3",
-    name: "Roberto Díaz",
-    email: "roberto@ajolote.mx",
-    phone: "+52 55 5555 1234",
-    avatar: "RD",
-    properties: 6,
-    sales: 4,
-    status: "activo",
-    schedule: createDefaultSchedule(),
-  },
-];
 
 const emptyAgent: Omit<Agent, "id"> = {
   name: "",
@@ -150,7 +79,7 @@ const emptyAgent: Omit<Agent, "id"> = {
 
 const AgentesSection = () => {
   const isMobile = useIsMobile();
-  const [agents, setAgents] = useState<Agent[]>(mockAgents);
+  const [agents, setAgents] = useState<Agent[]>([]);
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [isSchedulerOpen, setIsSchedulerOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);

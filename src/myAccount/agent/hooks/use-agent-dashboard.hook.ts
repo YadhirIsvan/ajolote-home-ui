@@ -26,7 +26,7 @@ export const useAgentDashboard = () => {
     setIsPropertyModalOpen(true);
   };
 
-  const handleStatusChange = (id: string, newStatus: AgentAppointment["status"]) => {
+  const handleStatusChange = (id: number, newStatus: AgentAppointment["status"]) => {
     const base = localAppointments ?? appointmentsQuery.data ?? [];
     setLocalAppointments(
       base.map((apt) => (apt.id === id ? { ...apt, status: newStatus } : apt))

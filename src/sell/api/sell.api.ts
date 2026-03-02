@@ -1,9 +1,7 @@
-import axiosInstance from "@/shared/api/axios.instance";
-
-const sellApi = axiosInstance;
+import { axiosInstance } from "@/shared/api/axios.instance";
 
 export const ENDPOINTS = {
-  SUBMIT_LEAD: "/api/seller-leads/",
+  SUBMIT_LEAD: "/public/seller-leads",
 } as const;
 
-export default sellApi;
+export const sellApi = axiosInstance;
