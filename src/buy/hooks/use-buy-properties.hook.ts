@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getPropertiesAction } from "@/buy/actions/get-properties.actions";
+import { getCitiesAction, type CityItem } from "@/buy/actions/get-cities.actions";
 import {
   DEFAULT_BUY_FILTERS,
   PRICE_RANGE_LIMITS,
@@ -26,6 +27,15 @@ export const formatPrice = (value: number): string =>
 export const useBuyProperties = () => {
   const [filters, setFilters] = useState<BuyFilters>(DEFAULT_BUY_FILTERS);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+  // Fetch cities for zone filter
+  const { data: citiesData } = useQuery({
+    queryKey: ["buy-cities"],
+    queryFn: getCitiesAction,
+    staleTime: 1000 * 60 * 60, // Cache for 1 hour
+  });
+
+  const cities: CityItem[] = citiesData ?? [];
 
   const { data, isLoading, isError } = useQuery({
     queryKey: [BUY_PROPERTIES_QUERY_KEY, {
@@ -92,5 +102,6 @@ export const useBuyProperties = () => {
     setState,
     setType,
     mapStateToStatus,
+    cities,
   };
 };

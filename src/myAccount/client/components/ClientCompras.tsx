@@ -33,7 +33,7 @@ const PropertyDetailCard = ({
 }: PropertyDetailCardProps) => {
   const docStep = steps.find((s) => s.label === "Documentos verificados");
   const showUploadAction = docStep?.allowUpload;
-  const progressNum = parseInt(prop.overallProgress?.replace(/%/g, "") || "0", 10);
+  const progressNum = Math.min(prop.overallProgress || 0, 100);
 
   return (
     <Card className="border border-border/20 bg-white rounded-2xl overflow-hidden">
@@ -301,7 +301,7 @@ const ClientCompras = ({ onBack }: ClientComprasProps) => {
                       <div className="flex-1 h-2 bg-muted/30 rounded-full overflow-hidden">
                         <div
                           className="h-full bg-champagne-gold rounded-full"
-                          style={{ width: prop.overallProgress || "0%" }}
+                          style={{ width: `${Math.min(prop.overallProgress || 0, 100)}%` }}
                         />
                       </div>
                       <span className="text-xs font-medium">{prop.overallProgress}</span>

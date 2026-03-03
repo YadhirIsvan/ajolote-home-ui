@@ -5,6 +5,7 @@ export const ENDPOINTS = {
   PROPERTY_DETAIL: (id: number) => `/public/properties/${id}`,
   SCHEDULE_APPOINTMENT: (id: number) => `/public/properties/${id}/appointment`,
   APPOINTMENT_SLOTS: "/public/appointment/slots",
+  CITIES: "/catalogs/cities",
 } as const;
 
 export const buyApi = axiosInstance;

@@ -8,6 +8,13 @@ export interface ScheduleAppointmentResponse {
 }
 
 const convertTo24h = (timeStr: string): string => {
+  // If already in 24h format (HH:MM), return as-is
+  if (/^\d{1,2}:\d{2}$/.test(timeStr)) {
+    const [hours, minutes] = timeStr.split(":");
+    return `${String(parseInt(hours, 10)).padStart(2, "0")}:${minutes}`;
+  }
+
+  // If in 12h format (H:MM AM/PM), convert to 24h
   const [time, period] = timeStr.split(" ");
   const [hoursStr, minutes] = time.split(":");
   let hours = parseInt(hoursStr, 10);

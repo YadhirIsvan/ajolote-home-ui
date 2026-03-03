@@ -21,6 +21,7 @@ const BuyPage = () => {
     setState,
     setType,
     mapStateToStatus,
+    cities,
   } = useBuyProperties();
 
   return (
@@ -46,6 +47,7 @@ const BuyPage = () => {
                 <h3 className="font-semibold text-primary mb-4">Filtros</h3>
                 <PropertyFilters
                   filters={filters}
+                  cities={cities}
                   onZoneChange={setZone}
                   onTypeChange={setType}
                   onStateChange={setState}

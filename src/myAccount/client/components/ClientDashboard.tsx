@@ -100,7 +100,7 @@ const ClientDashboard = ({ onNavigateVentas, onNavigateCompras }: ClientDashboar
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-midnight text-sm">{item.name}</p>
-                      <p className="text-xs text-foreground/50 truncate">{item.descripction}</p>
+                      <p className="text-xs text-foreground/50 truncate">{item.description}</p>
                     </div>
                     <span className="text-xs text-foreground/40 whitespace-nowrap">
                       {item.time === 1
@@ -183,10 +183,7 @@ const ClientDashboard = ({ onNavigateVentas, onNavigateCompras }: ClientDashboar
                   <p className="text-sm text-foreground/50">Cargando...</p>
                 ) : comprasList.length ? (
                   (comprasList as PropertyBuySummary[]).slice(0, 2).map((p) => {
-                    const progressNum = parseInt(
-                      p.overallProgress?.replace(/%/g, "") || "0",
-                      10
-                    );
+                    const progressNum = Math.min(p.overallProgress || 0, 100);
                     return (
                       <div key={p.id} className="p-3 bg-muted/20 rounded-lg">
                         <div className="flex items-center justify-between mb-2">

@@ -3,9 +3,11 @@ import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getPropertyDetailAction } from "@/buy/actions/get-property-detail.actions";
 import { scheduleAppointmentAction } from "@/buy/actions/schedule-appointment.actions";
-import type { AppointmentResponse } from "@/buy/types/property.types";
+import { getAppointmentSlotsAction } from "@/buy/actions/get-appointment-slots.actions";
+import type { AppointmentResponse, AppointmentSlot } from "@/buy/types/property.types";
 
 export const PROPERTY_DETAIL_QUERY_KEY = "buy-property-detail";
+export const APPOINTMENT_SLOTS_QUERY_KEY = "buy-appointment-slots";
 
 export const usePropertyDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -15,11 +17,16 @@ export const usePropertyDetail = () => {
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showVideoModal, setShowVideoModal] = useState(false);
+  const [showCallConfirmModal, setShowCallConfirmModal] = useState(false);
   const [successData, setSuccessData] = useState<AppointmentResponse | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [isScheduling, setIsScheduling] = useState(false);
   const [scheduleError, setScheduleError] = useState<string | null>(null);
+  const [availableSlots, setAvailableSlots] = useState<AppointmentSlot[]>([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
+  const [agentPhoneToCall, setAgentPhoneToCall] = useState<string>("");
 
   const { data, isLoading, isError } = useQuery({
     queryKey: [PROPERTY_DETAIL_QUERY_KEY, numId],
@@ -27,6 +34,27 @@ export const usePropertyDetail = () => {
     enabled: !isNaN(numId),
     staleTime: 1000 * 60 * 10,
   });
+
+  // Fetch appointment slots when date changes
+  const handleDateSelect = async (date: Date) => {
+    setSelectedDate(date);
+    setSelectedTime(null);
+    setSlotsLoading(true);
+
+    try {
+      const dateStr = date.toISOString().split("T")[0];
+      const result = await getAppointmentSlotsAction(numId, dateStr);
+      if (result.success && result.data) {
+        setAvailableSlots(result.data.available_slots || []);
+      } else {
+        setAvailableSlots([]);
+      }
+    } catch {
+      setAvailableSlots([]);
+    } finally {
+      setSlotsLoading(false);
+    }
+  };
 
   const property = data?.data ?? null;
 
@@ -55,6 +83,20 @@ export const usePropertyDetail = () => {
   const handleAuthSuccess = () => {
     setShowAuthModal(false);
     setShowScheduleModal(true);
+  };
+
+  // Maneja clic en botón de llamada - muestra confirmación
+  const handleCallClick = (phoneNumber: string) => {
+    setAgentPhoneToCall(phoneNumber);
+    setShowCallConfirmModal(true);
+  };
+
+  // Confirma la llamada y redirecciona a tel:
+  const handleConfirmCall = () => {
+    if (agentPhoneToCall) {
+      window.location.href = `tel:${agentPhoneToCall}`;
+      setShowCallConfirmModal(false);
+    }
   };
 
   // Bug 2: Ahora sí llama a la API para guardar la cita
@@ -107,11 +149,18 @@ export const usePropertyDetail = () => {
     setShowAuthModal,
     showSuccessModal,
     setShowSuccessModal,
+    showVideoModal,
+    setShowVideoModal,
+    showCallConfirmModal,
+    setShowCallConfirmModal,
     successData,
     selectedDate,
     setSelectedDate,
+    handleDateSelect,
     selectedTime,
     setSelectedTime,
+    availableSlots,
+    slotsLoading,
     truncatedDescription,
     displayImages,
     nearbyPOIs,
@@ -119,6 +168,8 @@ export const usePropertyDetail = () => {
     handleScheduleClick,
     handleAuthSuccess,
     handleConfirmAppointment,
+    handleCallClick,
+    handleConfirmCall,
     isScheduling,
     scheduleError,
   };

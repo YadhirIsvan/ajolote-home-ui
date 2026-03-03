@@ -62,6 +62,8 @@ export interface AppointmentSlotsResponse {
   slot_duration_minutes: number;
 }
 
+export type AppointmentSlot = string;
+
 export interface GetPropertiesParams {
   zone?: string;
   type?: string;

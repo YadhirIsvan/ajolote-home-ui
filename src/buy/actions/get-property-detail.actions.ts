@@ -75,7 +75,10 @@ const mapDetail = (item: BackendPropertyDetail): PropertyDetailData => ({
     .map((img) => img.image_url),
   video_id: item.video_id,
   video_img: item.video_thumbnail,
-  coordinates: item.coordinates,
+  coordinates: item.coordinates || {
+    lat: parseFloat(item.latitude) || 0,
+    lng: parseFloat(item.longitude) || 0,
+  },
   "nearby-places": item.nearby_places.map((place) => ({
     icon: place.place_type,
     label: `${place.name} - ${parseFloat(place.distance_km).toFixed(1)} km`,

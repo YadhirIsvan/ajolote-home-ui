@@ -4,17 +4,18 @@ import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { X } from "lucide-react";
 import {
-  BUY_ZONES,
   PROPERTY_TYPES,
   PROPERTY_STATES,
   AMENITY_OPTIONS,
   PRICE_RANGE_LIMITS,
   type BuyFilters,
 } from "@/buy/types/property.types";
+import type { CityItem } from "@/buy/actions/get-cities.actions";
 import { formatPrice } from "@/buy/hooks/use-buy-properties.hook";
 
 interface PropertyFiltersProps {
   filters: BuyFilters;
+  cities: CityItem[];
   onZoneChange: (zone: string) => void;
   onTypeChange: (type: string) => void;
   onStateChange: (state: string) => void;
@@ -25,6 +26,7 @@ interface PropertyFiltersProps {
 
 const PropertyFilters = ({
   filters,
+  cities,
   onZoneChange,
   onTypeChange,
   onStateChange,
@@ -41,9 +43,12 @@ const PropertyFilters = ({
           <SelectValue placeholder="Selecciona tu Zona" />
         </SelectTrigger>
         <SelectContent className="bg-card border-border z-50">
-          {BUY_ZONES.map((zone) => (
-            <SelectItem key={zone} value={zone} className="py-3 cursor-pointer">
-              {zone}
+          <SelectItem value="Todas las zonas" className="py-3 cursor-pointer">
+            Todas las zonas
+          </SelectItem>
+          {cities.map((city) => (
+            <SelectItem key={city.id} value={city.name} className="py-3 cursor-pointer">
+              {city.name}
             </SelectItem>
           ))}
         </SelectContent>

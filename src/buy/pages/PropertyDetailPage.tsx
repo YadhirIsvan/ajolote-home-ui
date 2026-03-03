@@ -6,8 +6,9 @@ import { Calendar } from "@/components/ui/calendar";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import {
   ArrowLeft, Share2, MapPin, BedDouble, Bath, Maximize,
-  CheckCircle2, Play, Phone, Mail, ChevronDown, ChevronUp,
+  CheckCircle2, Play, Phone, ChevronDown, ChevronUp,
   GraduationCap, ShoppingBag, Hospital, Train, Loader2,
+  MessageCircle,
 } from "lucide-react";
 import { usePropertyDetail } from "@/buy/hooks/use-property-detail.hook";
 import { TIME_SLOTS } from "@/buy/types/property.types";
@@ -23,6 +24,43 @@ const getPOIIcon = (iconType: string) => {
   }
 };
 
+const extractYouTubeId = (input: string | undefined): string | null => {
+  if (!input) return null;
+
+  // If it's already a short ID format (11 chars of alphanumeric, dash, underscore)
+  if (/^[a-zA-Z0-9_-]{11}$/.test(input)) {
+    return input;
+  }
+
+  // Try to extract from various YouTube URL formats
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/v\/([a-zA-Z0-9_-]{11})/,
+  ];
+
+  for (const pattern of patterns) {
+    const match = input.match(pattern);
+    if (match?.[1]) {
+      return match[1];
+    }
+  }
+
+  // If no pattern matches but it looks like a URL, try one more time
+  try {
+    const url = new URL(input);
+    const videoId = url.searchParams.get('v');
+    if (videoId && /^[a-zA-Z0-9_-]{11}$/.test(videoId)) {
+      return videoId;
+    }
+  } catch {
+    // Not a valid URL, return input as-is and let YouTube handle the error
+  }
+
+  // Return as-is and let YouTube give an error message
+  return input;
+};
+
 const PropertyDetailPage = () => {
   const {
     property,
@@ -36,11 +74,18 @@ const PropertyDetailPage = () => {
     setShowAuthModal,
     showSuccessModal,
     setShowSuccessModal,
+    showVideoModal,
+    setShowVideoModal,
+    showCallConfirmModal,
+    setShowCallConfirmModal,
     successData,
     selectedDate,
     setSelectedDate,
+    handleDateSelect,
     selectedTime,
     setSelectedTime,
+    availableSlots,
+    slotsLoading,
     truncatedDescription,
     displayImages,
     nearbyPOIs,
@@ -48,6 +93,8 @@ const PropertyDetailPage = () => {
     handleScheduleClick,
     handleAuthSuccess,
     handleConfirmAppointment,
+    handleCallClick,
+    handleConfirmCall,
     isScheduling,
     scheduleError,
   } = usePropertyDetail();
@@ -168,7 +215,10 @@ const PropertyDetailPage = () => {
             <div className="aspect-video bg-primary/5 rounded-2xl relative overflow-hidden shadow-medium">
               <img src={property.images[0]} alt="Video thumbnail" className="w-full h-full object-cover" />
               <div className="absolute inset-0 flex items-center justify-center bg-primary/20">
-                <button className="w-16 h-16 bg-champagne rounded-full flex items-center justify-center shadow-gold transition-transform hover:scale-110">
+                <button
+                  onClick={() => setShowVideoModal(true)}
+                  className="w-16 h-16 bg-champagne rounded-full flex items-center justify-center shadow-gold transition-transform hover:scale-110"
+                >
                   <Play className="w-7 h-7 text-white ml-1" fill="white" />
                 </button>
               </div>
@@ -230,13 +280,25 @@ const PropertyDetailPage = () => {
                 </div>
               </div>
               <div className="flex gap-3">
-                <Button variant="outline" className="flex-1 border-primary text-primary hover:bg-primary hover:text-white">
-                  <Mail className="w-4 h-4 mr-2" />
-                  Email
-                </Button>
-                <Button className="flex-1 bg-[#25D366] hover:bg-[#20BD5A] text-white">
-                  <Phone className="w-4 h-4 mr-2" />
+                <Button
+                  variant="outline"
+                  className="flex-1 border-primary text-primary hover:bg-primary hover:text-white"
+                  onClick={() => {
+                    const phone = property.agent.phone.replace(/\D/g, '');
+                    const message = `Hola, me interesa la propiedad:\n\n📍 ${property.title}\n💰 ${property.price} MXN\n📌 ${property.address}\n\n🛏️ ${property.beds} Recámaras | 🚿 ${property.baths} Baños | 📐 ${property.sqm}m²\n\n¿Puedes brindarme más información?`;
+                    const encodedMessage = encodeURIComponent(message);
+                    window.open(`https://wa.me/${phone}?text=${encodedMessage}`, '_blank');
+                  }}
+                >
+                  <MessageCircle className="w-4 h-4 mr-2" />
                   WhatsApp
+                </Button>
+                <Button
+                  className="flex-1 bg-[#25D366] hover:bg-[#20BD5A] text-white"
+                  onClick={() => handleCallClick(property.agent.phone)}
+                >
+                  <Phone className="w-4 h-4 mr-2" />
+                  Llamar
                 </Button>
               </div>
             </Card>
@@ -319,7 +381,10 @@ const PropertyDetailPage = () => {
                     <div className="aspect-video bg-primary/5 rounded-2xl relative overflow-hidden shadow-medium">
                       <img src={property.video_img || displayImages[0]} alt="Video thumbnail" className="w-full h-full object-cover" />
                       <div className="absolute inset-0 flex items-center justify-center bg-primary/20">
-                        <button className="w-20 h-20 bg-champagne rounded-full flex items-center justify-center shadow-gold transition-transform hover:scale-110">
+                        <button
+                          onClick={() => setShowVideoModal(true)}
+                          className="w-20 h-20 bg-champagne rounded-full flex items-center justify-center shadow-gold transition-transform hover:scale-110"
+                        >
                           <Play className="w-9 h-9 text-white ml-1" fill="white" />
                         </button>
                       </div>
@@ -371,10 +436,24 @@ const PropertyDetailPage = () => {
                         </div>
                       </div>
                       <div className="flex gap-2">
-                        <Button variant="outline" size="sm" className="flex-1 border-primary text-primary hover:bg-primary hover:text-white">
-                          <Mail className="w-4 h-4" />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1 border-primary text-primary hover:bg-primary hover:text-white"
+                          onClick={() => {
+                            const phone = property.agent.phone.replace(/\D/g, '');
+                            const message = `Hola, me interesa la propiedad:\n\n📍 ${property.title}\n💰 ${property.price} MXN\n📌 ${property.address}\n\n🛏️ ${property.beds} Recámaras | 🚿 ${property.baths} Baños | 📐 ${property.sqm}m²\n\n¿Puedes brindarme más información?`;
+                            const encodedMessage = encodeURIComponent(message);
+                            window.open(`https://wa.me/${phone}?text=${encodedMessage}`, '_blank');
+                          }}
+                        >
+                          <MessageCircle className="w-4 h-4" />
                         </Button>
-                        <Button size="sm" className="flex-1 bg-[#25D366] hover:bg-[#20BD5A] text-white">
+                        <Button
+                          size="sm"
+                          className="flex-1 bg-[#25D366] hover:bg-[#20BD5A] text-white"
+                          onClick={() => handleCallClick(property.agent.phone)}
+                        >
                           <Phone className="w-4 h-4" />
                         </Button>
                       </div>
@@ -461,28 +540,42 @@ const PropertyDetailPage = () => {
               <Calendar
                 mode="single"
                 selected={selectedDate}
-                onSelect={setSelectedDate}
+                onSelect={handleDateSelect}
                 disabled={(date) => date < new Date()}
                 className="rounded-xl border border-border"
               />
             </div>
             <div>
               <p className="text-sm font-medium text-primary mb-3">Selecciona un horario</p>
-              <div className="grid grid-cols-3 gap-2">
-                {TIME_SLOTS.map((time) => (
-                  <button
-                    key={time}
-                    onClick={() => setSelectedTime(time)}
-                    className={`py-2.5 px-3 rounded-xl text-sm font-medium transition-all min-h-[44px] ${
-                      selectedTime === time
-                        ? "bg-champagne text-white shadow-gold"
-                        : "bg-muted text-primary hover:bg-champagne/10"
-                    }`}
-                  >
-                    {time}
-                  </button>
-                ))}
-              </div>
+              {slotsLoading ? (
+                <div className="text-center py-4 text-sm text-foreground/60">
+                  Cargando horarios disponibles...
+                </div>
+              ) : availableSlots.length > 0 ? (
+                <div className="grid grid-cols-3 gap-2">
+                  {availableSlots.map((slot) => (
+                    <button
+                      key={slot}
+                      onClick={() => setSelectedTime(slot)}
+                      className={`py-2.5 px-3 rounded-xl text-sm font-medium transition-all min-h-[44px] ${
+                        selectedTime === slot
+                          ? "bg-champagne text-white shadow-gold"
+                          : "bg-muted text-primary hover:bg-champagne/10"
+                      }`}
+                    >
+                      {slot}
+                    </button>
+                  ))}
+                </div>
+              ) : selectedDate ? (
+                <div className="text-center py-4 text-sm text-foreground/60">
+                  No hay horarios disponibles para esta fecha. Por favor selecciona otra.
+                </div>
+              ) : (
+                <div className="text-center py-4 text-sm text-foreground/60">
+                  Selecciona una fecha para ver horarios disponibles
+                </div>
+              )}
             </div>
             {scheduleError && (
               <p className="text-sm text-destructive text-center">{scheduleError}</p>
@@ -492,7 +585,7 @@ const PropertyDetailPage = () => {
               size="lg"
               className="w-full"
               onClick={handleConfirmAppointment}
-              disabled={!selectedDate || !selectedTime || isScheduling}
+              disabled={!selectedDate || !selectedTime || isScheduling || slotsLoading}
             >
               {isScheduling ? (
                 <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Agendando...</>
@@ -500,6 +593,62 @@ const PropertyDetailPage = () => {
                 "Confirmar Cita"
               )}
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Video Modal */}
+      <Dialog open={showVideoModal} onOpenChange={setShowVideoModal}>
+        <DialogContent className="max-w-2xl rounded-2xl bg-background">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-primary text-center">
+              Recorrido Virtual
+            </DialogTitle>
+          </DialogHeader>
+          <div className="w-full aspect-video">
+            <iframe
+              width="100%"
+              height="100%"
+              src={`https://www.youtube.com/embed/${extractYouTubeId(property.video_id)}?autoplay=1`}
+              title="Recorrido virtual de la propiedad"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              className="rounded-lg"
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Call Confirmation Modal */}
+      <Dialog open={showCallConfirmModal} onOpenChange={setShowCallConfirmModal}>
+        <DialogContent className="sm:max-w-sm rounded-2xl bg-background text-center">
+          <DialogHeader>
+            <div className="flex justify-center mb-3">
+              <Phone className="w-12 h-12 text-champagne" />
+            </div>
+            <DialogTitle className="text-xl font-bold text-primary">
+              Llamar al Agente
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2 pb-2">
+            <p className="text-sm text-muted-foreground">
+              ¿Deseas llamar al agente al número {property.agent.phone}?
+            </p>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setShowCallConfirmModal(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                className="flex-1 bg-[#25D366] hover:bg-[#20BD5A] text-white"
+                onClick={handleConfirmCall}
+              >
+                Llamar
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
