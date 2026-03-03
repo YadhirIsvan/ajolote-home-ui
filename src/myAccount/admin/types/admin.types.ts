@@ -45,6 +45,53 @@ export interface AdminProperty {
   created_at: string;
 }
 
+export interface AdminPropertyImage {
+  id: number;
+  image_url: string;
+  is_cover: boolean;
+  sort_order: number;
+}
+
+export interface AdminPropertyDetail extends AdminProperty {
+  description: string;
+  property_condition: string;
+  bedrooms: number;
+  bathrooms: number;
+  parking_spaces: number;
+  construction_sqm: string;
+  land_sqm: string;
+  address_street: string;
+  address_number: string;
+  address_neighborhood: string;
+  address_zip: string;
+  city: { id: number; name: string; state_id: number } | null;
+  zone: string;
+  video_id: string;
+  latitude: string;
+  longitude: string;
+  images: AdminPropertyImage[];
+  amenities: { id: number; name: string; icon: string }[];
+}
+
+export interface CatalogState {
+  id: number;
+  name: string;
+  code: string;
+  country_id: number;
+}
+
+export interface CatalogCity {
+  id: number;
+  name: string;
+  state_id: number;
+}
+
+export interface CatalogAmenity {
+  id: number;
+  name: string;
+  icon: string;
+}
+
 // ─── Agentes ─────────────────────────────────────────────────────────────────
 export interface AdminAgent {
   id: number;
@@ -94,6 +141,13 @@ export interface AgentSchedule {
 }
 
 // ─── Citas ───────────────────────────────────────────────────────────────────
+export type AppointmentType =
+  | "primera_visita"
+  | "seguimiento"
+  | "cierre_contrato"
+  | "entrega_llaves"
+  | "avaluo";
+
 export interface AdminAppointment {
   id: number;
   matricula: string;
@@ -101,6 +155,7 @@ export interface AdminAppointment {
   scheduled_time: string;
   duration_minutes: number;
   status: string;
+  appointment_type: AppointmentType;
   client_name: string;
   client_email: string;
   client_phone: string;
@@ -116,6 +171,7 @@ export interface AdminAssignmentProperty {
 }
 
 export interface AdminAssignmentAgent {
+  id: number;
   membership_id: number;
   name: string;
   is_visible: boolean;
@@ -155,14 +211,15 @@ export type PurchaseProcessStatus =
   | "credito"
   | "docs_finales"
   | "escrituras"
-  | "cerrado";
+  | "cerrado"
+  | "cancelado";
 
 export interface AdminPurchaseProcess {
   id: number;
   status: PurchaseProcessStatus;
   overall_progress: number;
   client: { id: number; name: string; avatar: string | null };
-  property: { id: number; title: string; image: string | null };
+  property: { id: number; title: string; image: string | null; price: string };
   agent: { id: number; name: string };
   created_at: string;
   updated_at: string;
@@ -176,7 +233,8 @@ export type SaleProcessStatus =
   | "presentacion"
   | "firma_contrato"
   | "marketing"
-  | "publicacion";
+  | "publicacion"
+  | "cancelado";
 
 export interface AdminSaleProcess {
   id: number;

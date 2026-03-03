@@ -16,6 +16,7 @@ const SHOW_EMPTY_APPOINTMENTS = false;
 
 const AgentDashboard = ({ onLogout }: AgentDashboardProps) => {
   const {
+    dashboard,
     properties,
     appointments,
     selectedProperty,
@@ -34,8 +35,8 @@ const AgentDashboard = ({ onLogout }: AgentDashboardProps) => {
             <Briefcase className="w-6 h-6 text-champagne-gold" />
           </div>
           <div>
-            <h2 className="font-bold text-midnight">Alejandro Torres</h2>
-            <p className="text-sm text-foreground/60">Agente Premium</p>
+            <h2 className="font-bold text-midnight">{dashboard?.agent.name ?? "Agente"}</h2>
+            <p className="text-sm text-foreground/60">{dashboard?.agent.zone ?? "Agente"}</p>
           </div>
         </div>
       </div>
@@ -44,9 +45,9 @@ const AgentDashboard = ({ onLogout }: AgentDashboardProps) => {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         {[
           { label: "Propiedades", value: String(properties.length), icon: Home },
-          { label: "Leads Activos", value: "16", icon: Users },
-          { label: "Citas Hoy", value: "2", icon: Calendar },
-          { label: "Ventas Mes", value: "1", icon: CheckCircle },
+          { label: "Leads Activos", value: String(dashboard?.stats.active_leads ?? 0), icon: Users },
+          { label: "Citas Hoy", value: String(dashboard?.stats.today_appointments ?? 0), icon: Calendar },
+          { label: "Ventas Mes", value: String(dashboard?.stats.month_sales ?? 0), icon: CheckCircle },
         ].map((stat, index) => (
           <Card key={index} className="border-border/50 bg-white">
             <CardContent className="p-3 md:p-4 flex items-center gap-3 md:gap-4">

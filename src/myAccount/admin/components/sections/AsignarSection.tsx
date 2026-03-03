@@ -1,142 +1,292 @@
 import { useState } from "react";
-import { 
-  Home, 
-  User, 
-  ArrowRight, 
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  getAdminAssignmentsAction,
+  createAdminAssignmentAction,
+  deleteAdminAssignmentAction,
+} from "@/myAccount/admin/actions/get-admin-assignments.actions";
+import { getAdminAgentsAction } from "@/myAccount/admin/actions/get-admin-agents.actions";
+import { getAdminPropertiesAction } from "@/myAccount/admin/actions/get-admin-properties.actions";
+import {
+  Home,
+  User,
+  ArrowRight,
   X,
   Check,
-  Shuffle,
-  MapPin,
   Search,
-  ArrowLeftRight
+  ArrowLeftRight,
+  MapPin,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from "@/components/ui/drawer";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-interface Property {
-  id: string;
+// ─── Media URL helper ─────────────────────────────────────────────────────────
+const BACKEND_ORIGIN = (() => {
+  try {
+    return new URL(import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1").origin;
+  } catch {
+    return "http://localhost:8000";
+  }
+})();
+const getMediaUrl = (url: string | null | undefined): string => {
+  if (!url) return "";
+  if (url.startsWith("http")) return url;
+  return `${BACKEND_ORIGIN}${url}`;
+};
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface PropertyRow {
+  rawId: number;
   title: string;
-  location: string;
-  price: string;
   image: string;
-  agent: string | null;
-  bedrooms: number;
-  bathrooms: number;
+  price: string;
+  address: string;
+  // null = unassigned
+  agentName: string | null;
+  agentAvatar: string | null;
+  agentMembershipId: number | null;
+  // ALL assignment IDs for this property (to delete all at once)
+  allAssignmentIds: number[];
 }
 
-interface Agent {
-  id: string;
+interface AgentRow {
+  membershipId: number;
   name: string;
   avatar: string;
-  properties: number;
-  status: "activo" | "inactivo";
 }
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 const AsignarSection = () => {
   const isMobile = useIsMobile();
-  const [properties, setProperties] = useState<Property[]>([]);
-  const [agents, setAgents] = useState<Agent[]>([]);
+  const queryClient = useQueryClient();
+
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
+  const [selectedProperty, setSelectedProperty] = useState<PropertyRow | null>(null);
   const [isTransferOpen, setIsTransferOpen] = useState(false);
 
-  const unassignedProperties = properties.filter(p => !p.agent);
-  const assignedProperties = properties.filter(p => p.agent);
+  // ─── Queries ──────────────────────────────────────────────────────────────────
 
-  const filteredUnassigned = unassignedProperties.filter(p => 
-    p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.location.toLowerCase().includes(searchTerm.toLowerCase())
+  const assignmentsQuery = useQuery({
+    queryKey: ["admin-assignments"],
+    queryFn: getAdminAssignmentsAction,
+  });
+
+  const agentsQuery = useQuery({
+    queryKey: ["admin-agents"],
+    queryFn: getAdminAgentsAction,
+  });
+
+  const propertiesQuery = useQuery({
+    queryKey: ["admin-properties"],
+    queryFn: () => getAdminPropertiesAction({ limit: 200 }),
+  });
+
+  // ─── Mutations ────────────────────────────────────────────────────────────────
+
+  // Assign to an unassigned property (no existing assignments to remove)
+  const assignMutation = useMutation({
+    mutationFn: ({ propertyId, membershipId }: { propertyId: number; membershipId: number }) =>
+      createAdminAssignmentAction(propertyId, membershipId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-assignments"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-properties"] });
+      toast.success("Propiedad asignada");
+    },
+    onError: () => toast.error("Error al asignar la propiedad"),
+  });
+
+  // Transfer: delete ALL existing assignments, then create new one
+  const transferMutation = useMutation({
+    mutationFn: async ({
+      propertyId,
+      allAssignmentIds,
+      newMembershipId,
+    }: {
+      propertyId: number;
+      allAssignmentIds: number[];
+      newMembershipId: number;
+    }) => {
+      if (allAssignmentIds.length > 0) {
+        await Promise.all(allAssignmentIds.map((id) => deleteAdminAssignmentAction(id)));
+      }
+      await createAdminAssignmentAction(propertyId, newMembershipId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-assignments"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-properties"] });
+      toast.success("Agente actualizado");
+      setIsTransferOpen(false);
+    },
+    onError: () => toast.error("Error al cambiar el agente"),
+  });
+
+  // Remove: delete ALL assignments → property moves to "Sin Asignar"
+  const removeMutation = useMutation({
+    mutationFn: (allAssignmentIds: number[]) =>
+      Promise.all(allAssignmentIds.map((id) => deleteAdminAssignmentAction(id))),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-assignments"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-properties"] });
+      toast.success("Agente removido");
+    },
+    onError: () => toast.error("Error al remover el agente"),
+  });
+
+  // ─── Derived data ─────────────────────────────────────────────────────────────
+
+  const propertyDetailsMap = new Map(
+    (propertiesQuery.data?.results ?? []).map((p) => [p.id, p])
   );
 
-  const filteredAssigned = assignedProperties.filter(p => 
+  const agents: AgentRow[] = (agentsQuery.data?.results ?? []).map((a) => ({
+    membershipId: a.membership_id,
+    name: a.name,
+    avatar: a.avatar ?? a.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2),
+  }));
+
+  const rows: PropertyRow[] = (() => {
+    if (!assignmentsQuery.data) return [];
+
+    const unassigned: PropertyRow[] = (assignmentsQuery.data.unassigned_properties ?? []).map((p) => {
+      const detail = propertyDetailsMap.get(p.id);
+      return {
+        rawId: p.id,
+        title: p.title,
+        image: getMediaUrl(detail?.image),
+        price: detail?.price ?? "",
+        address: detail?.address ?? "",
+        agentName: null,
+        agentAvatar: null,
+        agentMembershipId: null,
+        allAssignmentIds: [],
+      };
+    });
+
+    const assigned: PropertyRow[] = (assignmentsQuery.data.assignments ?? []).map((a) => {
+      const detail = propertyDetailsMap.get(a.property.id);
+      // Pick the most recently assigned agent (last in array since backend orders by assigned_at asc internally,
+      // or just use index 0 — we fix duplicates by always deleting-all on transfer/remove)
+      const primaryAgent = a.agents[0] ?? null;
+      const agentRow = agents.find((ag) => ag.membershipId === primaryAgent?.membership_id);
+      return {
+        rawId: a.property.id,
+        title: a.property.title,
+        image: getMediaUrl(detail?.image),
+        price: detail?.price ?? "",
+        address: detail?.address ?? "",
+        agentName: primaryAgent?.name ?? null,
+        agentAvatar: agentRow?.avatar ?? null,
+        agentMembershipId: primaryAgent?.membership_id ?? null,
+        // Store ALL assignment IDs so we can delete all at once
+        allAssignmentIds: (a.agents ?? []).map((ag) => ag.id),
+      };
+    });
+
+    return [...unassigned, ...assigned];
+  })();
+
+  const unassignedRows = rows.filter((p) => !p.agentName);
+  const assignedRows = rows.filter((p) => !!p.agentName);
+
+  const filterRow = (p: PropertyRow) =>
     p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (p.agent && p.agent.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+    p.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (p.agentName ?? "").toLowerCase().includes(searchTerm.toLowerCase());
 
-  const handleAssign = (propertyId: string, agentName: string) => {
-    setProperties(prev => prev.map(p => 
-      p.id === propertyId ? { ...p, agent: agentName } : p
-    ));
-    toast.success(`Propiedad asignada a ${agentName}`);
+  // ─── Handlers ─────────────────────────────────────────────────────────────────
+
+  const handleAssign = (propertyRawId: number, membershipId: number) => {
+    assignMutation.mutate({ propertyId: propertyRawId, membershipId });
   };
 
-  const handleRemoveAgent = (propertyId: string) => {
-    setProperties(prev => prev.map(p => 
-      p.id === propertyId ? { ...p, agent: null } : p
-    ));
-    toast.success("Agente removido de la propiedad");
+  const handleRemoveAgent = (property: PropertyRow) => {
+    if (!property.allAssignmentIds.length) return;
+    removeMutation.mutate(property.allAssignmentIds);
   };
 
-  const handleOpenTransfer = (property: Property) => {
+  const handleOpenTransfer = (property: PropertyRow) => {
     setSelectedProperty(property);
     setIsTransferOpen(true);
   };
 
-  const handleTransfer = (newAgentName: string) => {
-    if (selectedProperty) {
-      const oldAgent = selectedProperty.agent;
-      setProperties(prev => prev.map(p => 
-        p.id === selectedProperty.id ? { ...p, agent: newAgentName } : p
-      ));
-      toast.success(`Propiedad transferida de ${oldAgent} a ${newAgentName}`);
-      setIsTransferOpen(false);
-    }
+  const handleTransfer = (newMembershipId: number) => {
+    if (!selectedProperty) return;
+    transferMutation.mutate({
+      propertyId: selectedProperty.rawId,
+      allAssignmentIds: selectedProperty.allAssignmentIds,
+      newMembershipId,
+    });
   };
 
-  const getAgentPropertyCount = (agentName: string) => {
-    return properties.filter(p => p.agent === agentName).length;
-  };
+  // ─── Sub-renders ──────────────────────────────────────────────────────────────
 
-  const PropertyCard = ({ property, showAssignSelect }: { property: Property; showAssignSelect: boolean }) => (
+  const PropertyCard = ({ property, showAssignSelect }: { property: PropertyRow; showAssignSelect: boolean }) => (
     <Card className="border-border/50 hover:border-champagne-gold/50 transition-all overflow-hidden">
       <div className="flex">
-        <img 
-          src={property.image} 
-          alt={property.title}
-          className="w-24 h-24 md:w-32 md:h-32 object-cover flex-shrink-0"
-        />
+        {property.image ? (
+          <img
+            src={property.image}
+            alt={property.title}
+            className="w-24 h-24 md:w-28 md:h-28 object-cover flex-shrink-0"
+          />
+        ) : (
+          <div className="w-24 h-24 md:w-28 md:h-28 bg-muted/30 flex items-center justify-center flex-shrink-0">
+            <Home className="w-8 h-8 text-foreground/20" />
+          </div>
+        )}
         <CardContent className="p-3 md:p-4 flex-1 min-w-0">
           <h3 className="font-semibold text-midnight truncate text-sm md:text-base">{property.title}</h3>
-          <div className="flex items-center gap-1 text-xs md:text-sm text-foreground/60 mb-1">
-            <MapPin className="w-3 h-3" />
-            <span className="truncate">{property.location}</span>
-          </div>
-          <div className="flex items-center gap-2 text-xs text-foreground/50 mb-2">
-            <span>{property.bedrooms} rec</span>
-            <span>•</span>
-            <span>{property.bathrooms} baños</span>
-          </div>
-          <p className="text-sm md:text-base font-bold text-champagne-gold mb-2">{property.price}</p>
-          
+          {property.address && (
+            <div className="flex items-center gap-1 text-xs text-foreground/60 mb-1">
+              <MapPin className="w-3 h-3 flex-shrink-0" />
+              <span className="truncate">{property.address}</span>
+            </div>
+          )}
+          {property.price && (
+            <p className="text-sm font-bold text-champagne-gold mb-2">{property.price}</p>
+          )}
+
           {showAssignSelect ? (
-            <Select onValueChange={(value) => handleAssign(property.id, value)}>
-              <SelectTrigger className="h-9 text-xs md:text-sm border-champagne-gold/50">
+            <Select
+              onValueChange={(value) => handleAssign(property.rawId, Number(value))}
+              disabled={assignMutation.isPending}
+            >
+              <SelectTrigger className="h-9 text-xs border-champagne-gold/50">
                 <SelectValue placeholder="Asignar a..." />
               </SelectTrigger>
               <SelectContent>
-                {agents.filter(a => a.status === "activo").map((agent) => (
-                  <SelectItem key={agent.id} value={agent.name}>
+                {agents.map((agent) => (
+                  <SelectItem key={agent.membershipId} value={String(agent.membershipId)}>
                     <div className="flex items-center gap-2">
                       <div className="w-6 h-6 rounded-full bg-champagne-gold text-white flex items-center justify-center text-xs">
                         {agent.avatar}
                       </div>
                       <span>{agent.name}</span>
-                      <span className="text-foreground/50">({getAgentPropertyCount(agent.name)})</span>
                     </div>
                   </SelectItem>
                 ))}
@@ -146,26 +296,30 @@ const AsignarSection = () => {
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 min-w-0">
                 <div className="w-6 h-6 rounded-full bg-champagne-gold text-white flex items-center justify-center text-xs flex-shrink-0">
-                  {agents.find(a => a.name === property.agent)?.avatar || "?"}
+                  {property.agentAvatar ?? "?"}
                 </div>
-                <span className="text-xs md:text-sm text-midnight truncate">{property.agent}</span>
+                <span className="text-xs text-midnight truncate">{property.agentName}</span>
               </div>
               <div className="flex gap-1 flex-shrink-0">
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-champagne-gold hover:bg-champagne-gold/10"
+                  className="h-7 w-7 text-champagne-gold hover:bg-champagne-gold/10"
                   onClick={() => handleOpenTransfer(property)}
+                  title="Cambiar agente"
+                  disabled={transferMutation.isPending}
                 >
-                  <ArrowLeftRight className="w-4 h-4" />
+                  <ArrowLeftRight className="w-3.5 h-3.5" />
                 </Button>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-8 w-8 text-red-400 hover:text-red-500 hover:bg-red-50"
-                  onClick={() => handleRemoveAgent(property.id)}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-red-400 hover:text-red-500 hover:bg-red-50"
+                  onClick={() => handleRemoveAgent(property)}
+                  disabled={removeMutation.isPending}
+                  title="Quitar agente"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-3.5 h-3.5" />
                 </Button>
               </div>
             </div>
@@ -177,67 +331,71 @@ const AsignarSection = () => {
 
   const TransferContent = () => {
     if (!selectedProperty) return null;
-    
+    const otherAgents = agents.filter((a) => a.membershipId !== selectedProperty.agentMembershipId);
     return (
-      <div className="space-y-6 p-4">
-        <div className="flex items-center gap-4 p-4 bg-muted/20 rounded-xl">
-          <img 
-            src={selectedProperty.image} 
-            alt={selectedProperty.title}
-            className="w-16 h-16 rounded-lg object-cover"
-          />
-          <div>
-            <h4 className="font-semibold text-midnight">{selectedProperty.title}</h4>
-            <p className="text-sm text-foreground/60">{selectedProperty.location}</p>
-            <p className="text-sm font-medium text-champagne-gold">{selectedProperty.price}</p>
+      <div className="space-y-5 p-4">
+        <div className="flex items-center gap-3 p-3 bg-muted/20 rounded-xl">
+          {selectedProperty.image ? (
+            <img src={selectedProperty.image} alt="" className="w-14 h-14 rounded-lg object-cover flex-shrink-0" />
+          ) : (
+            <div className="w-14 h-14 rounded-lg bg-muted/30 flex items-center justify-center flex-shrink-0">
+              <Home className="w-6 h-6 text-foreground/30" />
+            </div>
+          )}
+          <div className="min-w-0">
+            <h4 className="font-semibold text-midnight truncate text-sm">{selectedProperty.title}</h4>
+            {selectedProperty.address && (
+              <p className="text-xs text-foreground/60 truncate">{selectedProperty.address}</p>
+            )}
           </div>
         </div>
 
-        <div className="flex items-center gap-3 p-3 bg-orange-50 rounded-xl border border-orange-200">
-          <User className="w-5 h-5 text-orange-500" />
-          <div>
-            <p className="text-xs text-orange-600">Agente Actual</p>
-            <p className="font-medium text-orange-700">{selectedProperty.agent}</p>
+        {selectedProperty.agentName && (
+          <div className="flex items-center gap-3 p-3 bg-orange-50 rounded-xl border border-orange-200">
+            <User className="w-4 h-4 text-orange-500 flex-shrink-0" />
+            <div>
+              <p className="text-xs text-orange-600">Agente actual</p>
+              <p className="font-medium text-orange-700 text-sm">{selectedProperty.agentName}</p>
+            </div>
           </div>
-        </div>
+        )}
 
         <div>
-          <p className="text-sm font-medium text-midnight mb-3">Transferir a:</p>
+          <p className="text-sm font-medium text-midnight mb-2">Transferir a:</p>
           <div className="space-y-2">
-            {agents
-              .filter(a => a.name !== selectedProperty.agent && a.status === "activo")
-              .map((agent) => (
-                <button
-                  key={agent.id}
-                  onClick={() => handleTransfer(agent.name)}
-                  className="w-full flex items-center justify-between p-4 bg-muted/20 rounded-xl hover:bg-champagne-gold/10 hover:border-champagne-gold/50 border border-transparent transition-all"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-champagne-gold text-white flex items-center justify-center font-semibold">
-                      {agent.avatar}
-                    </div>
-                    <div className="text-left">
-                      <p className="font-medium text-midnight">{agent.name}</p>
-                      <p className="text-xs text-foreground/60">{getAgentPropertyCount(agent.name)} propiedades asignadas</p>
-                    </div>
+            {otherAgents.map((agent) => (
+              <button
+                key={agent.membershipId}
+                onClick={() => handleTransfer(agent.membershipId)}
+                disabled={transferMutation.isPending}
+                className="w-full flex items-center justify-between p-3 bg-muted/20 rounded-xl hover:bg-champagne-gold/10 border border-transparent hover:border-champagne-gold/50 transition-all disabled:opacity-50"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-champagne-gold text-white flex items-center justify-center font-semibold text-sm">
+                    {agent.avatar}
                   </div>
-                  <ArrowRight className="w-5 h-5 text-champagne-gold" />
-                </button>
-              ))}
+                  <p className="font-medium text-midnight text-sm">{agent.name}</p>
+                </div>
+                <ArrowRight className="w-4 h-4 text-champagne-gold" />
+              </button>
+            ))}
           </div>
         </div>
       </div>
     );
   };
 
+  const isLoading = assignmentsQuery.isLoading || agentsQuery.isLoading;
+
+  // ─── Render ───────────────────────────────────────────────────────────────────
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl md:text-3xl font-bold text-midnight">Asignar Propiedades</h1>
-        <p className="text-foreground/60">Matchmaking entre casas y agentes</p>
+        <p className="text-foreground/60">Asigna y transfiere propiedades entre agentes</p>
       </div>
 
-      {/* Search */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-foreground/40" />
         <Input
@@ -248,88 +406,83 @@ const AsignarSection = () => {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Unassigned Properties */}
-        <Card className="border-border/50">
-          <CardHeader className="bg-red-50 border-b border-red-100">
-            <CardTitle className="text-lg text-red-700 flex items-center gap-2">
-              <Home className="w-5 h-5" />
-              Casas Sin Asignar
-              <Badge className="bg-red-100 text-red-700 ml-auto">{filteredUnassigned.length}</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 space-y-4 max-h-[60vh] overflow-y-auto">
-            {filteredUnassigned.length === 0 ? (
-              <div className="text-center py-8 text-foreground/50">
-                <Check className="w-12 h-12 mx-auto mb-3 text-green-500" />
-                <p>Todas las propiedades están asignadas</p>
-              </div>
-            ) : (
-              filteredUnassigned.map((property) => (
-                <PropertyCard key={property.id} property={property} showAssignSelect />
-              ))
-            )}
-          </CardContent>
-        </Card>
+      {isLoading ? (
+        <div className="text-center py-12 text-foreground/50">Cargando...</div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card className="border-border/50">
+            <CardHeader className="bg-red-50 border-b border-red-100 py-3 px-4">
+              <CardTitle className="text-base text-red-700 flex items-center gap-2">
+                <Home className="w-4 h-4" />
+                Sin Asignar
+                <Badge className="bg-red-100 text-red-700 ml-auto">
+                  {unassignedRows.filter(filterRow).length}
+                </Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 space-y-3 max-h-[60vh] overflow-y-auto">
+              {unassignedRows.filter(filterRow).length === 0 ? (
+                <div className="text-center py-8 text-foreground/50">
+                  <Check className="w-10 h-10 mx-auto mb-2 text-green-500" />
+                  <p className="text-sm">Todas las propiedades están asignadas</p>
+                </div>
+              ) : (
+                unassignedRows.filter(filterRow).map((p) => (
+                  <PropertyCard key={p.rawId} property={p} showAssignSelect />
+                ))
+              )}
+            </CardContent>
+          </Card>
 
-        {/* Assigned Properties */}
-        <Card className="border-border/50">
-          <CardHeader className="bg-green-50 border-b border-green-100">
-            <CardTitle className="text-lg text-green-700 flex items-center gap-2">
-              <User className="w-5 h-5" />
-              Casas Asignadas
-              <Badge className="bg-green-100 text-green-700 ml-auto">{filteredAssigned.length}</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 space-y-4 max-h-[60vh] overflow-y-auto">
-            {filteredAssigned.length === 0 ? (
-              <div className="text-center py-8 text-foreground/50">
-                <Home className="w-12 h-12 mx-auto mb-3" />
-                <p>No hay propiedades asignadas</p>
-              </div>
-            ) : (
-              filteredAssigned.map((property) => (
-                <PropertyCard key={property.id} property={property} showAssignSelect={false} />
-              ))
-            )}
-          </CardContent>
-        </Card>
-      </div>
+          <Card className="border-border/50">
+            <CardHeader className="bg-green-50 border-b border-green-100 py-3 px-4">
+              <CardTitle className="text-base text-green-700 flex items-center gap-2">
+                <User className="w-4 h-4" />
+                Asignadas
+                <Badge className="bg-green-100 text-green-700 ml-auto">
+                  {assignedRows.filter(filterRow).length}
+                </Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 space-y-3 max-h-[60vh] overflow-y-auto">
+              {assignedRows.filter(filterRow).length === 0 ? (
+                <div className="text-center py-8 text-foreground/50">
+                  <Home className="w-10 h-10 mx-auto mb-2" />
+                  <p className="text-sm">No hay propiedades asignadas</p>
+                </div>
+              ) : (
+                assignedRows.filter(filterRow).map((p) => (
+                  <PropertyCard key={p.rawId} property={p} showAssignSelect={false} />
+                ))
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
-      {/* Agent Summary */}
+      {/* Resumen por agente — conteo real de propiedades asignadas */}
       <Card className="border-border/50">
-        <CardHeader>
-          <CardTitle className="text-lg text-midnight">Resumen por Agente</CardTitle>
+        <CardHeader className="py-3 px-4">
+          <CardTitle className="text-base text-midnight">Resumen por Agente</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <CardContent className="px-4 pb-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {agents.map((agent) => {
-              const agentProperties = getAgentPropertyCount(agent.name);
+              // Count only rows where this agent is the primary (and only) assigned agent
+              const count = assignedRows.filter(
+                (p) => p.agentMembershipId === agent.membershipId
+              ).length;
               return (
-                <div 
-                  key={agent.id}
-                  className={cn(
-                    "flex items-center gap-3 p-4 rounded-xl border transition-all",
-                    agent.status === "activo" 
-                      ? "bg-muted/20 border-border/30 hover:border-champagne-gold/50" 
-                      : "bg-gray-50 border-gray-200 opacity-50"
-                  )}
+                <div
+                  key={agent.membershipId}
+                  className="flex items-center gap-3 p-3 rounded-xl border border-border/30 bg-muted/20 hover:border-champagne-gold/50 transition-all"
                 >
-                  <div className={cn(
-                    "w-12 h-12 rounded-full flex items-center justify-center font-semibold text-white",
-                    agent.status === "activo" ? "bg-champagne-gold" : "bg-gray-400"
-                  )}>
+                  <div className="w-10 h-10 rounded-full bg-champagne-gold text-white flex items-center justify-center font-semibold text-sm flex-shrink-0">
                     {agent.avatar}
                   </div>
-                  <div>
-                    <p className="font-medium text-midnight">{agent.name}</p>
-                    <p className="text-sm text-foreground/60">{agentProperties} propiedades</p>
-                    <Badge className={cn(
-                      "text-xs mt-1",
-                      agent.status === "activo" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"
-                    )}>
-                      {agent.status}
-                    </Badge>
+                  <div className="min-w-0">
+                    <p className="font-medium text-midnight text-sm truncate">{agent.name}</p>
+                    <p className="text-xs text-foreground/60">{count} propiedad{count !== 1 ? "es" : ""}</p>
                   </div>
                 </div>
               );
@@ -343,18 +496,18 @@ const AsignarSection = () => {
         <Drawer open={isTransferOpen} onOpenChange={setIsTransferOpen}>
           <DrawerContent>
             <DrawerHeader className="border-b border-border/30">
-              <DrawerTitle>Transferir Propiedad</DrawerTitle>
+              <DrawerTitle>Cambiar Agente</DrawerTitle>
             </DrawerHeader>
-            <TransferContent />
+            {TransferContent()}
           </DrawerContent>
         </Drawer>
       ) : (
         <Dialog open={isTransferOpen} onOpenChange={setIsTransferOpen}>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Transferir Propiedad</DialogTitle>
+              <DialogTitle>Cambiar Agente</DialogTitle>
             </DialogHeader>
-            <TransferContent />
+            {TransferContent()}
           </DialogContent>
         </Dialog>
       )}

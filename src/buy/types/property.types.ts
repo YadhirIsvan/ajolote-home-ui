@@ -115,12 +115,13 @@ export const PROPERTY_STATES = [
   { value: "usada", label: "Usada" },
 ] as const;
 
+// IDs numéricos reales del catálogo del backend (/catalogs/amenities)
 export const AMENITY_OPTIONS = [
-  { id: "pool", label: "Alberca" },
-  { id: "security", label: "Seguridad 24/7" },
-  { id: "garden", label: "Jardín" },
-  { id: "parking", label: "Estacionamiento" },
-  { id: "gym", label: "Gimnasio" },
+  { id: "1", label: "Alberca" },
+  { id: "2", label: "Gimnasio" },
+  { id: "3", label: "Seguridad 24/7" },
+  { id: "5", label: "Estacionamiento" },
+  { id: "6", label: "Jardín" },
 ] as const;
 
 export const PRICE_RANGE_LIMITS = {

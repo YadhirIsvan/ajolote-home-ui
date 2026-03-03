@@ -7,10 +7,11 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import {
   ArrowLeft, Share2, MapPin, BedDouble, Bath, Maximize,
   CheckCircle2, Play, Phone, Mail, ChevronDown, ChevronUp,
-  GraduationCap, ShoppingBag, Hospital, Train,
+  GraduationCap, ShoppingBag, Hospital, Train, Loader2,
 } from "lucide-react";
 import { usePropertyDetail } from "@/buy/hooks/use-property-detail.hook";
 import { TIME_SLOTS } from "@/buy/types/property.types";
+import AuthModal from "@/auth/components/AuthModal";
 
 const getPOIIcon = (iconType: string) => {
   switch (iconType) {
@@ -31,6 +32,11 @@ const PropertyDetailPage = () => {
     setShowFullDescription,
     showScheduleModal,
     setShowScheduleModal,
+    showAuthModal,
+    setShowAuthModal,
+    showSuccessModal,
+    setShowSuccessModal,
+    successData,
     selectedDate,
     setSelectedDate,
     selectedTime,
@@ -39,7 +45,11 @@ const PropertyDetailPage = () => {
     displayImages,
     nearbyPOIs,
     hasVideoTour,
+    handleScheduleClick,
+    handleAuthSuccess,
     handleConfirmAppointment,
+    isScheduling,
+    scheduleError,
   } = usePropertyDetail();
 
   if (isLoading) {
@@ -349,7 +359,7 @@ const PropertyDetailPage = () => {
                   <Card className="p-6 rounded-2xl shadow-medium">
                     <p className="text-4xl font-bold text-champagne mb-1">{property.price}</p>
                     <p className="text-sm text-muted-foreground mb-6">MXN</p>
-                    <Button variant="gold" size="lg" className="w-full mb-4" onClick={() => setShowScheduleModal(true)}>
+                    <Button variant="gold" size="lg" className="w-full mb-4" onClick={handleScheduleClick}>
                       Agendar Visita
                     </Button>
                     <div className="pt-4 border-t border-border">
@@ -379,10 +389,64 @@ const PropertyDetailPage = () => {
 
       {/* Mobile Sticky Bottom CTA */}
       <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border p-4 lg:hidden z-40">
-        <Button variant="gold" size="lg" className="w-full shadow-gold" onClick={() => setShowScheduleModal(true)}>
+        <Button variant="gold" size="lg" className="w-full shadow-gold" onClick={handleScheduleClick}>
           Agendar Visita
         </Button>
       </div>
+
+      {/* Auth Modal — se abre si el usuario no está logueado */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onLoginSuccess={handleAuthSuccess}
+      />
+
+      {/* Diálogo de éxito después de agendar */}
+      <Dialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
+        <DialogContent className="sm:max-w-sm rounded-2xl bg-background text-center">
+          <DialogHeader>
+            <div className="flex justify-center mb-3">
+              <CheckCircle2 className="w-16 h-16 text-champagne" />
+            </div>
+            <DialogTitle className="text-xl font-bold text-primary">
+              ¡Cita Registrada!
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 pt-2 pb-2">
+            {successData && (
+              <>
+                <p className="text-sm text-muted-foreground">
+                  Tu visita ha sido agendada exitosamente.
+                </p>
+                <div className="bg-muted/50 rounded-xl p-4 text-left space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Matrícula</span>
+                    <span className="font-semibold text-primary">{successData.matricula}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Fecha</span>
+                    <span className="font-semibold text-primary">{successData.scheduled_date}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Hora</span>
+                    <span className="font-semibold text-primary">{successData.scheduled_time.slice(0, 5)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Agente</span>
+                    <span className="font-semibold text-primary">{successData.agent.name}</span>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Recibirás una confirmación por correo electrónico.
+                </p>
+              </>
+            )}
+            <Button variant="gold" className="w-full mt-2" onClick={() => setShowSuccessModal(false)}>
+              Entendido
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Schedule Modal */}
       <Dialog open={showScheduleModal} onOpenChange={setShowScheduleModal}>
@@ -420,14 +484,21 @@ const PropertyDetailPage = () => {
                 ))}
               </div>
             </div>
+            {scheduleError && (
+              <p className="text-sm text-destructive text-center">{scheduleError}</p>
+            )}
             <Button
               variant="gold"
               size="lg"
               className="w-full"
               onClick={handleConfirmAppointment}
-              disabled={!selectedDate || !selectedTime}
+              disabled={!selectedDate || !selectedTime || isScheduling}
             >
-              Confirmar Cita
+              {isScheduling ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Agendando...</>
+              ) : (
+                "Confirmar Cita"
+              )}
             </Button>
           </div>
         </DialogContent>

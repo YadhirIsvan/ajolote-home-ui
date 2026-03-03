@@ -16,11 +16,34 @@ export const adminApi = {
 
   uploadPropertyImages: (id: number, formData: FormData) =>
     axiosInstance.post(`/admin/properties/${id}/images`, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
+      transformRequest: [
+        (data: unknown, headers: Record<string, string>) => {
+          if (headers) {
+            delete headers["Content-Type"];
+            delete headers["content-type"];
+          }
+          return data;
+        },
+      ],
     }),
 
   toggleFeatured: (id: number) =>
     axiosInstance.patch(`/admin/properties/${id}/toggle-featured`),
+
+  getPropertyDetail: (id: number) =>
+    axiosInstance.get(`/admin/properties/${id}`),
+
+  deletePropertyImage: (propertyId: number, imageId: number) =>
+    axiosInstance.delete(`/admin/properties/${propertyId}/images/${imageId}`),
+
+  getStates: () =>
+    axiosInstance.get("/catalogs/states", { params: { country_id: 1 } }),
+
+  getCities: (stateId: number) =>
+    axiosInstance.get("/catalogs/cities", { params: { state_id: stateId } }),
+
+  getAmenities: () =>
+    axiosInstance.get("/catalogs/amenities"),
 
   // ─── Agentes ────────────────────────────────────────────────────────────────
   getAgents: (params?: Record<string, unknown>) =>
@@ -31,6 +54,19 @@ export const adminApi = {
 
   updateAgent: (id: number, data: Record<string, unknown>) =>
     axiosInstance.patch(`/admin/agents/${id}`, data),
+
+  updateAgentAvatar: (id: number, formData: FormData) =>
+    axiosInstance.patch(`/admin/agents/${id}`, formData, {
+      transformRequest: [
+        (data: unknown, headers: Record<string, string>) => {
+          if (headers) {
+            delete headers["Content-Type"];
+            delete headers["content-type"];
+          }
+          return data;
+        },
+      ],
+    }),
 
   deleteAgent: (id: number) =>
     axiosInstance.delete(`/admin/agents/${id}`),

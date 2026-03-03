@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Upload, FileText, Home, Users } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
 import LeadDetailCard from "@/myAccount/agent/components/LeadDetailCard";
 import LeadCard from "@/myAccount/agent/components/LeadCard";
+import { getAgentPropertyLeadsAction } from "@/myAccount/agent/actions/get-agent-property-leads.actions";
 import type { AgentProperty, AgentLead } from "@/myAccount/agent/types/agent.types";
 
 interface AgentPropertyModalProps {
@@ -19,9 +21,21 @@ interface AgentPropertyModalProps {
 
 const AgentPropertyModal = ({ isOpen, onClose, property }: AgentPropertyModalProps) => {
   const [selectedLead, setSelectedLead] = useState<AgentLead | null>(null);
-  const [leads, setLeads] = useState<AgentLead[]>([]);
+  const [localLeadUpdates, setLocalLeadUpdates] = useState<Record<number, number>>({});
   const [isDragging, setIsDragging] = useState(false);
   const isMobile = useIsMobile();
+
+  const leadsQuery = useQuery({
+    queryKey: ["agent-property-leads", property?.id],
+    queryFn: () => getAgentPropertyLeadsAction(property!.id),
+    enabled: !!property?.id && isOpen,
+  });
+
+  const leads: AgentLead[] = (leadsQuery.data ?? []).map((lead) =>
+    localLeadUpdates[lead.id] !== undefined
+      ? { ...lead, stage: localLeadUpdates[lead.id] }
+      : lead
+  );
 
   if (!property) return null;
 
@@ -37,14 +51,11 @@ const AgentPropertyModal = ({ isOpen, onClose, property }: AgentPropertyModalPro
     setIsDragging(false);
   };
 
-  const handleStageChange = (leadId: number, newStage: number, note: string) => {
-    setLeads((prev) =>
-      prev.map((lead) => (lead.id === leadId ? { ...lead, stage: newStage } : lead))
-    );
+  const handleStageChange = (leadId: number, newStage: number, _note: string) => {
+    setLocalLeadUpdates((prev) => ({ ...prev, [leadId]: newStage }));
     if (selectedLead?.id === leadId) {
       setSelectedLead((prev) => (prev ? { ...prev, stage: newStage } : null));
     }
-    console.log(`Lead ${leadId} → etapa ${newStage}. Nota: ${note}`);
   };
 
   return (

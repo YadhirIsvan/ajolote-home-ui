@@ -2,12 +2,18 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getAgentPropertiesAction } from "@/myAccount/agent/actions/get-agent-properties.actions";
 import { getAgentAppointmentsAction } from "@/myAccount/agent/actions/get-agent-appointments.actions";
+import { getAgentDashboardAction } from "@/myAccount/agent/actions/get-agent-dashboard.actions";
 import type { AgentProperty, AgentAppointment } from "@/myAccount/agent/types/agent.types";
 
 export const useAgentDashboard = () => {
   const [selectedProperty, setSelectedProperty] = useState<AgentProperty | null>(null);
   const [isPropertyModalOpen, setIsPropertyModalOpen] = useState(false);
   const [localAppointments, setLocalAppointments] = useState<AgentAppointment[] | null>(null);
+
+  const dashboardQuery = useQuery({
+    queryKey: ["agent-dashboard"],
+    queryFn: getAgentDashboardAction,
+  });
 
   const propertiesQuery = useQuery({
     queryKey: ["agent-properties"],
@@ -34,6 +40,7 @@ export const useAgentDashboard = () => {
   };
 
   return {
+    dashboard: dashboardQuery.data ?? null,
     properties: propertiesQuery.data ?? [],
     propertiesLoading: propertiesQuery.isLoading,
     appointments,

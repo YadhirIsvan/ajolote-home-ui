@@ -3,36 +3,28 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getClientPropertiesBuyAction } from "@/myAccount/client/actions/get-client-properties-buy.actions";
 import { getClientPropertyFilesAction } from "@/myAccount/client/actions/get-client-property-files.actions";
 import { uploadClientPropertyFilesAction } from "@/myAccount/client/actions/upload-client-property-files.actions";
+import { clientApi } from "@/myAccount/client/api/client.api";
 import type { Step } from "@/myAccount/client/types/client.types";
 
-const PROCESS_STEP_LABELS = [
-  "Solicitud enviada",
-  "Visita",
-  "Documentos verificados",
-  "Crédito aprobado",
-  "Firma de contrato",
-  "Entrega de llaves",
-];
+interface BackendStep {
+  key: string;
+  label: string;
+  progress: number;
+  status: "completed" | "current" | "pending";
+  allow_upload: boolean;
+}
 
-const buildStepsFromProgress = (progress: number): Step[] => {
-  const pct = typeof progress === "number" ? progress : 0;
-  return PROCESS_STEP_LABELS.map((label, i) => {
-    const threshold = ((i + 1) / PROCESS_STEP_LABELS.length) * 100;
-    const done = pct >= threshold;
-    const isDocStep = label === "Documentos verificados";
-    return {
-      label,
-      done,
-      current:
-        !done &&
-        (i === 0 ||
-          PROCESS_STEP_LABELS.slice(0, i).every(
-            (_, j) => pct >= ((j + 1) / PROCESS_STEP_LABELS.length) * 100
-          )),
-      allowUpload: isDocStep && !done,
-    };
-  });
-};
+interface PurchaseDetailResponse {
+  steps?: BackendStep[];
+}
+
+const mapBackendSteps = (steps: BackendStep[]): Step[] =>
+  steps.map((s) => ({
+    label: s.label,
+    done: s.status === "completed",
+    current: s.status === "current",
+    allowUpload: s.allow_upload,
+  }));
 
 export const useClientCompras = () => {
   const queryClient = useQueryClient();
@@ -51,6 +43,16 @@ export const useClientCompras = () => {
   const { data: filesData = [], isLoading: filesLoading } = useQuery({
     queryKey: ["client-property-files", viewingDetailId],
     queryFn: () => getClientPropertyFilesAction(viewingDetailId!),
+    enabled: !!viewingDetailId,
+  });
+
+  const { data: purchaseSteps = [] } = useQuery({
+    queryKey: ["client-purchase-steps", viewingDetailId],
+    queryFn: async () => {
+      const { data } = await clientApi.getPropertyDetail(viewingDetailId!);
+      const detail = data as PurchaseDetailResponse;
+      return detail.steps ? mapBackendSteps(detail.steps) : [];
+    },
     enabled: !!viewingDetailId,
   });
 
@@ -90,12 +92,12 @@ export const useClientCompras = () => {
     displayList,
     filesData,
     filesLoading,
+    purchaseSteps,
     uploadMutation,
     fileInputRef,
     activePropertyId,
     setActivePropertyId,
     handleFileSelect,
     triggerUpload,
-    buildStepsFromProgress,
   };
 };

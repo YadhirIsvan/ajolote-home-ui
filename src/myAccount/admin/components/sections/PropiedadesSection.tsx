@@ -1,17 +1,13 @@
-import { useState } from "react";
-import { 
-  Home, 
-  Plus, 
-  Edit, 
-  Trash2, 
-  MapPin, 
+import { useState, useRef, useCallback, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  Home,
+  Plus,
+  Edit,
+  Trash2,
+  MapPin,
   Search,
-  FileText,
   Eye,
-  Upload,
-  Bath,
-  BedDouble,
-  Maximize,
   Save,
   Camera,
   Building,
@@ -20,7 +16,10 @@ import {
   Filter,
   Clock,
   CheckCircle,
-  XCircle
+  XCircle,
+  X,
+  Star,
+  Loader2,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -28,106 +27,250 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from "@/components/ui/drawer";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
+import {
+  getAdminPropertiesAction,
+  deleteAdminPropertyAction,
+  toggleAdminPropertyFeaturedAction,
+  getAdminPropertyDetailAction,
+  createAdminPropertyAction,
+  updateAdminPropertyAction,
+  uploadAdminPropertyImagesAction,
+  deleteAdminPropertyImageAction,
+  getAdminStatesAction,
+  getAdminCitiesAction,
+  getAdminAmenitiesAction,
+  type PropertyFormPayload,
+} from "@/myAccount/admin/actions/get-admin-properties.actions";
+import type {
+  AdminProperty,
+  AdminPropertyImage,
+} from "@/myAccount/admin/types/admin.types";
 
-// Types
-interface PropertyDocument {
-  id: string;
-  name: string;
-  type: string;
-  uploadedAt: string;
-}
+// ─── Local types ──────────────────────────────────────────────────────────────
 
 type PropertyType = "casa" | "departamento" | "terreno" | "local";
 type PropertyStatus = "pendiente" | "activa" | "vendida";
 
 interface Property {
   id: string;
+  rawId: number;
   title: string;
   type: PropertyType;
-  location: string; // municipio
-  state: string; // estado
   address: string;
   price: string;
   image: string;
   status: PropertyStatus;
-  bedrooms: number;
-  bathrooms: number;
-  sqm: number;
   agent: string | null;
-  documents: PropertyDocument[];
-  description: string;
-  yearBuilt: number;
-  parkingSpots: number;
-  features: string[];
   submittedAt: string;
+  isFeatured: boolean;
 }
 
-const emptyProperty: Omit<Property, "id" | "documents" | "submittedAt"> = {
-  title: "",
-  type: "casa",
-  location: "",
-  state: "",
-  address: "",
-  price: "",
-  image: "",
-  status: "pendiente",
-  bedrooms: 1,
-  bathrooms: 1,
-  sqm: 0,
-  agent: null,
-  description: "",
-  yearBuilt: new Date().getFullYear(),
-  parkingSpots: 1,
-  features: [],
+interface PropertyFormData {
+  title: string;
+  description: string;
+  listing_type: "sale" | "pending_listing";
+  status: "disponible" | "vendida";
+  property_type: "house" | "apartment" | "land" | "commercial";
+  property_condition: "new" | "semi_new" | "used";
+  price: string;
+  bedrooms: number;
+  bathrooms: number;
+  parking_spaces: number;
+  construction_sqm: string;
+  land_sqm: string;
+  address_street: string;
+  address_number: string;
+  address_neighborhood: string;
+  address_zip: string;
+  state_id: number | "";
+  city_id: number | "";
+  zone: string;
+  video_id: string;
+  is_featured: boolean;
+  amenity_ids: number[];
+}
+
+// ─── Mappers ──────────────────────────────────────────────────────────────────
+
+// ─── Media URL helper ─────────────────────────────────────────────────────────
+const BACKEND_ORIGIN = (() => {
+  try {
+    return new URL(import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1").origin;
+  } catch {
+    return "http://localhost:8000";
+  }
+})();
+
+const getMediaUrl = (url: string | null | undefined): string => {
+  if (!url) return "";
+  if (url.startsWith("http")) return url;
+  return `${BACKEND_ORIGIN}${url}`;
 };
 
-// Config
-const propertyTypeConfig: Record<PropertyType, { label: string; icon: React.ComponentType<any> }> = {
+const mapPropertyType = (type: string): PropertyType => {
+  const m: Record<string, PropertyType> = {
+    house: "casa",
+    apartment: "departamento",
+    land: "terreno",
+    commercial: "local",
+  };
+  return m[type] ?? "casa";
+};
+
+const mapPropertyStatus = (p: AdminProperty): PropertyStatus => {
+  if (p.status === "vendida") return "vendida";
+  if (p.is_active) return "activa";
+  return "pendiente";
+};
+
+const mapAdminProperty = (p: AdminProperty): Property => ({
+  id: String(p.id),
+  rawId: p.id,
+  title: p.title,
+  address: p.address,
+  price: p.price,
+  image: getMediaUrl(p.image),
+  type: mapPropertyType(p.property_type),
+  status: mapPropertyStatus(p),
+  agent: p.agent?.name ?? null,
+  submittedAt: p.created_at.split("T")[0],
+  isFeatured: p.is_featured,
+});
+
+// ─── Config ───────────────────────────────────────────────────────────────────
+
+const propertyTypeConfig: Record<PropertyType, { label: string; icon: React.ComponentType<{ className?: string }> }> = {
   casa: { label: "Casa", icon: Home },
   departamento: { label: "Departamento", icon: Building },
   terreno: { label: "Terreno", icon: Mountain },
   local: { label: "Local", icon: Store },
 };
 
-const statusConfig: Record<PropertyStatus, { label: string; className: string; icon: React.ComponentType<any> }> = {
+const statusConfig: Record<PropertyStatus, { label: string; className: string; icon: React.ComponentType<{ className?: string }> }> = {
   activa: { label: "Activa", className: "bg-green-100 text-green-700", icon: CheckCircle },
   pendiente: { label: "Pendiente", className: "bg-orange-100 text-orange-600", icon: Clock },
   vendida: { label: "Vendida", className: "bg-gray-100 text-gray-600", icon: XCircle },
 };
 
-const mexicanStates = [
-  "Aguascalientes", "Baja California", "Baja California Sur", "Campeche", "Chiapas",
-  "Chihuahua", "CDMX", "Coahuila", "Colima", "Durango", "Guanajuato", "Guerrero",
-  "Hidalgo", "Jalisco", "Estado de México", "Michoacán", "Morelos", "Nayarit",
-  "Nuevo León", "Oaxaca", "Puebla", "Querétaro", "Quintana Roo", "San Luis Potosí",
-  "Sinaloa", "Sonora", "Tabasco", "Tamaulipas", "Tlaxcala", "Veracruz", "Yucatán", "Zacatecas"
-];
+const emptyForm: PropertyFormData = {
+  title: "",
+  description: "",
+  listing_type: "sale" as const,
+  status: "disponible",
+  property_type: "house",
+  property_condition: "new",
+  price: "",
+  bedrooms: 1,
+  bathrooms: 1,
+  parking_spaces: 1,
+  construction_sqm: "",
+  land_sqm: "",
+  address_street: "",
+  address_number: "",
+  address_neighborhood: "",
+  address_zip: "",
+  state_id: "",
+  city_id: "",
+  zone: "",
+  video_id: "",
+  is_featured: false,
+  amenity_ids: [],
+};
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 const PropiedadesSection = () => {
   const isMobile = useIsMobile();
-  const [properties, setProperties] = useState<Property[]>([]);
+  const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // List state
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState<PropertyType | "all">("all");
   const [filterStatus, setFilterStatus] = useState<"pendiente" | "activa" | "all">("all");
-  const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
-  const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [formData, setFormData] = useState<Omit<Property, "id" | "documents" | "submittedAt">>(emptyProperty);
-  const [editingId, setEditingId] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
 
-  // Filter properties
+  // Detail modal
+  const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+
+  // Form state
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [formData, setFormData] = useState<PropertyFormData>(emptyForm);
+  const [existingImages, setExistingImages] = useState<AdminPropertyImage[]>([]);
+  const [newImageFiles, setNewImageFiles] = useState<File[]>([]);
+  const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
+  const [isLoadingDetail, setIsLoadingDetail] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Cascading cities
+  const selectedStateId = formData.state_id !== "" ? formData.state_id : null;
+
+  // ─── Queries ────────────────────────────────────────────────────────────────
+
+  const propertiesQuery = useQuery({
+    queryKey: ["admin-properties"],
+    queryFn: () => getAdminPropertiesAction({ limit: 200 }),
+  });
+
+  const statesQuery = useQuery({
+    queryKey: ["catalog-states"],
+    queryFn: getAdminStatesAction,
+    staleTime: 10 * 60 * 1000,
+    enabled: isFormOpen,
+  });
+
+  const citiesQuery = useQuery({
+    queryKey: ["catalog-cities", selectedStateId],
+    queryFn: () => getAdminCitiesAction(selectedStateId!),
+    enabled: isFormOpen && selectedStateId !== null,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const amenitiesQuery = useQuery({
+    queryKey: ["catalog-amenities"],
+    queryFn: getAdminAmenitiesAction,
+    staleTime: 10 * 60 * 1000,
+    enabled: isFormOpen,
+  });
+
+  // ─── Mutations ──────────────────────────────────────────────────────────────
+
+  const deleteMutation = useMutation({
+    mutationFn: (rawId: number) => deleteAdminPropertyAction(rawId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-properties"] });
+      toast.success("Propiedad eliminada");
+      setIsDetailOpen(false);
+    },
+    onError: () => toast.error("Error al eliminar la propiedad"),
+  });
+
+  const toggleFeaturedMutation = useMutation({
+    mutationFn: (rawId: number) => toggleAdminPropertyFeaturedAction(rawId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-properties"] });
+      toast.success("Propiedad destacada actualizada");
+    },
+    onError: () => toast.error("Error al actualizar"),
+  });
+
+  // ─── Derived data ────────────────────────────────────────────────────────────
+
+  const properties = (propertiesQuery.data?.results ?? []).map(mapAdminProperty);
+
   const filteredProperties = properties.filter((p) => {
-    const matchesSearch = 
+    const matchesSearch =
       p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.state.toLowerCase().includes(searchTerm.toLowerCase());
+      p.address.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = filterType === "all" || p.type === filterType;
     const matchesStatus = filterStatus === "all" || p.status === filterStatus;
     return matchesSearch && matchesType && matchesStatus;
@@ -136,6 +279,8 @@ const PropiedadesSection = () => {
   const pendingCount = properties.filter(p => p.status === "pendiente").length;
   const activeCount = properties.filter(p => p.status === "activa").length;
 
+  // ─── Handlers — list ─────────────────────────────────────────────────────────
+
   const handleViewDetail = (property: Property) => {
     setSelectedProperty(property);
     setIsDetailOpen(true);
@@ -143,98 +288,225 @@ const PropiedadesSection = () => {
 
   const handleCreate = () => {
     setEditingId(null);
-    setFormData(emptyProperty);
+    setFormData(emptyForm);
+    setExistingImages([]);
+    setNewImageFiles([]);
+    setNewImagePreviews([]);
     setIsFormOpen(true);
   };
 
-  const handleEdit = (property: Property) => {
-    setEditingId(property.id);
-    setFormData({
-      title: property.title,
-      type: property.type,
-      location: property.location,
-      state: property.state,
-      address: property.address,
-      price: property.price,
-      image: property.image,
-      status: property.status,
-      bedrooms: property.bedrooms,
-      bathrooms: property.bathrooms,
-      sqm: property.sqm,
-      agent: property.agent,
-      description: property.description,
-      yearBuilt: property.yearBuilt,
-      parkingSpots: property.parkingSpots,
-      features: property.features,
-    });
+  const handleEdit = async (property: Property) => {
+    setEditingId(property.rawId);
+    setFormData(emptyForm);
+    setExistingImages([]);
+    setNewImageFiles([]);
+    setNewImagePreviews([]);
+    setIsLoadingDetail(true);
     setIsFormOpen(true);
     setIsDetailOpen(false);
+
+    try {
+      const detail = await getAdminPropertyDetailAction(property.rawId);
+
+      setExistingImages(detail.images ?? []);
+
+      const stateId = detail.city?.state_id ?? "";
+      const cityId = detail.city?.id ?? "";
+
+      setFormData({
+        title: detail.title ?? "",
+        description: detail.description ?? "",
+        listing_type: (detail.listing_type as "sale" | "pending_listing") ?? "sale",
+        status: (detail.status as "disponible" | "vendida") ?? "disponible",
+        property_type: (detail.property_type as "house" | "apartment" | "land" | "commercial") ?? "house",
+        property_condition: (detail.property_condition as "new" | "semi_new" | "used") ?? "new",
+        price: detail.price ?? "",
+        bedrooms: detail.bedrooms ?? 1,
+        bathrooms: detail.bathrooms ?? 1,
+        parking_spaces: detail.parking_spaces ?? 1,
+        construction_sqm: detail.construction_sqm ?? "",
+        land_sqm: detail.land_sqm ?? "",
+        address_street: detail.address_street ?? "",
+        address_number: detail.address_number ?? "",
+        address_neighborhood: detail.address_neighborhood ?? "",
+        address_zip: detail.address_zip ?? "",
+        state_id: stateId,
+        city_id: cityId,
+        zone: detail.zone ?? "",
+        video_id: detail.video_id ?? "",
+        is_featured: detail.is_featured ?? false,
+        amenity_ids: (detail.amenities ?? []).map((a) => a.id),
+      });
+    } catch {
+      toast.error("Error al cargar el detalle de la propiedad");
+      setIsFormOpen(false);
+    } finally {
+      setIsLoadingDetail(false);
+    }
   };
 
-  const handleSave = () => {
-    if (editingId) {
-      setProperties(prev => prev.map(p => 
-        p.id === editingId 
-          ? { ...p, ...formData }
-          : p
-      ));
-      toast.success("Propiedad actualizada correctamente");
-    } else {
-      const newProperty: Property = {
-        id: Date.now().toString(),
-        ...formData,
-        documents: [],
-        submittedAt: new Date().toISOString().split("T")[0],
+  const handleDelete = (rawId: number) => {
+    deleteMutation.mutate(rawId);
+  };
+
+  const handleToggleFeatured = (rawId: number) => {
+    toggleFeaturedMutation.mutate(rawId);
+  };
+
+  // ─── Handlers — form ──────────────────────────────────────────────────────────
+
+  const handleFileSelect = useCallback((files: FileList | null) => {
+    if (!files) return;
+    const arr = Array.from(files);
+    setNewImageFiles((prev) => [...prev, ...arr]);
+    arr.forEach((file) => {
+      const url = URL.createObjectURL(file);
+      setNewImagePreviews((prev) => [...prev, url]);
+    });
+  }, []);
+
+  const handleRemoveNewImage = (index: number) => {
+    setNewImagePreviews((prev) => {
+      URL.revokeObjectURL(prev[index]);
+      return prev.filter((_, i) => i !== index);
+    });
+    setNewImageFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  // Cleanup object URLs when form closes
+  useEffect(() => {
+    if (!isFormOpen) {
+      newImagePreviews.forEach((url) => URL.revokeObjectURL(url));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFormOpen]);
+
+  const handleDeleteImage = async (imageId: number) => {
+    if (editingId === null) return;
+    try {
+      await deleteAdminPropertyImageAction(editingId, imageId);
+      setExistingImages((prev) => prev.filter((img) => img.id !== imageId));
+    } catch {
+      toast.error("Error al eliminar la imagen");
+    }
+  };
+
+  const handleDeleteAllImages = async () => {
+    if (editingId === null) return;
+    try {
+      await Promise.all(existingImages.map((img) => deleteAdminPropertyImageAction(editingId, img.id)));
+      setExistingImages([]);
+    } catch {
+      toast.error("Error al eliminar las imágenes");
+    }
+  };
+
+  const handleSave = async () => {
+    if (!formData.title.trim()) {
+      toast.error("El título es requerido");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const payload: PropertyFormPayload = {
+        title: formData.title,
+        description: formData.description,
+        listing_type: formData.listing_type,
+        status: formData.status,
+        property_type: formData.property_type,
+        property_condition: formData.property_condition,
+        price: formData.price,
+        bedrooms: formData.bedrooms,
+        bathrooms: formData.bathrooms,
+        parking_spaces: formData.parking_spaces,
+        construction_sqm: formData.construction_sqm,
+        land_sqm: formData.land_sqm,
+        address_street: formData.address_street,
+        address_number: formData.address_number,
+        address_neighborhood: formData.address_neighborhood,
+        address_zip: formData.address_zip,
+        city: formData.city_id !== "" ? formData.city_id : null,
+        zone: formData.zone,
+        video_id: extractYouTubeId(formData.video_id),
+        is_featured: formData.is_featured,
+        amenity_ids: formData.amenity_ids,
       };
-      setProperties(prev => [...prev, newProperty]);
-      toast.success("Propiedad creada correctamente");
+
+      let propertyId: number;
+
+      if (editingId !== null) {
+        const updated = await updateAdminPropertyAction(editingId, payload);
+        propertyId = updated.id;
+      } else {
+        const created = await createAdminPropertyAction(payload);
+        propertyId = created.id;
+      }
+
+      if (newImageFiles.length > 0) {
+        try {
+          const hasCover = existingImages.some((img) => img.is_cover);
+          await uploadAdminPropertyImagesAction(propertyId, newImageFiles, !hasCover);
+        } catch {
+          toast.error("Propiedad guardada, pero hubo un error al subir las imágenes");
+        }
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["admin-properties"] });
+      toast.success(editingId !== null ? "Propiedad actualizada" : "Propiedad creada");
+      setIsFormOpen(false);
+    } catch {
+      toast.error("Error al guardar la propiedad");
+    } finally {
+      setIsSaving(false);
     }
-    setIsFormOpen(false);
   };
 
-  const handleDelete = (id: string) => {
-    setProperties(prev => prev.filter(p => p.id !== id));
-    setIsDetailOpen(false);
-    toast.success("Propiedad eliminada");
+  const handleAmenityToggle = (id: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      amenity_ids: prev.amenity_ids.includes(id)
+        ? prev.amenity_ids.filter((aid) => aid !== id)
+        : [...prev.amenity_ids, id],
+    }));
   };
 
-  const handleActivate = (id: string) => {
-    setProperties(prev => prev.map(p => 
-      p.id === id ? { ...p, status: "activa" as PropertyStatus } : p
-    ));
-    if (selectedProperty?.id === id) {
-      setSelectedProperty(prev => prev ? { ...prev, status: "activa" } : null);
+  const handleStateChange = (value: string) => {
+    setFormData((prev) => ({ ...prev, state_id: Number(value), city_id: "" }));
+  };
+
+  const extractYouTubeId = (input: string): string => {
+    const patterns = [
+      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
+    ];
+    for (const pattern of patterns) {
+      const match = input.match(pattern);
+      if (match) return match[1];
     }
-    toast.success("Propiedad publicada correctamente");
+    // Already just an ID (≤11 alphanumeric chars)
+    return input.trim();
   };
 
-  const formatPrice = (price: string) => {
-    const num = parseInt(price);
-    return isNaN(num) ? "$0" : `$${num.toLocaleString("es-MX")}`;
-  };
+  // ─── Sub-components ───────────────────────────────────────────────────────────
 
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString("es-MX", {
-      day: "numeric",
-      month: "short",
-      year: "numeric"
-    });
-  };
+  const formatDate = (date: string) =>
+    new Date(date).toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" });
 
-  // Property Detail Content
   const PropertyDetailContent = () => {
     if (!selectedProperty) return null;
     const TypeIcon = propertyTypeConfig[selectedProperty.type].icon;
     const StatusIcon = statusConfig[selectedProperty.status].icon;
-    
+
     return (
       <div className="space-y-5">
-        <img 
-          src={selectedProperty.image} 
-          alt={selectedProperty.title}
-          className="w-full h-48 md:h-56 object-cover rounded-xl"
-        />
-        
+        {selectedProperty.image && (
+          <img
+            src={selectedProperty.image}
+            alt={selectedProperty.title}
+            className="w-full h-48 md:h-56 object-cover rounded-xl"
+          />
+        )}
+
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
@@ -246,69 +518,21 @@ const PropiedadesSection = () => {
                 <StatusIcon className="w-3 h-3 mr-1" />
                 {statusConfig[selectedProperty.status].label}
               </Badge>
+              {selectedProperty.isFeatured && (
+                <Badge className="bg-champagne-gold/20 text-champagne-gold-dark">Destacada</Badge>
+              )}
             </div>
             <h3 className="text-xl font-bold text-midnight">{selectedProperty.title}</h3>
-            <div className="flex items-center gap-2 text-foreground/60 mt-1">
-              <MapPin className="w-4 h-4" />
-              <span>{selectedProperty.location}, {selectedProperty.state}</span>
-            </div>
+            {selectedProperty.address && (
+              <div className="flex items-center gap-2 text-foreground/60 mt-1">
+                <MapPin className="w-4 h-4" />
+                <span className="text-sm">{selectedProperty.address}</span>
+              </div>
+            )}
           </div>
         </div>
 
-        <div className="text-2xl font-bold text-champagne-gold">
-          {formatPrice(selectedProperty.price)}
-        </div>
-
-        {selectedProperty.type !== "terreno" && (
-          <div className="grid grid-cols-4 gap-3 p-4 bg-muted/30 rounded-xl">
-            <div className="text-center">
-              <BedDouble className="w-5 h-5 text-champagne-gold mx-auto mb-1" />
-              <p className="text-lg font-bold text-midnight">{selectedProperty.bedrooms}</p>
-              <p className="text-xs text-foreground/60">Rec.</p>
-            </div>
-            <div className="text-center">
-              <Bath className="w-5 h-5 text-champagne-gold mx-auto mb-1" />
-              <p className="text-lg font-bold text-midnight">{selectedProperty.bathrooms}</p>
-              <p className="text-xs text-foreground/60">Baños</p>
-            </div>
-            <div className="text-center">
-              <Maximize className="w-5 h-5 text-champagne-gold mx-auto mb-1" />
-              <p className="text-lg font-bold text-midnight">{selectedProperty.sqm}</p>
-              <p className="text-xs text-foreground/60">m²</p>
-            </div>
-            <div className="text-center">
-              <Home className="w-5 h-5 text-champagne-gold mx-auto mb-1" />
-              <p className="text-lg font-bold text-midnight">{selectedProperty.parkingSpots}</p>
-              <p className="text-xs text-foreground/60">Estac.</p>
-            </div>
-          </div>
-        )}
-
-        {selectedProperty.type === "terreno" && (
-          <div className="p-4 bg-muted/30 rounded-xl text-center">
-            <Maximize className="w-6 h-6 text-champagne-gold mx-auto mb-1" />
-            <p className="text-2xl font-bold text-midnight">{selectedProperty.sqm.toLocaleString()}</p>
-            <p className="text-sm text-foreground/60">metros cuadrados</p>
-          </div>
-        )}
-
-        <div>
-          <h4 className="font-semibold text-midnight mb-2">Descripción</h4>
-          <p className="text-foreground/70 text-sm">{selectedProperty.description}</p>
-        </div>
-
-        {selectedProperty.features.length > 0 && (
-          <div>
-            <h4 className="font-semibold text-midnight mb-2">Características</h4>
-            <div className="flex flex-wrap gap-2">
-              {selectedProperty.features.map((feature, idx) => (
-                <Badge key={idx} variant="outline" className="border-champagne-gold/50 text-champagne-gold">
-                  {feature}
-                </Badge>
-              ))}
-            </div>
-          </div>
-        )}
+        <div className="text-2xl font-bold text-champagne-gold">{selectedProperty.price}</div>
 
         <div className="grid grid-cols-2 gap-4 p-4 bg-muted/30 rounded-xl text-sm">
           <div>
@@ -319,37 +543,27 @@ const PropiedadesSection = () => {
             <p className="text-foreground/60">Fecha Solicitud</p>
             <p className="font-medium text-midnight">{formatDate(selectedProperty.submittedAt)}</p>
           </div>
-          {selectedProperty.yearBuilt > 0 && (
-            <div>
-              <p className="text-foreground/60">Año Construcción</p>
-              <p className="font-medium text-midnight">{selectedProperty.yearBuilt}</p>
-            </div>
-          )}
         </div>
 
         <div className="flex gap-3 pt-4">
-          {selectedProperty.status === "pendiente" && (
-            <Button 
-              variant="gold" 
-              className="flex-1" 
-              onClick={() => handleActivate(selectedProperty.id)}
-            >
-              <CheckCircle className="w-4 h-4 mr-2" />
-              Publicar
-            </Button>
-          )}
-          <Button 
-            variant={selectedProperty.status === "pendiente" ? "outline" : "gold"}
-            className="flex-1" 
-            onClick={() => handleEdit(selectedProperty)}
+          <Button
+            variant="gold"
+            className="flex-1"
+            onClick={() => handleToggleFeatured(selectedProperty.rawId)}
+            disabled={toggleFeaturedMutation.isPending}
           >
+            <CheckCircle className="w-4 h-4 mr-2" />
+            {selectedProperty.isFeatured ? "Quitar Destacado" : "Destacar"}
+          </Button>
+          <Button variant="outline" className="flex-1" onClick={() => handleEdit(selectedProperty)}>
             <Edit className="w-4 h-4 mr-2" />
             Editar
           </Button>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             className="border-red-200 text-red-500 hover:bg-red-50"
-            onClick={() => handleDelete(selectedProperty.id)}
+            onClick={() => handleDelete(selectedProperty.rawId)}
+            disabled={deleteMutation.isPending}
           >
             <Trash2 className="w-4 h-4" />
           </Button>
@@ -358,182 +572,412 @@ const PropiedadesSection = () => {
     );
   };
 
-  // Form Content
-  const FormContent = () => (
-    <div className="space-y-5 p-4 overflow-y-auto max-h-[70vh]">
-      <div className="space-y-2">
-        <Label>Título</Label>
-        <Input
-          value={formData.title}
-          onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-          placeholder="Ej: Casa en Polanco"
-          className="h-12"
-        />
-      </div>
+  const FormContent = () => {
+    if (isLoadingDetail) {
+      return (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-8 h-8 animate-spin text-champagne-gold" />
+        </div>
+      );
+    }
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label>Tipo de Propiedad</Label>
-          <Select
-            value={formData.type}
-            onValueChange={(value: PropertyType) => setFormData(prev => ({ ...prev, type: value }))}
-          >
-            <SelectTrigger className="h-12">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(propertyTypeConfig).map(([key, config]) => (
-                <SelectItem key={key} value={key}>
-                  <div className="flex items-center gap-2">
-                    <config.icon className="w-4 h-4" />
-                    {config.label}
+    const states = statesQuery.data ?? [];
+    const cities = citiesQuery.data ?? [];
+    const amenities = amenitiesQuery.data ?? [];
+
+    return (
+      <div className="space-y-6 p-4 overflow-y-auto max-h-[70vh]">
+        {/* ── Información General ── */}
+        <div>
+          <h4 className="text-sm font-semibold text-foreground/70 uppercase tracking-wider mb-3">
+            Información General
+          </h4>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="col-span-2 space-y-1">
+              <Label>Título *</Label>
+              <Input
+                value={formData.title}
+                onChange={(e) => setFormData((p) => ({ ...p, title: e.target.value }))}
+                placeholder="Ej: Casa en Polanco"
+                className="h-11"
+              />
+            </div>
+            <div className="col-span-2 space-y-1">
+              <Label>Descripción</Label>
+              <Textarea
+                value={formData.description}
+                onChange={(e) => setFormData((p) => ({ ...p, description: e.target.value }))}
+                placeholder="Describe la propiedad..."
+                rows={3}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Tipo de propiedad</Label>
+              <Select
+                value={formData.property_type}
+                onValueChange={(v) => setFormData((p) => ({ ...p, property_type: v as PropertyFormData["property_type"] }))}
+              >
+                <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="house">Casa</SelectItem>
+                  <SelectItem value="apartment">Departamento</SelectItem>
+                  <SelectItem value="land">Terreno</SelectItem>
+                  <SelectItem value="commercial">Local comercial</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label>Tipo de listado</Label>
+              <Select
+                value={formData.listing_type}
+                onValueChange={(v) => setFormData((p) => ({ ...p, listing_type: v as "sale" | "pending_listing" }))}
+              >
+                <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="sale">Venta</SelectItem>
+                  <SelectItem value="pending_listing">En listado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label>Condición</Label>
+              <Select
+                value={formData.property_condition}
+                onValueChange={(v) => setFormData((p) => ({ ...p, property_condition: v as PropertyFormData["property_condition"] }))}
+              >
+                <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="new">Nueva</SelectItem>
+                  <SelectItem value="semi_new">Semi-nueva</SelectItem>
+                  <SelectItem value="used">Usada</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label>Estado de la propiedad</Label>
+              <Select
+                value={formData.status}
+                onValueChange={(v) => setFormData((p) => ({ ...p, status: v as "disponible" | "vendida" }))}
+              >
+                <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="disponible">Disponible</SelectItem>
+                  <SelectItem value="vendida">Vendida</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Precios y Medidas ── */}
+        <div>
+          <h4 className="text-sm font-semibold text-foreground/70 uppercase tracking-wider mb-3">
+            Precios y Medidas
+          </h4>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <Label>Precio (MXN)</Label>
+              <Input
+                type="number"
+                value={formData.price}
+                onChange={(e) => setFormData((p) => ({ ...p, price: e.target.value }))}
+                placeholder="12500000"
+                className="h-11"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>m² construcción</Label>
+              <Input
+                type="number"
+                value={formData.construction_sqm}
+                onChange={(e) => setFormData((p) => ({ ...p, construction_sqm: e.target.value }))}
+                placeholder="200"
+                className="h-11"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>m² terreno</Label>
+              <Input
+                type="number"
+                value={formData.land_sqm}
+                onChange={(e) => setFormData((p) => ({ ...p, land_sqm: e.target.value }))}
+                placeholder="300"
+                className="h-11"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Recámaras</Label>
+              <Input
+                type="number"
+                min={0}
+                value={formData.bedrooms}
+                onChange={(e) => setFormData((p) => ({ ...p, bedrooms: Number(e.target.value) }))}
+                className="h-11"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Baños</Label>
+              <Input
+                type="number"
+                min={0}
+                value={formData.bathrooms}
+                onChange={(e) => setFormData((p) => ({ ...p, bathrooms: Number(e.target.value) }))}
+                className="h-11"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Estacionamientos</Label>
+              <Input
+                type="number"
+                min={0}
+                value={formData.parking_spaces}
+                onChange={(e) => setFormData((p) => ({ ...p, parking_spaces: Number(e.target.value) }))}
+                className="h-11"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* ── Ubicación ── */}
+        <div>
+          <h4 className="text-sm font-semibold text-foreground/70 uppercase tracking-wider mb-3">
+            Ubicación
+          </h4>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <Label>Estado</Label>
+              <Select
+                value={formData.state_id !== "" ? String(formData.state_id) : ""}
+                onValueChange={handleStateChange}
+              >
+                <SelectTrigger className="h-11">
+                  <SelectValue placeholder={statesQuery.isLoading ? "Cargando..." : "Seleccionar"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {states.map((s) => (
+                    <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label>Ciudad</Label>
+              <Select
+                value={formData.city_id !== "" ? String(formData.city_id) : ""}
+                onValueChange={(v) => setFormData((p) => ({ ...p, city_id: Number(v) }))}
+                disabled={!formData.state_id}
+              >
+                <SelectTrigger className="h-11">
+                  <SelectValue placeholder={citiesQuery.isLoading ? "Cargando..." : "Seleccionar"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {cities.map((c) => (
+                    <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="col-span-2 space-y-1">
+              <Label>Zona</Label>
+              <Select
+                value={formData.zone}
+                onValueChange={(v) => setFormData((p) => ({ ...p, zone: v }))}
+              >
+                <SelectTrigger className="h-11"><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="norte">Norte</SelectItem>
+                  <SelectItem value="sur">Sur</SelectItem>
+                  <SelectItem value="centro">Centro</SelectItem>
+                  <SelectItem value="oriente">Oriente</SelectItem>
+                  <SelectItem value="poniente">Poniente</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label>Calle</Label>
+              <Input
+                value={formData.address_street}
+                onChange={(e) => setFormData((p) => ({ ...p, address_street: e.target.value }))}
+                placeholder="Av. Presidente Masaryk"
+                className="h-11"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Número</Label>
+              <Input
+                value={formData.address_number}
+                onChange={(e) => setFormData((p) => ({ ...p, address_number: e.target.value }))}
+                placeholder="123"
+                className="h-11"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Colonia</Label>
+              <Input
+                value={formData.address_neighborhood}
+                onChange={(e) => setFormData((p) => ({ ...p, address_neighborhood: e.target.value }))}
+                placeholder="Polanco"
+                className="h-11"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Código postal</Label>
+              <Input
+                value={formData.address_zip}
+                onChange={(e) => setFormData((p) => ({ ...p, address_zip: e.target.value }))}
+                placeholder="11560"
+                className="h-11"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* ── Extras ── */}
+        <div>
+          <h4 className="text-sm font-semibold text-foreground/70 uppercase tracking-wider mb-3">
+            Extras
+          </h4>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <Label>Video de YouTube</Label>
+              <Input
+                value={formData.video_id}
+                onChange={(e) =>
+                  setFormData((p) => ({ ...p, video_id: extractYouTubeId(e.target.value) }))
+                }
+                placeholder="URL o ID del video (ej: dQw4w9WgXcQ)"
+                className="h-11"
+              />
+            </div>
+            <div className="flex items-center gap-3 pt-6">
+              <Switch
+                id="is_featured"
+                checked={formData.is_featured}
+                onCheckedChange={(checked) => setFormData((p) => ({ ...p, is_featured: checked }))}
+              />
+              <Label htmlFor="is_featured" className="cursor-pointer flex items-center gap-1">
+                <Star className="w-4 h-4 text-champagne-gold" />
+                Propiedad destacada
+              </Label>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Amenidades ── */}
+        {amenities.length > 0 && (
+          <div>
+            <h4 className="text-sm font-semibold text-foreground/70 uppercase tracking-wider mb-3">
+              Amenidades
+            </h4>
+            <div className="grid grid-cols-3 gap-2">
+              {amenities.map((amenity) => (
+                <label
+                  key={amenity.id}
+                  className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-muted/40 transition-colors"
+                >
+                  <Checkbox
+                    checked={formData.amenity_ids.includes(amenity.id)}
+                    onCheckedChange={() => handleAmenityToggle(amenity.id)}
+                  />
+                  <span className="text-sm">{amenity.name}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Imágenes ── */}
+        <div>
+          <h4 className="text-sm font-semibold text-foreground/70 uppercase tracking-wider mb-3">
+            Imágenes
+          </h4>
+
+          {/* Existing images (edit mode) */}
+          {existingImages.length > 0 && (
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-foreground/60">Imágenes actuales</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-red-500 hover:text-red-600 hover:bg-red-50 text-xs"
+                  onClick={handleDeleteAllImages}
+                >
+                  <Trash2 className="w-3 h-3 mr-1" />
+                  Eliminar todas
+                </Button>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {existingImages.map((img) => (
+                  <div key={img.id} className="relative group rounded-lg overflow-hidden border border-border/50">
+                    <img
+                      src={getMediaUrl(img.image_url)}
+                      alt=""
+                      className="w-full h-24 object-cover"
+                    />
+                    {img.is_cover && (
+                      <Badge className="absolute bottom-1 left-1 text-[10px] bg-champagne-gold text-white px-1 py-0">
+                        Portada
+                      </Badge>
+                    )}
+                    <button
+                      onClick={() => handleDeleteImage(img.id)}
+                      className="absolute top-1 right-1 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
                   </div>
-                </SelectItem>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* New images preview */}
+          {newImagePreviews.length > 0 && (
+            <div className="grid grid-cols-3 gap-2 mb-3">
+              {newImagePreviews.map((url, i) => (
+                <div key={i} className="relative group rounded-lg overflow-hidden border border-champagne-gold/40">
+                  <img src={url} alt="" className="w-full h-24 object-cover" />
+                  <button
+                    onClick={() => handleRemoveNewImage(i)}
+                    className="absolute top-1 right-1 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
               ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-2">
-          <Label>Estado</Label>
-          <Select
-            value={formData.status}
-            onValueChange={(value: PropertyStatus) => setFormData(prev => ({ ...prev, status: value }))}
+            </div>
+          )}
+
+          {/* Upload zone */}
+          <div
+            className="border-2 border-dashed border-champagne-gold/50 rounded-xl p-6 text-center cursor-pointer hover:bg-champagne-gold/5 transition-colors"
+            onClick={() => fileInputRef.current?.click()}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => {
+              e.preventDefault();
+              handleFileSelect(e.dataTransfer.files);
+            }}
           >
-            <SelectTrigger className="h-12">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="pendiente">Pendiente</SelectItem>
-              <SelectItem value="activa">Activa</SelectItem>
-              <SelectItem value="vendida">Vendida</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label>Municipio</Label>
-          <Input
-            value={formData.location}
-            onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
-            placeholder="Ej: Miguel Hidalgo"
-            className="h-12"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label>Estado</Label>
-          <Select
-            value={formData.state}
-            onValueChange={(value) => setFormData(prev => ({ ...prev, state: value }))}
-          >
-            <SelectTrigger className="h-12">
-              <SelectValue placeholder="Seleccionar" />
-            </SelectTrigger>
-            <SelectContent>
-              {mexicanStates.map((state) => (
-                <SelectItem key={state} value={state}>{state}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label>Dirección Completa</Label>
-        <Input
-          value={formData.address}
-          onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
-          placeholder="Av. Presidente Masaryk 123"
-          className="h-12"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label>Precio (MXN)</Label>
-        <Input
-          type="number"
-          value={formData.price}
-          onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
-          placeholder="12500000"
-          className="h-12"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label>Metros Cuadrados</Label>
-        <Input
-          type="number"
-          value={formData.sqm}
-          onChange={(e) => setFormData(prev => ({ ...prev, sqm: parseInt(e.target.value) || 0 }))}
-          placeholder="320"
-          className="h-12"
-        />
-      </div>
-
-      {formData.type !== "terreno" && (
-        <div className="grid grid-cols-3 gap-3">
-          <div className="space-y-2">
-            <Label>Recámaras</Label>
-            <Input
-              type="number"
-              value={formData.bedrooms}
-              onChange={(e) => setFormData(prev => ({ ...prev, bedrooms: parseInt(e.target.value) || 0 }))}
-              className="h-12"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Baños</Label>
-            <Input
-              type="number"
-              value={formData.bathrooms}
-              onChange={(e) => setFormData(prev => ({ ...prev, bathrooms: parseInt(e.target.value) || 0 }))}
-              className="h-12"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Estac.</Label>
-            <Input
-              type="number"
-              value={formData.parkingSpots}
-              onChange={(e) => setFormData(prev => ({ ...prev, parkingSpots: parseInt(e.target.value) || 0 }))}
-              className="h-12"
+            <Camera className="w-8 h-8 text-champagne-gold mx-auto mb-2" />
+            <p className="text-sm text-foreground/60">
+              Click o arrastra imágenes aquí
+            </p>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={(e) => handleFileSelect(e.target.files)}
             />
           </div>
         </div>
-      )}
-
-      {formData.type !== "terreno" && (
-        <div className="space-y-2">
-          <Label>Año de Construcción</Label>
-          <Input
-            type="number"
-            value={formData.yearBuilt}
-            onChange={(e) => setFormData(prev => ({ ...prev, yearBuilt: parseInt(e.target.value) || 2020 }))}
-            className="h-12"
-          />
-        </div>
-      )}
-
-      <div className="space-y-2">
-        <Label>Descripción</Label>
-        <Textarea
-          value={formData.description}
-          onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-          placeholder="Describe la propiedad..."
-          rows={3}
-        />
       </div>
+    );
+  };
 
-      <div className="space-y-2">
-        <Label>Imagen (Simulado)</Label>
-        <div className="border-2 border-dashed border-champagne-gold/50 rounded-xl p-6 text-center cursor-pointer hover:bg-champagne-gold/5 transition-colors">
-          <Camera className="w-8 h-8 text-champagne-gold mx-auto mb-2" />
-          <p className="text-sm text-foreground/60">Click para subir imagen</p>
-        </div>
-      </div>
-    </div>
-  );
+  // ─── Render ───────────────────────────────────────────────────────────────────
 
   return (
     <div className="space-y-6">
@@ -551,7 +995,7 @@ const PropiedadesSection = () => {
 
       {/* Status Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card 
+        <Card
           className={`cursor-pointer border-2 transition-all ${filterStatus === "pendiente" ? "border-orange-400 bg-orange-50" : "border-border/50 hover:border-orange-300"}`}
           onClick={() => setFilterStatus(filterStatus === "pendiente" ? "all" : "pendiente")}
         >
@@ -565,7 +1009,7 @@ const PropiedadesSection = () => {
             </div>
           </CardContent>
         </Card>
-        <Card 
+        <Card
           className={`cursor-pointer border-2 transition-all ${filterStatus === "activa" ? "border-green-400 bg-green-50" : "border-border/50 hover:border-green-300"}`}
           onClick={() => setFilterStatus(filterStatus === "activa" ? "all" : "activa")}
         >
@@ -597,7 +1041,7 @@ const PropiedadesSection = () => {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-foreground/40" />
           <Input
-            placeholder="Buscar por nombre, municipio o estado..."
+            placeholder="Buscar por nombre o dirección..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10 h-12 border-border/50"
@@ -613,7 +1057,6 @@ const PropiedadesSection = () => {
         </Button>
       </div>
 
-      {/* Expandable Filters */}
       {showFilters && (
         <div className="flex flex-wrap gap-3 p-4 bg-muted/30 rounded-xl animate-in slide-in-from-top-2">
           <div className="flex items-center gap-2">
@@ -636,11 +1079,7 @@ const PropiedadesSection = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => {
-              setFilterType("all");
-              setFilterStatus("all");
-              setSearchTerm("");
-            }}
+            onClick={() => { setFilterType("all"); setFilterStatus("all"); setSearchTerm(""); }}
             className="text-foreground/60"
           >
             Limpiar filtros
@@ -649,63 +1088,64 @@ const PropiedadesSection = () => {
       )}
 
       {/* Properties Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-        {filteredProperties.map((property) => {
-          const TypeIcon = propertyTypeConfig[property.type].icon;
-          const StatusIcon = statusConfig[property.status].icon;
-          
-          return (
-            <Card
-              key={property.id}
-              className="overflow-hidden border-border/50 hover:border-champagne-gold/50 hover:shadow-lg transition-all cursor-pointer group"
-              onClick={() => handleViewDetail(property)}
-            >
-              <div className="relative">
-                <img
-                  src={property.image}
-                  alt={property.title}
-                  className="w-full h-40 md:h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-                <Badge className={`absolute top-3 right-3 ${statusConfig[property.status].className}`}>
-                  <StatusIcon className="w-3 h-3 mr-1" />
-                  {statusConfig[property.status].label}
-                </Badge>
-                <Badge variant="outline" className="absolute top-3 left-3 bg-white/90 border-0">
-                  <TypeIcon className="w-3 h-3 mr-1" />
-                  {propertyTypeConfig[property.type].label}
-                </Badge>
-              </div>
-              <CardContent className="p-4">
-                <h3 className="font-semibold text-midnight truncate">{property.title}</h3>
-                <div className="flex items-center gap-1 text-sm text-foreground/60 mb-2">
-                  <MapPin className="w-3.5 h-3.5" />
-                  <span>{property.location}, {property.state}</span>
-                </div>
-                <div className="flex items-center gap-3 text-xs text-foreground/60 mb-3">
-                  <span>{property.sqm} m²</span>
-                  {property.type !== "terreno" && (
-                    <>
-                      <span>•</span>
-                      <span>{property.bedrooms} rec</span>
-                      <span>•</span>
-                      <span>{property.bathrooms} baños</span>
-                    </>
-                  )}
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-lg font-bold text-champagne-gold">{formatPrice(property.price)}</span>
-                  <Button variant="ghost" size="sm" className="text-champagne-gold">
-                    <Eye className="w-4 h-4 mr-1" />
-                    Ver
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+      {propertiesQuery.isLoading ? (
+        <div className="text-center py-12 text-foreground/50">Cargando propiedades...</div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+          {filteredProperties.map((property) => {
+            const TypeIcon = propertyTypeConfig[property.type].icon;
+            const StatusIcon = statusConfig[property.status].icon;
 
-      {filteredProperties.length === 0 && (
+            return (
+              <Card
+                key={property.id}
+                className="overflow-hidden border-border/50 hover:border-champagne-gold/50 hover:shadow-lg transition-all cursor-pointer group"
+                onClick={() => handleViewDetail(property)}
+              >
+                <div className="relative">
+                  {property.image ? (
+                    <img
+                      src={property.image}
+                      alt={property.title}
+                      className="w-full h-40 md:h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  ) : (
+                    <div className="w-full h-40 md:h-48 bg-muted/30 flex items-center justify-center">
+                      <Home className="w-12 h-12 text-foreground/20" />
+                    </div>
+                  )}
+                  <Badge className={`absolute top-3 right-3 ${statusConfig[property.status].className}`}>
+                    <StatusIcon className="w-3 h-3 mr-1" />
+                    {statusConfig[property.status].label}
+                  </Badge>
+                  <Badge variant="outline" className="absolute top-3 left-3 bg-white/90 border-0">
+                    <TypeIcon className="w-3 h-3 mr-1" />
+                    {propertyTypeConfig[property.type].label}
+                  </Badge>
+                </div>
+                <CardContent className="p-4">
+                  <h3 className="font-semibold text-midnight truncate">{property.title}</h3>
+                  {property.address && (
+                    <div className="flex items-center gap-1 text-sm text-foreground/60 mb-2">
+                      <MapPin className="w-3.5 h-3.5" />
+                      <span className="truncate">{property.address}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between">
+                    <span className="text-lg font-bold text-champagne-gold">{property.price}</span>
+                    <Button variant="ghost" size="sm" className="text-champagne-gold">
+                      <Eye className="w-4 h-4 mr-1" />
+                      Ver
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      {!propertiesQuery.isLoading && filteredProperties.length === 0 && (
         <div className="text-center py-12">
           <Home className="w-12 h-12 mx-auto mb-4 text-foreground/30" />
           <p className="text-foreground/50">No se encontraron propiedades</p>
@@ -724,7 +1164,7 @@ const PropiedadesSection = () => {
               <DrawerTitle>Detalle de Propiedad</DrawerTitle>
             </DrawerHeader>
             <div className="overflow-y-auto p-4">
-              <PropertyDetailContent />
+              {PropertyDetailContent()}
             </div>
           </DrawerContent>
         </Drawer>
@@ -734,7 +1174,7 @@ const PropiedadesSection = () => {
             <DialogHeader>
               <DialogTitle>Detalle de Propiedad</DialogTitle>
             </DialogHeader>
-            <PropertyDetailContent />
+            {PropertyDetailContent()}
           </DialogContent>
         </Dialog>
       )}
@@ -744,29 +1184,31 @@ const PropiedadesSection = () => {
         <Drawer open={isFormOpen} onOpenChange={setIsFormOpen}>
           <DrawerContent className="max-h-[95vh]">
             <DrawerHeader className="border-b border-border/30">
-              <DrawerTitle>{editingId ? "Editar Propiedad" : "Nueva Propiedad"}</DrawerTitle>
+              <DrawerTitle>{editingId !== null ? "Editar Propiedad" : "Nueva Propiedad"}</DrawerTitle>
             </DrawerHeader>
-            <FormContent />
+            {FormContent()}
             <DrawerFooter className="border-t border-border/30">
-              <Button variant="gold" onClick={handleSave} className="w-full h-12">
-                <Save className="w-4 h-4 mr-2" />
-                Guardar
+              <Button variant="gold" onClick={handleSave} className="w-full h-12" disabled={isSaving}>
+                {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                {isSaving ? "Guardando..." : "Guardar"}
               </Button>
             </DrawerFooter>
           </DrawerContent>
         </Drawer>
       ) : (
         <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-          <DialogContent className="max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
             <DialogHeader>
-              <DialogTitle>{editingId ? "Editar Propiedad" : "Nueva Propiedad"}</DialogTitle>
+              <DialogTitle>{editingId !== null ? "Editar Propiedad" : "Nueva Propiedad"}</DialogTitle>
             </DialogHeader>
-            <FormContent />
-            <DialogFooter className="pt-4 border-t">
-              <Button variant="outline" onClick={() => setIsFormOpen(false)}>Cancelar</Button>
-              <Button variant="gold" onClick={handleSave}>
-                <Save className="w-4 h-4 mr-2" />
-                Guardar
+            {FormContent()}
+            <DialogFooter className="pt-4 border-t flex-shrink-0">
+              <Button variant="outline" onClick={() => setIsFormOpen(false)} disabled={isSaving}>
+                Cancelar
+              </Button>
+              <Button variant="gold" onClick={handleSave} disabled={isSaving}>
+                {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                {isSaving ? "Guardando..." : "Guardar"}
               </Button>
             </DialogFooter>
           </DialogContent>

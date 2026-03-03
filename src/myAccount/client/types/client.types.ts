@@ -84,6 +84,7 @@ export interface PropertyFileItem {
   mime_type: string;
   size_bytes: number;
   document_stage: string;
+  uploaded_at?: string;
 }
 
 export interface RecentActivityItem {

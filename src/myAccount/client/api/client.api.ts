@@ -11,15 +11,15 @@ export const clientApi = {
   getPropertyDetail: (processId: number) =>
     axiosInstance.get(`/client/purchases/${processId}`),
 
-  getPropertyFiles: (processId: number) =>
-    axiosInstance.get(`/client/purchases/${processId}/documents`),
-
   uploadPropertyFiles: (processId: number, formData: FormData) =>
     axiosInstance.post(`/client/purchases/${processId}/documents`, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     }),
 
   getUserProfile: () => axiosInstance.get("/client/profile"),
+
+  updateProfile: (data: Record<string, string>) =>
+    axiosInstance.patch("/client/profile", data),
 
   getDashboard: () => axiosInstance.get("/client/dashboard"),
 

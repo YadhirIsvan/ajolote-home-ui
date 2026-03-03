@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { getAdminClientsAction } from "@/myAccount/admin/actions/get-admin-clients.actions";
+import type { AdminClient } from "@/myAccount/admin/types/admin.types";
 import { 
   User, 
   Search, 
@@ -45,6 +48,7 @@ interface ClientProperty {
 
 interface Client {
   id: string;
+  rawId: number;
   name: string;
   email: string;
   phone: string;
@@ -66,7 +70,18 @@ const sellingStagesInfo = [
   { stage: "Publicación", duration: "1-2 días" },
 ];
 
-const emptyClient: Omit<Client, "id" | "buyingProperties" | "sellingProperties" | "avatar"> = {
+const mapAdminClient = (item: AdminClient): Client => ({
+  id: String(item.membership_id),
+  rawId: item.membership_id,
+  name: item.name,
+  email: item.email,
+  phone: item.phone ?? "",
+  avatar: item.avatar ?? item.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2),
+  buyingProperties: [],
+  sellingProperties: [],
+});
+
+const emptyClient: Omit<Client, "id" | "rawId" | "buyingProperties" | "sellingProperties" | "avatar"> = {
   name: "",
   email: "",
   phone: "",
@@ -74,19 +89,20 @@ const emptyClient: Omit<Client, "id" | "buyingProperties" | "sellingProperties" 
 
 const ClientesSection = () => {
   const isMobile = useIsMobile();
-  const [clients, setClients] = useState<Client[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+
+  const clientsQuery = useQuery({
+    queryKey: ["admin-clients", searchTerm],
+    queryFn: () => getAdminClientsAction({ search: searchTerm || undefined, limit: 200 }),
+  });
+  const clients = (clientsQuery.data?.results ?? []).map(mapAdminClient);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState(emptyClient);
 
-  const filteredClients = clients.filter(
-    (c) =>
-      c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredClients = clients;
 
   const handleClientClick = (client: Client) => {
     setSelectedClient(client);
@@ -111,170 +127,25 @@ const ClientesSection = () => {
   };
 
   const handleSave = () => {
-    if (editingId) {
-      setClients(prev => prev.map(c => 
-        c.id === editingId ? { ...c, ...formData } : c
-      ));
-      toast.success("Cliente actualizado");
-    } else {
-      const newClient: Client = {
-        id: Date.now().toString(),
-        ...formData,
-        avatar: formData.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2),
-        buyingProperties: [],
-        sellingProperties: [],
-      };
-      setClients(prev => [...prev, newClient]);
-      toast.success("Cliente creado");
-    }
+    toast.info("Creación/edición de clientes disponible próximamente");
     setIsFormOpen(false);
   };
 
-  const handleDelete = (id: string) => {
-    setClients(prev => prev.filter(c => c.id !== id));
+  const handleDelete = (_id: string) => {
+    toast.info("Eliminación de clientes disponible próximamente");
     setIsDetailOpen(false);
-    toast.success("Cliente eliminado");
   };
 
-  const handleChangeStage = (clientId: string, propertyId: string, newStage: string, type: "buying" | "selling") => {
-    setClients(prev => prev.map(c => {
-      if (c.id !== clientId) return c;
-      
-      if (type === "buying") {
-        return {
-          ...c,
-          buyingProperties: c.buyingProperties.map(p => 
-            p.id === propertyId ? { ...p, stage: newStage } : p
-          )
-        };
-      } else {
-        return {
-          ...c,
-          sellingProperties: c.sellingProperties.map(p => 
-            p.id === propertyId ? { ...p, stage: newStage } : p
-          )
-        };
-      }
-    }));
-    
-    if (selectedClient?.id === clientId) {
-      setSelectedClient(prev => {
-        if (!prev) return null;
-        if (type === "buying") {
-          return {
-            ...prev,
-            buyingProperties: prev.buyingProperties.map(p => 
-              p.id === propertyId ? { ...p, stage: newStage } : p
-            )
-          };
-        } else {
-          return {
-            ...prev,
-            sellingProperties: prev.sellingProperties.map(p => 
-              p.id === propertyId ? { ...p, stage: newStage } : p
-            )
-          };
-        }
-      });
-    }
-    toast.success(`Etapa actualizada a "${newStage}"`);
+  const handleChangeStage = (_clientId: string, _propertyId: string, _newStage: string, _type: "buying" | "selling") => {
+    toast.info("Actualización de etapa disponible próximamente");
   };
 
-  const handleUploadDocument = (clientId: string, propertyId: string, type: "buying" | "selling") => {
-    const newDoc: ClientDocument = {
-      id: Date.now().toString(),
-      name: `Documento_${Date.now()}.pdf`,
-      uploadedAt: new Date().toISOString().split("T")[0],
-    };
-    
-    setClients(prev => prev.map(c => {
-      if (c.id !== clientId) return c;
-      
-      if (type === "buying") {
-        return {
-          ...c,
-          buyingProperties: c.buyingProperties.map(p => 
-            p.id === propertyId ? { ...p, documents: [...p.documents, newDoc] } : p
-          )
-        };
-      } else {
-        return {
-          ...c,
-          sellingProperties: c.sellingProperties.map(p => 
-            p.id === propertyId ? { ...p, documents: [...p.documents, newDoc] } : p
-          )
-        };
-      }
-    }));
-    
-    // Update selected client
-    if (selectedClient?.id === clientId) {
-      setSelectedClient(prev => {
-        if (!prev) return null;
-        if (type === "buying") {
-          return {
-            ...prev,
-            buyingProperties: prev.buyingProperties.map(p => 
-              p.id === propertyId ? { ...p, documents: [...p.documents, newDoc] } : p
-            )
-          };
-        } else {
-          return {
-            ...prev,
-            sellingProperties: prev.sellingProperties.map(p => 
-              p.id === propertyId ? { ...p, documents: [...p.documents, newDoc] } : p
-            )
-          };
-        }
-      });
-    }
-    
-    toast.success("Documento subido");
+  const handleUploadDocument = (_clientId: string, _propertyId: string, _type: "buying" | "selling") => {
+    toast.info("Subida de documentos disponible próximamente");
   };
 
-  const handleDeleteDocument = (clientId: string, propertyId: string, docId: string, type: "buying" | "selling") => {
-    setClients(prev => prev.map(c => {
-      if (c.id !== clientId) return c;
-      
-      if (type === "buying") {
-        return {
-          ...c,
-          buyingProperties: c.buyingProperties.map(p => 
-            p.id === propertyId ? { ...p, documents: p.documents.filter(d => d.id !== docId) } : p
-          )
-        };
-      } else {
-        return {
-          ...c,
-          sellingProperties: c.sellingProperties.map(p => 
-            p.id === propertyId ? { ...p, documents: p.documents.filter(d => d.id !== docId) } : p
-          )
-        };
-      }
-    }));
-    
-    if (selectedClient?.id === clientId) {
-      setSelectedClient(prev => {
-        if (!prev) return null;
-        if (type === "buying") {
-          return {
-            ...prev,
-            buyingProperties: prev.buyingProperties.map(p => 
-              p.id === propertyId ? { ...p, documents: p.documents.filter(d => d.id !== docId) } : p
-            )
-          };
-        } else {
-          return {
-            ...prev,
-            sellingProperties: prev.sellingProperties.map(p => 
-              p.id === propertyId ? { ...p, documents: p.documents.filter(d => d.id !== docId) } : p
-            )
-          };
-        }
-      });
-    }
-    
-    toast.success("Documento eliminado");
+  const handleDeleteDocument = (_clientId: string, _propertyId: string, _docId: string, _type: "buying" | "selling") => {
+    toast.info("Eliminación de documentos disponible próximamente");
   };
 
   const PropertyCard = ({ property, stages, clientId, type }: { property: ClientProperty; stages: string[]; clientId: string; type: "buying" | "selling" }) => {
@@ -540,6 +411,9 @@ const ClientesSection = () => {
 
       {/* Clients Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {clientsQuery.isLoading && (
+          <p className="col-span-3 text-center text-foreground/60 py-8">Cargando clientes...</p>
+        )}
         {filteredClients.map((client) => (
           <Card 
             key={client.id} 

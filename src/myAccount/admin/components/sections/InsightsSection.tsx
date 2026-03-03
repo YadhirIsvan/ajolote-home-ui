@@ -1,32 +1,28 @@
 import { useState } from "react";
-import { 
-  DollarSign, 
-  TrendingUp, 
-  Clock, 
+import { useQuery } from "@tanstack/react-query";
+import {
+  DollarSign,
+  TrendingUp,
+  Clock,
   Home,
   BarChart3,
   PieChart,
   MapPin,
   Trophy,
   Download,
-  Filter,
-  Calendar,
-  FileText,
-  User,
-  CheckCircle
+  FileText
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   PieChart as RechartsPie,
   Pie,
@@ -35,29 +31,66 @@ import {
 } from "recharts";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import { getAdminInsightsAction } from "@/myAccount/admin/actions/get-admin-insights.actions";
+import type { InsightsPeriod } from "@/myAccount/admin/actions/get-admin-insights.actions";
+
+const PIE_COLORS = ["#C5A059", "#3B82F6", "#8B5CF6", "#10B981", "#F59E0B", "#EF4444"];
 
 const InsightsSection = () => {
   const isMobile = useIsMobile();
-  const [period, setPeriod] = useState("year");
+  const [period, setPeriod] = useState<InsightsPeriod>("year");
 
-  const monthlySalesData: { month: string; ventas: number; valor: number }[] = [];
-  const propertyTypeData: { name: string; value: number; color: string }[] = [];
-  const zoneHeatMapData: { zone: string; sales: number; value: number; intensity: number }[] = [];
-  const topAgents: { name: string; sales: number; volume: string; commission: string; avatar: string }[] = [];
-  const auditLogs: { admin: string; action: string; property: string; date: string; client: string }[] = [];
+  const insightsQuery = useQuery({
+    queryKey: ["admin-insights", period],
+    queryFn: () => getAdminInsightsAction(period),
+  });
 
+  const insights = insightsQuery.data;
+
+  const monthlySalesData = (insights?.sales_by_month ?? []).map((m) => ({
+    month: m.month,
+    ventas: m.count,
+    valor: Number(m.total_amount) / 1_000_000,
+  }));
+
+  const propertyTypeData = (insights?.distribution_by_type ?? []).map((t, i) => ({
+    name: t.property_type,
+    value: t.count,
+    color: PIE_COLORS[i % PIE_COLORS.length],
+  }));
+
+  const maxZoneSales = Math.max(1, ...(insights?.activity_by_zone ?? []).map((z) => z.sales));
+  const zoneHeatMapData = (insights?.activity_by_zone ?? []).map((z) => ({
+    zone: z.zone,
+    sales: z.sales,
+    value: z.leads,
+    intensity: Math.round((z.sales / maxZoneSales) * 100),
+  }));
+
+  const topAgents = (insights?.top_agents ?? []).map((a) => ({
+    name: a.name,
+    sales: a.sales_count,
+    volume: a.score,
+    commission: "",
+    avatar: a.name.charAt(0).toUpperCase(),
+  }));
+
+  const summary = insights?.summary;
   const stats = {
-    totalVolume: "$0",
-    avgTicket: "$0",
+    totalVolume: summary?.total_revenue
+      ? `$${Number(summary.total_revenue).toLocaleString("es-MX")}`
+      : "$0",
+    avgTicket: summary?.total_sales && summary.total_sales > 0 && summary.total_revenue
+      ? `$${Math.round(Number(summary.total_revenue) / summary.total_sales).toLocaleString("es-MX")}`
+      : "$0",
     avgDaysToSell: 0,
     totalCommissions: "$0",
-    totalProperties: 0,
-    yearlyCommissions: "$0"
+    totalProperties: summary?.total_properties ?? 0,
+    activeLeads: summary?.active_leads ?? 0,
   };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-midnight">Ventas e Insights</h1>
@@ -65,7 +98,7 @@ const InsightsSection = () => {
         </div>
 
         <div className="flex items-center gap-3">
-          <Select value={period} onValueChange={setPeriod}>
+          <Select value={period} onValueChange={(v) => setPeriod(v as InsightsPeriod)}>
             <SelectTrigger className="w-36">
               <SelectValue />
             </SelectTrigger>
@@ -121,8 +154,8 @@ const InsightsSection = () => {
                 <Clock className="w-5 h-5 text-purple-500" />
               </div>
               <div>
-                <p className="text-xs text-foreground/60">Tiempo Medio</p>
-                <p className="text-lg md:text-xl font-bold text-midnight">{stats.avgDaysToSell} días</p>
+                <p className="text-xs text-foreground/60">Leads Activos</p>
+                <p className="text-lg md:text-xl font-bold text-midnight">{stats.activeLeads}</p>
               </div>
             </div>
           </CardContent>
@@ -135,8 +168,8 @@ const InsightsSection = () => {
                 <DollarSign className="w-5 h-5 text-green-500" />
               </div>
               <div>
-                <p className="text-xs text-foreground/60">Comisiones</p>
-                <p className="text-lg md:text-xl font-bold text-midnight">{stats.totalCommissions}</p>
+                <p className="text-xs text-foreground/60">Ventas Totales</p>
+                <p className="text-lg md:text-xl font-bold text-midnight">{summary?.total_sales ?? 0}</p>
               </div>
             </div>
           </CardContent>
@@ -149,7 +182,7 @@ const InsightsSection = () => {
                 <Home className="w-5 h-5 text-orange-500" />
               </div>
               <div>
-                <p className="text-xs text-foreground/60">Total Vendidas</p>
+                <p className="text-xs text-foreground/60">Total Propiedades</p>
                 <p className="text-lg md:text-xl font-bold text-midnight">{stats.totalProperties}</p>
               </div>
             </div>
@@ -184,25 +217,31 @@ const InsightsSection = () => {
             </CardHeader>
             <CardContent>
               <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={monthlySalesData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis dataKey="month" stroke="#6b7280" fontSize={12} />
-                    <YAxis stroke="#6b7280" fontSize={12} />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: "#fff", 
-                        border: "1px solid #e5e7eb",
-                        borderRadius: "8px"
-                      }}
-                      formatter={(value: number, name: string) => [
-                        name === "ventas" ? `${value} propiedades` : `$${value}M`,
-                        name === "ventas" ? "Ventas" : "Valor"
-                      ]}
-                    />
-                    <Bar dataKey="ventas" fill="#C5A059" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+                {monthlySalesData.length === 0 ? (
+                  <div className="flex items-center justify-center h-full text-foreground/40">
+                    {insightsQuery.isLoading ? "Cargando..." : "Sin datos para este período"}
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={monthlySalesData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                      <XAxis dataKey="month" stroke="#6b7280" fontSize={12} />
+                      <YAxis stroke="#6b7280" fontSize={12} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "#fff",
+                          border: "1px solid #e5e7eb",
+                          borderRadius: "8px"
+                        }}
+                        formatter={(value: number, name: string) => [
+                          name === "ventas" ? `${value} propiedades` : `$${value.toFixed(1)}M`,
+                          name === "ventas" ? "Ventas" : "Valor"
+                        ]}
+                      />
+                      <Bar dataKey="ventas" fill="#C5A059" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -218,26 +257,32 @@ const InsightsSection = () => {
             </CardHeader>
             <CardContent>
               <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RechartsPie>
-                    <Pie
-                      data={propertyTypeData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={100}
-                      paddingAngle={5}
-                      dataKey="value"
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    >
-                      {propertyTypeData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                    <Legend />
-                  </RechartsPie>
-                </ResponsiveContainer>
+                {propertyTypeData.length === 0 ? (
+                  <div className="flex items-center justify-center h-full text-foreground/40">
+                    {insightsQuery.isLoading ? "Cargando..." : "Sin datos para este período"}
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RechartsPie>
+                      <Pie
+                        data={propertyTypeData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={100}
+                        paddingAngle={5}
+                        dataKey="value"
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      >
+                        {propertyTypeData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                      <Legend />
+                    </RechartsPie>
+                  </ResponsiveContainer>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -252,39 +297,44 @@ const InsightsSection = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {zoneHeatMapData.map((zone, idx) => (
-                  <div key={zone.zone} className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="font-medium text-midnight">{zone.zone}</span>
-                      <div className="flex items-center gap-4">
-                        <span className="text-foreground/60">{zone.sales} ventas</span>
-                        <span className="font-semibold text-champagne-gold">${zone.value}M</span>
+              {zoneHeatMapData.length === 0 ? (
+                <p className="text-center text-foreground/40 py-8">
+                  {insightsQuery.isLoading ? "Cargando..." : "Sin datos para este período"}
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {zoneHeatMapData.map((zone, idx) => (
+                    <div key={zone.zone} className="space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="font-medium text-midnight">{zone.zone}</span>
+                        <div className="flex items-center gap-4">
+                          <span className="text-foreground/60">{zone.sales} ventas</span>
+                          <span className="font-semibold text-champagne-gold">{zone.value} leads</span>
+                        </div>
+                      </div>
+                      <div className="h-3 bg-muted/30 rounded-full overflow-hidden">
+                        <div
+                          className={cn(
+                            "h-full rounded-full transition-all",
+                            idx === 0 ? "bg-champagne-gold" :
+                            idx === 1 ? "bg-champagne-gold/80" :
+                            idx === 2 ? "bg-champagne-gold/60" :
+                            "bg-champagne-gold/40"
+                          )}
+                          style={{ width: `${zone.intensity}%` }}
+                        />
                       </div>
                     </div>
-                    <div className="h-3 bg-muted/30 rounded-full overflow-hidden">
-                      <div 
-                        className={cn(
-                          "h-full rounded-full transition-all",
-                          idx === 0 ? "bg-champagne-gold" :
-                          idx === 1 ? "bg-champagne-gold/80" :
-                          idx === 2 ? "bg-champagne-gold/60" :
-                          "bg-champagne-gold/40"
-                        )}
-                        style={{ width: `${zone.intensity}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
 
-      {/* Bottom Sections */}
+      {/* Top Agents */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Top Agents Ranking */}
         <Card className="border-border/30">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-midnight">
@@ -293,89 +343,70 @@ const InsightsSection = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {topAgents.map((agent, idx) => (
-                <div 
-                  key={agent.name} 
-                  className={cn(
-                    "flex items-center gap-4 p-3 rounded-xl transition-colors",
-                    idx === 0 ? "bg-champagne-gold/10" : "bg-muted/20"
-                  )}
-                >
-                  <div className={cn(
-                    "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
-                    idx === 0 ? "bg-champagne-gold text-white" :
-                    idx === 1 ? "bg-gray-400 text-white" :
-                    idx === 2 ? "bg-amber-600 text-white" :
-                    "bg-muted text-foreground/60"
-                  )}>
-                    {idx + 1}
+            {topAgents.length === 0 ? (
+              <p className="text-center text-foreground/40 py-4">
+                {insightsQuery.isLoading ? "Cargando..." : "Sin datos"}
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {topAgents.map((agent, idx) => (
+                  <div
+                    key={agent.name}
+                    className={cn(
+                      "flex items-center gap-4 p-3 rounded-xl transition-colors",
+                      idx === 0 ? "bg-champagne-gold/10" : "bg-muted/20"
+                    )}
+                  >
+                    <div className={cn(
+                      "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
+                      idx === 0 ? "bg-champagne-gold text-white" :
+                      idx === 1 ? "bg-gray-400 text-white" :
+                      idx === 2 ? "bg-amber-600 text-white" :
+                      "bg-muted text-foreground/60"
+                    )}>
+                      {idx + 1}
+                    </div>
+
+                    <div className="w-10 h-10 rounded-full bg-midnight/10 flex items-center justify-center">
+                      <span className="text-sm font-semibold text-midnight">{agent.avatar}</span>
+                    </div>
+
+                    <div className="flex-1">
+                      <p className="font-semibold text-midnight">{agent.name}</p>
+                      <p className="text-xs text-foreground/60">{agent.sales} ventas • score: {agent.volume}</p>
+                    </div>
                   </div>
-                  
-                  <div className="w-10 h-10 rounded-full bg-midnight/10 flex items-center justify-center">
-                    <span className="text-sm font-semibold text-midnight">{agent.avatar}</span>
-                  </div>
-                  
-                  <div className="flex-1">
-                    <p className="font-semibold text-midnight">{agent.name}</p>
-                    <p className="text-xs text-foreground/60">{agent.sales} ventas • {agent.volume}</p>
-                  </div>
-                  
-                  <div className="text-right">
-                    <p className="text-sm font-bold text-champagne-gold">{agent.commission}</p>
-                    <p className="text-xs text-foreground/60">comisión</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Audit Log */}
         <Card className="border-border/30">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-midnight">
               <FileText className="w-5 h-5 text-champagne-gold" />
-              Log de Auditoría
+              Resumen del Período
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {auditLogs.map((log, idx) => (
-                <div 
-                  key={idx} 
-                  className="flex items-start gap-3 p-3 bg-muted/20 rounded-xl"
-                >
-                  <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
-                    <CheckCircle className="w-4 h-4 text-green-600" />
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium text-midnight text-sm">{log.admin}</span>
-                      <span className="text-foreground/60 text-sm">{log.action}</span>
-                    </div>
-                    <p className="text-sm text-champagne-gold font-medium truncate">{log.property}</p>
-                    <div className="flex items-center gap-2 mt-1 text-xs text-foreground/50">
-                      <User className="w-3 h-3" />
-                      <span>{log.client}</span>
-                      <span>•</span>
-                      <Calendar className="w-3 h-3" />
-                      <span>{log.date}</span>
-                    </div>
-                  </div>
+              {[
+                { label: "Total Propiedades", value: String(summary?.total_properties ?? 0) },
+                { label: "Total Ventas", value: String(summary?.total_sales ?? 0) },
+                { label: "Leads Activos", value: String(summary?.active_leads ?? 0) },
+                { label: "Ingresos Totales", value: summary?.total_revenue ? `$${Number(summary.total_revenue).toLocaleString("es-MX")}` : "$0" },
+              ].map((item) => (
+                <div key={item.label} className="flex items-center justify-between p-3 bg-muted/20 rounded-xl">
+                  <span className="text-sm text-foreground/60">{item.label}</span>
+                  <span className="font-semibold text-midnight">{item.value}</span>
                 </div>
               ))}
             </div>
-            
-            <Button variant="outline" className="w-full mt-4">
-              Ver historial completo
-            </Button>
           </CardContent>
         </Card>
       </div>
 
-      {/* Export Section */}
       <Card className="border-border/30 bg-gradient-to-r from-midnight/5 to-champagne-gold/5">
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
@@ -383,7 +414,7 @@ const InsightsSection = () => {
               <h3 className="text-lg font-bold text-midnight">Exportar Reportes</h3>
               <p className="text-sm text-foreground/60">Descarga el historial completo en PDF o Excel</p>
             </div>
-            
+
             <div className="flex gap-3">
               <Button variant="outline" className="flex items-center gap-2">
                 <FileText className="w-4 h-4" />

@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { 
-  Home, 
-  User, 
-  MapPin, 
-  Calendar, 
-  FileText, 
+import { useQuery } from "@tanstack/react-query";
+import {
+  Home,
+  User,
+  MapPin,
+  Calendar,
+  FileText,
   DollarSign,
   Eye,
   Download,
@@ -20,6 +21,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import { getAdminHistoryAction } from "@/myAccount/admin/actions/get-admin-history.actions";
+import type { AdminSaleHistoryItem } from "@/myAccount/admin/types/admin.types";
 
 interface SoldProperty {
   id: string;
@@ -40,7 +43,24 @@ interface SoldProperty {
   closedAt: string;
 }
 
-const soldProperties: SoldProperty[] = [];
+const mapHistoryItem = (item: AdminSaleHistoryItem): SoldProperty => ({
+  id: String(item.id),
+  property: item.property.title,
+  type: item.property.property_type,
+  client: item.client.name,
+  clientEmail: "",
+  agent: item.agent.name,
+  price: `$${Number(item.sale_price).toLocaleString("es-MX")}`,
+  priceNum: Number(item.sale_price) || 0,
+  location: item.property.zone,
+  zone: item.property.zone,
+  soldDate: item.closed_at.split("T")[0],
+  daysToSell: 0,
+  paymentMethod: item.payment_method,
+  documents: [],
+  closedBy: item.agent.name,
+  closedAt: item.closed_at.split("T")[0],
+});
 
 const HistorialSection = () => {
   const isMobile = useIsMobile();
@@ -48,18 +68,24 @@ const HistorialSection = () => {
   const [filterZone, setFilterZone] = useState<string>("all");
   const [filterPayment, setFilterPayment] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");
-  const [selectedProperty, setSelectedProperty] = useState<SoldProperty | null>(null);
   const [showFilters, setShowFilters] = useState(false);
 
-  const zones = [...new Set(soldProperties.map(p => p.zone))];
-  const types = [...new Set(soldProperties.map(p => p.type))];
+  const historyQuery = useQuery({
+    queryKey: ["admin-history"],
+    queryFn: () => getAdminHistoryAction({ limit: 100 }),
+  });
+
+  const soldProperties: SoldProperty[] = (historyQuery.data?.results ?? []).map(mapHistoryItem);
+
+  const zones = [...new Set(soldProperties.map(p => p.zone))].filter(Boolean);
+  const types = [...new Set(soldProperties.map(p => p.type))].filter(Boolean);
 
   const filteredProperties = soldProperties.filter(property => {
-    const matchesSearch = 
+    const matchesSearch =
       property.property.toLowerCase().includes(searchTerm.toLowerCase()) ||
       property.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
       property.agent.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     const matchesZone = filterZone === "all" || property.zone === filterZone;
     const matchesPayment = filterPayment === "all" || property.paymentMethod.includes(filterPayment);
     const matchesType = filterType === "all" || property.type === filterType;
@@ -80,7 +106,6 @@ const HistorialSection = () => {
     <Card className="border-border/30 hover:border-champagne-gold/50 hover:shadow-lg transition-all">
       <CardContent className="p-5">
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-          {/* Property Info */}
           <div className="flex-1 space-y-3">
             <div className="flex items-start justify-between">
               <div>
@@ -125,15 +150,13 @@ const HistorialSection = () => {
             </div>
           </div>
 
-          {/* Actions */}
           <div className="flex md:flex-col gap-2">
             <Dialog>
               <DialogTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   className="flex-1 md:flex-none"
-                  onClick={() => setSelectedProperty(property)}
                 >
                   <Eye className="w-4 h-4 mr-2" />
                   Ver Detalles
@@ -145,9 +168,8 @@ const HistorialSection = () => {
                     {property.property}
                   </DialogTitle>
                 </DialogHeader>
-                
+
                 <div className="space-y-6 py-4">
-                  {/* Property Header */}
                   <div className="p-4 bg-gradient-to-r from-champagne-gold/10 to-transparent rounded-xl">
                     <div className="flex items-center justify-between">
                       <div>
@@ -156,12 +178,10 @@ const HistorialSection = () => {
                       </div>
                       <div className="text-right">
                         <p className="text-2xl font-bold text-champagne-gold">{property.price}</p>
-                        <p className="text-sm text-green-600">{property.daysToSell} días para vender</p>
                       </div>
                     </div>
                   </div>
 
-                  {/* Client & Agent Info */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Card className="border-border/30">
                       <CardHeader className="pb-2">
@@ -172,7 +192,6 @@ const HistorialSection = () => {
                       </CardHeader>
                       <CardContent>
                         <p className="font-semibold text-midnight">{property.client}</p>
-                        <p className="text-sm text-foreground/60">{property.clientEmail}</p>
                       </CardContent>
                     </Card>
 
@@ -185,12 +204,10 @@ const HistorialSection = () => {
                       </CardHeader>
                       <CardContent>
                         <p className="font-semibold text-midnight">{property.agent}</p>
-                        <p className="text-sm text-foreground/60">Vendedor</p>
                       </CardContent>
                     </Card>
                   </div>
 
-                  {/* Sale Details */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <div className="p-3 bg-muted/30 rounded-xl text-center">
                       <Calendar className="w-5 h-5 mx-auto mb-1 text-champagne-gold" />
@@ -209,32 +226,11 @@ const HistorialSection = () => {
                     </div>
                     <div className="p-3 bg-muted/30 rounded-xl text-center">
                       <Home className="w-5 h-5 mx-auto mb-1 text-purple-500" />
-                      <p className="text-xs text-foreground/60">Días en Venta</p>
-                      <p className="font-semibold text-sm">{property.daysToSell}</p>
+                      <p className="text-xs text-foreground/60">Cierre</p>
+                      <p className="font-semibold text-sm">{property.closedAt}</p>
                     </div>
                   </div>
 
-                  {/* Documents */}
-                  <Card className="border-border/30">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm text-foreground/60 flex items-center gap-2">
-                        <FileText className="w-4 h-4 text-champagne-gold" />
-                        Documentos ({property.documents.length})
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex flex-wrap gap-2">
-                        {property.documents.map((doc, idx) => (
-                          <Badge key={idx} variant="outline" className="bg-muted/30">
-                            <FileText className="w-3 h-3 mr-1" />
-                            {doc}
-                          </Badge>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* Audit Log */}
                   <div className="p-4 bg-midnight/5 rounded-xl">
                     <p className="text-xs text-foreground/60 mb-2">Registro de Auditoría</p>
                     <div className="flex items-center justify-between">
@@ -242,10 +238,6 @@ const HistorialSection = () => {
                         <p className="text-sm font-medium text-midnight">Cerrado por: {property.closedBy}</p>
                         <p className="text-xs text-foreground/60">Fecha de cierre: {property.closedAt}</p>
                       </div>
-                      <Button variant="outline" size="sm">
-                        <Download className="w-4 h-4 mr-2" />
-                        Exportar
-                      </Button>
                     </div>
                   </div>
                 </div>
@@ -259,16 +251,13 @@ const HistorialSection = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div>
         <h1 className="text-2xl md:text-3xl font-bold text-midnight">Historial de Ventas</h1>
         <p className="text-foreground/60">Registro completo de propiedades vendidas</p>
       </div>
 
-      {/* Search and Filters */}
       <div className="space-y-4">
         <div className="flex flex-col md:flex-row gap-3">
-          {/* Search */}
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/50" />
             <Input
@@ -279,10 +268,9 @@ const HistorialSection = () => {
             />
           </div>
 
-          {/* Filter Toggle (Mobile) */}
           {isMobile && (
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => setShowFilters(!showFilters)}
               className={cn(showFilters && "bg-champagne-gold/10 border-champagne-gold")}
             >
@@ -296,7 +284,6 @@ const HistorialSection = () => {
             </Button>
           )}
 
-          {/* Desktop Filters */}
           {!isMobile && (
             <>
               <Select value={filterZone} onValueChange={setFilterZone}>
@@ -343,7 +330,6 @@ const HistorialSection = () => {
           )}
         </div>
 
-        {/* Mobile Filters Panel */}
         {isMobile && showFilters && (
           <Card className="border-champagne-gold/30">
             <CardContent className="p-4 space-y-3">
@@ -395,10 +381,9 @@ const HistorialSection = () => {
         )}
       </div>
 
-      {/* Results Count */}
       <div className="flex items-center justify-between">
         <p className="text-sm text-foreground/60">
-          {filteredProperties.length} propiedades vendidas
+          {historyQuery.isLoading ? "Cargando..." : `${filteredProperties.length} propiedades vendidas`}
         </p>
         <Button variant="outline" size="sm">
           <Download className="w-4 h-4 mr-2" />
@@ -406,9 +391,14 @@ const HistorialSection = () => {
         </Button>
       </div>
 
-      {/* Properties List */}
       <div className="space-y-4">
-        {filteredProperties.length === 0 ? (
+        {historyQuery.isLoading ? (
+          <Card className="border-border/30">
+            <CardContent className="p-12 text-center">
+              <p className="text-foreground/60">Cargando historial...</p>
+            </CardContent>
+          </Card>
+        ) : filteredProperties.length === 0 ? (
           <Card className="border-border/30">
             <CardContent className="p-12 text-center">
               <Home className="w-12 h-12 mx-auto mb-4 text-foreground/30" />
