@@ -1,4 +1,4 @@
-import { Home, Calendar, Users, ChevronRight, CheckCircle, LogOut, Settings, Briefcase } from "lucide-react";
+import { Home, Calendar, Users, ChevronRight, CheckCircle, LogOut, Settings, Briefcase, RefreshCw } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +14,16 @@ interface AgentDashboardProps {
 
 const SHOW_EMPTY_APPOINTMENTS = false;
 
+const getStatusLabel = (displayStatus: string): string => {
+  const labels: Record<string, string> = {
+    registrar_propiedad: "Registrar Propiedad",
+    aprobar_estado: "Aprobar Estado",
+    marketing: "Marketing",
+    vendida: "Vendida",
+  };
+  return labels[displayStatus] || displayStatus;
+};
+
 const AgentDashboard = ({ onLogout }: AgentDashboardProps) => {
   const {
     dashboard,
@@ -24,6 +34,7 @@ const AgentDashboard = ({ onLogout }: AgentDashboardProps) => {
     setIsPropertyModalOpen,
     handlePropertyClick,
     handleStatusChange,
+    refetchAll,
   } = useAgentDashboard();
 
   return (
@@ -93,6 +104,20 @@ const AgentDashboard = ({ onLogout }: AgentDashboardProps) => {
 
         {/* Properties Tab */}
         <TabsContent value="properties">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg md:text-xl font-semibold text-midnight">
+              Mis Propiedades
+            </h3>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => refetchAll()}
+              className="gap-2 border-champagne-gold/30 hover:border-champagne-gold hover:bg-champagne-gold/5"
+            >
+              <RefreshCw className="w-4 h-4" />
+              <span className="hidden sm:inline">Actualizar</span>
+            </Button>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {properties.map((property) => (
               <Card
@@ -108,12 +133,16 @@ const AgentDashboard = ({ onLogout }: AgentDashboardProps) => {
                   />
                   <Badge
                     className={`absolute top-3 right-3 ${
-                      property.status === "En negociación"
-                        ? "bg-champagne-gold text-white"
-                        : "bg-green-500 text-white"
+                      property.displayStatus === "aprobar_estado"
+                        ? "bg-blue-500 text-white"
+                        : property.displayStatus === "marketing"
+                        ? "bg-purple-500 text-white"
+                        : property.displayStatus === "vendida"
+                        ? "bg-green-500 text-white"
+                        : "bg-champagne-gold text-white"
                     }`}
                   >
-                    {property.status}
+                    {getStatusLabel(property.displayStatus)}
                   </Badge>
                 </div>
                 <CardContent className="p-4 md:p-5">

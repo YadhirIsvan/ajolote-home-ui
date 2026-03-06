@@ -24,11 +24,24 @@ export interface PropertySaleSummary {
   price: string;
   image: string;
   status: string;
+  client_visible_status: 'registrar_propiedad' | 'aprobar_estado' | 'marketing' | 'vendida';
   views: number;
   interested: number;
   daysListed: number;
   trend: string;
   progressStep: number;
+  // Property detail fields
+  type?: string;
+  sqm?: number;
+  bedrooms?: number;
+  bathrooms?: number;
+  currency?: string;
+  address_street?: string;
+  address_number?: string;
+  address_neighborhood?: string;
+  city?: { id: number; name: string } | null;
+  construction_sqm?: number;
+  land_sqm?: number;
 }
 
 export interface SaleProcessAgent {

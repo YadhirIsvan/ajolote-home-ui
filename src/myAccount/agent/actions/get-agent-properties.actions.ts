@@ -8,6 +8,7 @@ interface BackendAgentProperty {
   price: string;
   property_type: string;
   status: string;
+  display_status: string;
   image: string | null;
   leads_count: number;
   assigned_at: string;
@@ -35,6 +36,7 @@ const mapItem = (item: BackendAgentProperty): AgentProperty => ({
   image: item.image ?? "",
   leads: item.leads_count,
   status: item.status,
+  displayStatus: item.display_status,
 });
 
 export const getAgentPropertiesAction = async (): Promise<AgentProperty[]> => {

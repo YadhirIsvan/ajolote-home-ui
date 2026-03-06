@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Upload, FileText, Home, Users } from "lucide-react";
+import { Upload, FileText, Home, Users, RefreshCw } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -19,6 +19,31 @@ interface AgentPropertyModalProps {
   property: AgentProperty | null;
 }
 
+const getStatusBadgeStyles = (displayStatus: string): string => {
+  switch (displayStatus) {
+    case "registrar_propiedad":
+      return "bg-yellow-100 text-yellow-700";
+    case "aprobar_estado":
+      return "bg-blue-100 text-blue-700";
+    case "marketing":
+      return "bg-purple-100 text-purple-700";
+    case "vendida":
+      return "bg-green-100 text-green-700";
+    default:
+      return "bg-slate-100 text-slate-700";
+  }
+};
+
+const formatStatusLabel = (displayStatus: string): string => {
+  const labels: Record<string, string> = {
+    registrar_propiedad: "Registrar Propiedad",
+    aprobar_estado: "Aprobar Estado",
+    marketing: "Marketing",
+    vendida: "Vendida",
+  };
+  return labels[displayStatus] || displayStatus;
+};
+
 const AgentPropertyModal = ({ isOpen, onClose, property }: AgentPropertyModalProps) => {
   const [selectedLead, setSelectedLead] = useState<AgentLead | null>(null);
   const [localLeadUpdates, setLocalLeadUpdates] = useState<Record<number, number>>({});
@@ -29,6 +54,8 @@ const AgentPropertyModal = ({ isOpen, onClose, property }: AgentPropertyModalPro
     queryKey: ["agent-property-leads", property?.id],
     queryFn: () => getAgentPropertyLeadsAction(property!.id),
     enabled: !!property?.id && isOpen,
+    staleTime: 0, // Considera datos stale inmediatamente
+    refetchInterval: 5000, // Refetch cada 5 segundos
   });
 
   const leads: AgentLead[] = (leadsQuery.data ?? []).map((lead) =>
@@ -141,7 +168,9 @@ const AgentPropertyModal = ({ isOpen, onClose, property }: AgentPropertyModalPro
                         >
                           <span className="text-foreground/60 text-sm">{item.label}</span>
                           {item.label === "Estado" ? (
-                            <Badge className="bg-green-100 text-green-700">Activa</Badge>
+                            <Badge className={getStatusBadgeStyles(property.displayStatus)}>
+                              {formatStatusLabel(property.displayStatus)}
+                            </Badge>
                           ) : (
                             <span className={item.className}>{item.value}</span>
                           )}
@@ -165,12 +194,23 @@ const AgentPropertyModal = ({ isOpen, onClose, property }: AgentPropertyModalPro
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <h3 className="text-lg font-bold text-midnight">Clientes Interesados</h3>
-                      <Badge
-                        variant="outline"
-                        className="border-champagne-gold/30 text-champagne-gold"
-                      >
-                        {leads.length} total
-                      </Badge>
+                      <div className="flex items-center gap-3">
+                        <Badge
+                          variant="outline"
+                          className="border-champagne-gold/30 text-champagne-gold"
+                        >
+                          {leads.length} total
+                        </Badge>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => leadsQuery.refetch()}
+                          className="gap-2 border-champagne-gold/30 hover:border-champagne-gold hover:bg-champagne-gold/5"
+                        >
+                          <RefreshCw className="w-4 h-4" />
+                          <span className="hidden sm:inline">Actualizar</span>
+                        </Button>
+                      </div>
                     </div>
                     <div className="space-y-4">
                       {leads.map((lead) => (

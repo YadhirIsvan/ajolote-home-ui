@@ -5,6 +5,17 @@ import { useNavigate } from "react-router-dom";
 import { useClientDashboard } from "@/myAccount/client/hooks/use-client-dashboard.hook";
 import type { PropertySaleItem, PropertyBuySummary } from "@/myAccount/client/types/client.types";
 
+const formatPrice = (price: string | number | undefined): string => {
+  if (!price) return "$0";
+  const num = typeof price === "string" ? parseFloat(price) : price;
+  return new Intl.NumberFormat("es-MX", {
+    style: "currency",
+    currency: "MXN",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(num);
+};
+
 interface ClientDashboardProps {
   onLogout: () => void;
   onNavigateVentas?: () => void;
@@ -146,7 +157,7 @@ const ClientDashboard = ({ onNavigateVentas, onNavigateCompras }: ClientDashboar
                     >
                       <span className="text-midnight truncate">{p.title}</span>
                       <span className="text-champagne-gold font-medium shrink-0 ml-2">
-                        {p.price}
+                        {formatPrice(p.price)}
                       </span>
                     </div>
                   ))
@@ -191,7 +202,7 @@ const ClientDashboard = ({ onNavigateVentas, onNavigateCompras }: ClientDashboar
                             {p.title}
                           </span>
                           <span className="text-champagne-gold font-medium text-sm shrink-0 ml-2">
-                            {p.price}
+                            {formatPrice(p.price)}
                           </span>
                         </div>
                         <div className="flex items-center gap-2">

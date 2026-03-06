@@ -68,6 +68,7 @@ const mapDetail = (item: BackendPropertyDetail): PropertyDetailData => ({
   beds: item.bedrooms,
   baths: item.bathrooms,
   sqm: parseFloat(item.construction_sqm),
+  land_sqm: item.land_sqm ? parseFloat(item.land_sqm) : undefined,
   verified: item.is_verified,
   status: item.status,
   images: item.images
@@ -83,6 +84,7 @@ const mapDetail = (item: BackendPropertyDetail): PropertyDetailData => ({
     icon: place.place_type,
     label: `${place.name} - ${parseFloat(place.distance_km).toFixed(1)} km`,
   })),
+  amenities: item.amenities,
   agent: {
     name: item.agent.name,
     photo: item.agent.photo,
@@ -110,10 +112,12 @@ export const getPropertyDetailAction = async (
         beds: 0,
         baths: 0,
         sqm: 0,
+        land_sqm: undefined,
         verified: false,
         status: "",
         description: "",
         coordinates: { lat: 0, lng: 0 },
+        amenities: [],
         agent: { name: "", photo: "", phone: "", email: "" },
       },
       fromFallback: true,

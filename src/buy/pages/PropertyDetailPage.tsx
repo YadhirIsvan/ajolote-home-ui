@@ -342,7 +342,7 @@ const PropertyDetailPage = () => {
                 </div>
 
                 {/* Key Specs */}
-                <div className="flex items-center gap-8 py-4 px-6 bg-muted/50 rounded-2xl w-fit">
+                <div className="flex flex-wrap items-center gap-8 py-4 px-6 bg-muted/50 rounded-2xl">
                   <div className="flex items-center gap-3">
                     <BedDouble className="w-6 h-6 text-primary" />
                     <div>
@@ -363,10 +363,37 @@ const PropertyDetailPage = () => {
                     <Maximize className="w-6 h-6 text-primary" />
                     <div>
                       <p className="font-semibold text-primary">{property.sqm}m²</p>
-                      <p className="text-xs text-muted-foreground">Área Total</p>
+                      <p className="text-xs text-muted-foreground">Área Construcción</p>
                     </div>
                   </div>
+                  {property.land_sqm && (
+                    <>
+                      <div className="w-px h-10 bg-border" />
+                      <div className="flex items-center gap-3">
+                        <Maximize className="w-6 h-6 text-primary" />
+                        <div>
+                          <p className="font-semibold text-primary">{property.land_sqm}m²</p>
+                          <p className="text-xs text-muted-foreground">Área Terreno</p>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
+
+                {/* Amenities */}
+                {property.amenities && property.amenities.length > 0 && (
+                  <div>
+                    <h3 className="text-xl font-semibold text-primary mb-4">Amenidades</h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                      {property.amenities.map((amenity) => (
+                        <div key={amenity.id} className="flex items-center gap-3 bg-muted/50 rounded-xl px-4 py-3">
+                          <span className="text-champagne text-xl">{amenity.icon}</span>
+                          <span className="text-sm font-medium text-foreground">{amenity.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Description */}
                 <div>

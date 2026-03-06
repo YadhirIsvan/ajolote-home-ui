@@ -6,6 +6,7 @@ export interface AgentProperty {
   image: string;
   leads: number;
   status: string;
+  displayStatus: string;
 }
 
 export interface AgentDashboardStats {

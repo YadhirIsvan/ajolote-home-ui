@@ -26,6 +26,7 @@ export interface PropertyDetailData {
   beds: number;
   baths: number;
   sqm: number;
+  land_sqm?: number;
   verified: boolean;
   status: string;
   description: string;
@@ -33,6 +34,7 @@ export interface PropertyDetailData {
   video_img?: string;
   coordinates: { lat: number; lng: number };
   "nearby-places"?: { icon: string; label: string }[];
+  amenities?: { id: number; name: string; icon: string }[];
   agent: { name: string; photo: string; phone: string; email: string };
 }
 

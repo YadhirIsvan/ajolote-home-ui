@@ -13,16 +13,22 @@ export const useAgentDashboard = () => {
   const dashboardQuery = useQuery({
     queryKey: ["agent-dashboard"],
     queryFn: getAgentDashboardAction,
+    staleTime: 0,
+    refetchInterval: 5000, // Refetch cada 5 segundos
   });
 
   const propertiesQuery = useQuery({
     queryKey: ["agent-properties"],
     queryFn: getAgentPropertiesAction,
+    staleTime: 0, // Los datos se consideran "stale" inmediatamente
+    refetchInterval: 5000, // Refetch automático cada 5 segundos cuando la ventana esté activa
   });
 
   const appointmentsQuery = useQuery({
     queryKey: ["agent-appointments"],
     queryFn: getAgentAppointmentsAction,
+    staleTime: 0,
+    refetchInterval: 5000,
   });
 
   const appointments = localAppointments ?? appointmentsQuery.data ?? [];
@@ -39,6 +45,12 @@ export const useAgentDashboard = () => {
     );
   };
 
+  const refetchAll = () => {
+    dashboardQuery.refetch();
+    propertiesQuery.refetch();
+    appointmentsQuery.refetch();
+  };
+
   return {
     dashboard: dashboardQuery.data ?? null,
     properties: propertiesQuery.data ?? [],
@@ -50,5 +62,6 @@ export const useAgentDashboard = () => {
     setIsPropertyModalOpen,
     handlePropertyClick,
     handleStatusChange,
+    refetchAll, // ✅ Agregamos función para refrescar manualmente
   };
 };

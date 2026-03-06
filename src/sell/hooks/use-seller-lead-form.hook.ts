@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { z } from "zod";
 import type { SellerLeadData } from "@/sell/actions/submit-seller-lead.actions";
+import { submitSellerLeadAction } from "@/sell/actions/submit-seller-lead.actions";
 
 const step1Schema = z.object({
   propertyType: z.string().min(1, "Selecciona un tipo de propiedad"),
@@ -15,6 +16,12 @@ const step2Schema = z.object({
   bedrooms: z.string().min(1, "Selecciona el número de recámaras"),
   bathrooms: z.string().min(1, "Selecciona el número de baños"),
   expectedPrice: z.string().optional(),
+});
+
+const step3Schema = z.object({
+  fullName: z.string().min(1, "Ingresa tu nombre completo"),
+  email: z.string().email("Ingresa un email válido"),
+  phone: z.string().min(1, "Ingresa tu teléfono"),
 });
 
 const EMPTY_FORM: SellerLeadData = {
@@ -33,17 +40,20 @@ interface UseSellerLeadFormOptions {
   onOpenChange: (open: boolean) => void;
   mode?: "default" | "add";
   onPropertyAdded?: (data: Record<string, string>) => void;
+  membershipId?: number;
 }
 
 export const useSellerLeadForm = ({
   onOpenChange,
   mode = "default",
   onPropertyAdded,
+  membershipId,
 }: UseSellerLeadFormOptions) => {
-  const TOTAL_STEPS = 2;
+  const TOTAL_STEPS = 3;
 
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState<SellerLeadData>(EMPTY_FORM);
 
@@ -70,6 +80,12 @@ export const useSellerLeadForm = ({
           bathrooms: formData.bathrooms,
           expectedPrice: formData.expectedPrice,
         });
+      } else if (step === 3) {
+        step3Schema.parse({
+          fullName: formData.fullName,
+          email: formData.email,
+          phone: formData.phone,
+        });
       }
       setErrors({});
       return true;
@@ -85,11 +101,29 @@ export const useSellerLeadForm = ({
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (mode === "add" && onPropertyAdded) {
       onPropertyAdded(formData as unknown as Record<string, string>);
+      setIsSubmitted(true);
+      return;
     }
-    setIsSubmitted(true);
+
+    // Default mode: send to backend
+    setIsSubmitting(true);
+    try {
+      const response = await submitSellerLeadAction(formData, membershipId);
+      setIsSubmitted(response.success);
+      if (!response.success) {
+        setErrors({ submit: response.message });
+        setIsSubmitting(false);
+        return;
+      }
+    } catch (error) {
+      setErrors({ submit: "Error al enviar el formulario" });
+      setIsSubmitting(false);
+      return;
+    }
+    setIsSubmitting(false);
   };
 
   const handleNext = () => {
@@ -110,6 +144,7 @@ export const useSellerLeadForm = ({
     setTimeout(() => {
       setCurrentStep(1);
       setIsSubmitted(false);
+      setIsSubmitting(false);
       setFormData(EMPTY_FORM);
       setErrors({});
     }, 300);
@@ -122,6 +157,7 @@ export const useSellerLeadForm = ({
     formData,
     errors,
     isSubmitted,
+    isSubmitting,
     mode,
     updateFormData,
     handleNext,

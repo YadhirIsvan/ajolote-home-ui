@@ -8,31 +8,41 @@ export const useClientVentas = () => {
   const [selectedPropertyId, setSelectedPropertyId] = useState<number | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
 
-  const { data, isLoading: ventasLoading } = useQuery({
+  const ventasQuery = useQuery({
     queryKey: ["client-properties-sale"],
     queryFn: getClientPropertiesSaleAction,
+    staleTime: 0, // Datos considerados stale inmediatamente
+    refetchInterval: 5000, // Refetch automático cada 5 segundos
   });
 
-  const ventasList = (data?.list ?? []) as PropertySaleItem[];
+  const ventasList = (ventasQuery.data?.list ?? []) as PropertySaleItem[];
   const fallback = ventasList.find((p) => p.id === selectedPropertyId);
 
-  const { data: detailData } = useQuery({
+  const detailQuery = useQuery({
     queryKey: ["client-property-sale-detail", selectedPropertyId],
     queryFn: () => getClientPropertySaleDetailAction(selectedPropertyId!, fallback),
     enabled: !!selectedPropertyId,
+    staleTime: 0,
+    refetchInterval: 5000,
   });
 
   const selectedProperty = selectedPropertyId
-    ? ((detailData ?? ventasList.find((p) => p.id === selectedPropertyId)) as PropertySaleItem | undefined)
+    ? ((detailQuery.data ?? ventasList.find((p) => p.id === selectedPropertyId)) as PropertySaleItem | undefined)
     : null;
+
+  const refetchAll = () => {
+    ventasQuery.refetch();
+    detailQuery.refetch();
+  };
 
   return {
     ventasList,
-    ventasLoading,
+    ventasLoading: ventasQuery.isLoading,
     selectedPropertyId,
     setSelectedPropertyId,
     selectedProperty,
     isFormOpen,
     setIsFormOpen,
+    refetchAll, // Función para refrescar manualmente
   };
 };

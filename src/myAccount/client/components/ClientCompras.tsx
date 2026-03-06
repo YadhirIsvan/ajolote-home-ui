@@ -10,6 +10,17 @@ import type {
 } from "@/myAccount/client/types/client.types";
 import { UseMutationResult } from "@tanstack/react-query";
 
+const formatPrice = (price: string | number | undefined): string => {
+  if (!price) return "$0";
+  const num = typeof price === "string" ? parseFloat(price) : price;
+  return new Intl.NumberFormat("es-MX", {
+    style: "currency",
+    currency: "MXN",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(num);
+};
+
 interface ClientComprasProps {
   onBack: () => void;
 }
@@ -58,7 +69,7 @@ const PropertyDetailCard = ({
                   {prop.address}
                 </div>
               </div>
-              <span className="text-2xl font-bold text-champagne-gold">{prop.price}</span>
+              <span className="text-2xl font-bold text-champagne-gold">{formatPrice(prop.price)}</span>
             </div>
             <div className="flex items-center gap-2 mt-3 text-sm text-foreground/60">
               <span>Agente asignado:</span>
@@ -196,13 +207,13 @@ const ClientCompras = ({ onBack }: ClientComprasProps) => {
     displayList,
     filesData,
     filesLoading,
+    purchaseSteps,
     uploadMutation,
     fileInputRef,
     activePropertyId,
     setActivePropertyId,
     handleFileSelect,
     triggerUpload,
-    buildStepsFromProgress,
   } = useClientCompras();
 
   return (
@@ -224,11 +235,13 @@ const ClientCompras = ({ onBack }: ClientComprasProps) => {
 
       {/* Back */}
       <button
-        onClick={() =>
-          viewingDetailId && comprasList.length > 1
-            ? setSelectedPropertyId(null)
-            : onBack()
-        }
+        onClick={() => {
+          if (selectedPropertyId) {
+            setSelectedPropertyId(null);
+          } else {
+            onBack();
+          }
+        }}
         className="flex items-center gap-2 text-sm text-foreground/60 hover:text-champagne-gold transition-colors group"
       >
         <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
@@ -249,27 +262,34 @@ const ClientCompras = ({ onBack }: ClientComprasProps) => {
         <p className="text-muted-foreground">Cargando...</p>
       ) : comprasList.length === 0 ? (
         <p className="text-muted-foreground">No tienes compras en proceso</p>
-      ) : comprasList.length === 1 && singleProperty ? (
+      ) : selectedPropertyId ? (
+        // Mostrar detalle de la propiedad seleccionada
+        viewingProperty ? (
+          <PropertyDetailCard
+            prop={viewingProperty}
+            files={filesData}
+            filesLoading={filesLoading}
+            steps={purchaseSteps}
+            onUpload={() => triggerUpload(viewingProperty.id)}
+            uploadMutation={uploadMutation}
+          />
+        ) : (
+          <p className="text-muted-foreground">Cargando propiedad...</p>
+        )
+      ) : comprasList.length === 1 ? (
+        // Si hay solo una propiedad, mostrarla automáticamente
         <PropertyDetailCard
-          prop={singleProperty}
+          prop={comprasList[0]}
           files={filesData}
           filesLoading={filesLoading}
-          steps={buildStepsFromProgress(singleProperty.overallProgress)}
-          onUpload={() => triggerUpload(singleProperty.id)}
-          uploadMutation={uploadMutation}
-        />
-      ) : viewingDetailId && viewingProperty ? (
-        <PropertyDetailCard
-          prop={viewingProperty}
-          files={filesData}
-          filesLoading={filesLoading}
-          steps={buildStepsFromProgress(viewingProperty.overallProgress)}
-          onUpload={() => triggerUpload(viewingProperty.id)}
+          steps={purchaseSteps}
+          onUpload={() => triggerUpload(comprasList[0].id)}
           uploadMutation={uploadMutation}
         />
       ) : (
+        // Mostrar lista de propiedades
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {displayList.map((prop) => (
+          {comprasList.map((prop) => (
             <Card
               key={prop.id}
               className="border border-border/20 bg-white rounded-2xl overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
@@ -293,7 +313,7 @@ const ClientCompras = ({ onBack }: ClientComprasProps) => {
                       <MapPin className="w-3.5 h-3.5" />
                       {prop.address}
                     </div>
-                    <p className="text-xl font-bold text-champagne-gold mt-2">{prop.price}</p>
+                    <p className="text-xl font-bold text-champagne-gold mt-2">{formatPrice(prop.price)}</p>
                     <p className="text-sm text-foreground/60 mt-1">
                       Agente: {prop.agent_name}
                     </p>

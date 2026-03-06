@@ -26,6 +26,16 @@ const mapBackendSteps = (steps: BackendStep[]): Step[] =>
     allowUpload: s.allow_upload,
   }));
 
+const buildStepsFromProgress = (progress: number | undefined): Step[] => {
+  const steps: Step[] = [
+    { label: "Oferta", done: progress! >= 15, current: progress! >= 15 && progress! < 30, allowUpload: false },
+    { label: "Avalúo", done: progress! >= 30, current: progress! >= 30 && progress! < 45, allowUpload: false },
+    { label: "Crédito", done: progress! >= 45, current: progress! >= 45 && progress! < 60, allowUpload: false },
+    { label: "Documentos verificados", done: progress! >= 100, current: progress! >= 60 && progress! < 100, allowUpload: progress! >= 60 && progress! < 100 },
+  ];
+  return steps;
+};
+
 export const useClientCompras = () => {
   const queryClient = useQueryClient();
   const [selectedPropertyId, setSelectedPropertyId] = useState<number | null>(null);
@@ -99,5 +109,6 @@ export const useClientCompras = () => {
     setActivePropertyId,
     handleFileSelect,
     triggerUpload,
+    buildStepsFromProgress,
   };
 };

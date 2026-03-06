@@ -1,4 +1,4 @@
-import { ArrowLeft, Home, MapPin, Eye, Calendar, TrendingUp } from "lucide-react";
+import { ArrowLeft, Home, MapPin, Eye, Calendar, TrendingUp, RefreshCw } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,13 +12,58 @@ interface ClientVentasProps {
 
 const progressSteps = ["Registrar propiedad", "Aprobar estado", "Marketing", "Vendida"];
 
+const formatPrice = (price: string | number | undefined): string => {
+  if (!price) return "$0";
+  const num = typeof price === "string" ? parseFloat(price) : price;
+  return new Intl.NumberFormat("es-MX", {
+    style: "currency",
+    currency: "MXN",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(num);
+};
+
+const getClientVisibleStatusLabel = (status: 'registrar_propiedad' | 'aprobar_estado' | 'marketing' | 'vendida'): string => {
+  const labels: Record<'registrar_propiedad' | 'aprobar_estado' | 'marketing' | 'vendida', string> = {
+    'registrar_propiedad': 'Registrar propiedad',
+    'aprobar_estado': 'Aprobar estado',
+    'marketing': 'Marketing',
+    'vendida': 'Vendida',
+  };
+  return labels[status];
+};
+
+const getStatusBadgeColor = (status: 'registrar_propiedad' | 'aprobar_estado' | 'marketing' | 'vendida') => {
+  switch (status) {
+    case 'vendida':
+      return 'bg-emerald-500 text-white';
+    case 'marketing':
+      return 'bg-blue-500 text-white';
+    case 'aprobar_estado':
+      return 'bg-yellow-500 text-white';
+    case 'registrar_propiedad':
+    default:
+      return 'bg-amber-100 text-amber-700';
+  }
+};
+
+const getProgressStepIndex = (status: 'registrar_propiedad' | 'aprobar_estado' | 'marketing' | 'vendida'): number => {
+  const map: Record<'registrar_propiedad' | 'aprobar_estado' | 'marketing' | 'vendida', number> = {
+    'registrar_propiedad': 0,
+    'aprobar_estado': 1,
+    'marketing': 2,
+    'vendida': 3,
+  };
+  return map[status];
+};
+
 const MiniProgressBar = ({ currentStep }: { currentStep: number }) => (
   <div className="flex items-center gap-1 mt-3">
     {progressSteps.map((_, i) => (
       <div
         key={i}
         className={`h-1.5 flex-1 rounded-full transition-colors ${
-          i < currentStep ? "bg-emerald-500" : "bg-muted"
+          i <= currentStep ? "bg-emerald-500" : "bg-muted"
         }`}
       />
     ))}
@@ -36,7 +81,7 @@ const FullProgressStepper = ({ currentStep }: { currentStep: number }) => (
     />
     <div className="flex items-start justify-between relative">
       {progressSteps.map((label, i) => {
-        const done = i < currentStep;
+        const done = i <= currentStep;
         const active = i === currentStep;
         return (
           <div key={i} className="flex flex-col items-center flex-1">
@@ -86,6 +131,7 @@ const ClientVentas = ({ onBack }: ClientVentasProps) => {
     selectedProperty,
     isFormOpen,
     setIsFormOpen,
+    refetchAll,
   } = useClientVentas();
 
   if (selectedPropertyId && selectedProperty) {
@@ -97,6 +143,7 @@ const ClientVentas = ({ onBack }: ClientVentasProps) => {
           ? `+${prop.trend}% visitas`
           : `${prop.trend}% visitas`
         : "";
+    const progressIndex = getProgressStepIndex(prop.client_visible_status);
 
     return (
       <div className="space-y-6">
@@ -112,7 +159,7 @@ const ClientVentas = ({ onBack }: ClientVentasProps) => {
 
         <Card className="border border-border/20 rounded-2xl">
           <CardContent className="p-6">
-            <FullProgressStepper currentStep={prop.progressStep} />
+            <FullProgressStepper currentStep={progressIndex} />
           </CardContent>
         </Card>
 
@@ -124,12 +171,21 @@ const ClientVentas = ({ onBack }: ClientVentasProps) => {
               </h2>
               <div className="space-y-4">
                 {[
-                  { label: "Tipo", value: prop.type },
-                  { label: "Ubicación", value: prop.address },
-                  { label: "Metros cuadrados", value: `${prop.sqm} m²` },
-                  { label: "Recámaras", value: String(prop.bedrooms) },
-                  { label: "Baños", value: String(prop.bathrooms) },
-                  { label: "Precio", value: prop.price },
+                  { 
+                    label: "Ubicación", 
+                    value: [
+                      prop.address_street && prop.address_number && `${prop.address_street} ${prop.address_number}`,
+                      prop.address_neighborhood && `Col. ${prop.address_neighborhood}`,
+                      prop.city?.name,
+                    ].filter(Boolean).join(', ') || prop.address || 'N/A'
+                  },
+                  { 
+                    label: "Metros cuadrados", 
+                    value: prop.construction_sqm ? `${prop.construction_sqm} m²` : (prop.land_sqm ? `${prop.land_sqm} m²` : 'N/A')
+                  },
+                  { label: "Recámaras", value: String(prop.bedrooms ?? 'N/A') },
+                  { label: "Baños", value: String(prop.bathrooms ?? 'N/A') },
+                  { label: "Precio", value: formatPrice(prop.price) },
                 ].map((item) => (
                   <div
                     key={item.label}
@@ -150,12 +206,12 @@ const ClientVentas = ({ onBack }: ClientVentasProps) => {
                 <div className="space-y-4">
                   {[
                     { label: "Nombre", value: prop.title },
-                    { label: "Ubicación", value: prop.address },
-                    { label: "Precio", value: prop.price },
-                    { label: "Visitas", value: String(prop.views) },
-                    { label: "Días publicada", value: `${prop.daysListed} días` },
+                    { label: "Ubicación", value: prop.address ?? 'N/A' },
+                    { label: "Precio", value: formatPrice(prop.price) },
+                    { label: "Visitas", value: String(prop.views ?? 0) },
+                    { label: "Días publicada", value: `${prop.daysListed ?? 0} días` },
                     { label: "Tendencia", value: trendStr },
-                    { label: "Interesados", value: String(prop.interested) },
+                    { label: "Interesados", value: String(prop.interested ?? 0) },
                   ].map((item) => (
                     <div
                       key={item.label}
@@ -203,8 +259,8 @@ const ClientVentas = ({ onBack }: ClientVentasProps) => {
         </Button>
       </div>
 
-      {/* Summary Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      {/* Summary Stats - COMENTADO POR AHORA */}
+      {/* <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
           { label: "Propiedades", value: "2", color: "text-blue-600", bg: "bg-blue-50" },
           { label: "Visitas totales", value: "209", color: "text-champagne-gold", bg: "bg-champagne-gold/10" },
@@ -218,15 +274,30 @@ const ClientVentas = ({ onBack }: ClientVentasProps) => {
             </CardContent>
           </Card>
         ))}
-      </div>
+      </div> */}
 
       {/* Property Cards */}
       <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-bold text-midnight">Mis Propiedades</h2>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => refetchAll()}
+            className="gap-2 border-champagne-gold/30 hover:border-champagne-gold hover:bg-champagne-gold/5"
+          >
+            <RefreshCw className="w-4 h-4" />
+            <span className="hidden sm:inline">Actualizar</span>
+          </Button>
+        </div>
+        <div>
         {ventasLoading ? (
           <p className="text-sm text-foreground/50">Cargando propiedades...</p>
         ) : (
           ventasList.map((prop) => {
-            const isPublished = prop.status === "Publicada";
+            const clientVisibleStatus = prop.client_visible_status;
+            const isVendida = clientVisibleStatus === 'vendida';
+            const progressIndex = getProgressStepIndex(clientVisibleStatus);
             return (
               <Card
                 key={prop.id}
@@ -237,18 +308,17 @@ const ClientVentas = ({ onBack }: ClientVentasProps) => {
                   <div className="flex flex-col sm:flex-row">
                     <div className="sm:w-48 h-40 sm:h-auto bg-muted/30 relative flex-shrink-0">
                       <img
-                        src={prop.image}
+                        src={prop.image || "https://via.placeholder.com/400x300?text=Propiedad"}
                         alt={prop.title}
                         className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = "https://via.placeholder.com/400x300?text=Sin+Imagen";
+                        }}
                       />
                       <Badge
-                        className={`absolute top-3 left-3 text-xs ${
-                          isPublished
-                            ? "bg-emerald-500 text-white"
-                            : "bg-amber-100 text-amber-700"
-                        }`}
+                        className={`absolute top-3 left-3 text-xs ${getStatusBadgeColor(clientVisibleStatus)}`}
                       >
-                        {prop.status}
+                        {getClientVisibleStatusLabel(clientVisibleStatus)}
                       </Badge>
                     </div>
 
@@ -261,10 +331,10 @@ const ClientVentas = ({ onBack }: ClientVentasProps) => {
                             {prop.address}
                           </div>
                         </div>
-                        <span className="text-xl font-bold text-champagne-gold">{prop.price}</span>
+                        <span className="text-xl font-bold text-champagne-gold">{formatPrice(prop.price)}</span>
                       </div>
 
-                      {isPublished ? (
+                      {isVendida ? (
                         <div className="flex flex-wrap items-center gap-4 mt-4 pt-4 border-t border-border/10">
                           <div className="flex items-center gap-1.5 text-sm text-foreground/60">
                             <Eye className="w-4 h-4" />
@@ -292,13 +362,13 @@ const ClientVentas = ({ onBack }: ClientVentasProps) => {
                       ) : (
                         <div className="mt-4 pt-4 border-t border-border/10">
                           <p className="text-xs text-foreground/50 mb-1">Progreso de revisión</p>
-                          <MiniProgressBar currentStep={prop.progressStep} />
+                          <MiniProgressBar currentStep={progressIndex} />
                           <div className="flex justify-between mt-2">
                             {progressSteps.map((s, i) => (
                               <span
                                 key={i}
                                 className={`text-[9px] ${
-                                  i < prop.progressStep
+                                  i < progressIndex
                                     ? "text-emerald-600"
                                     : "text-muted-foreground"
                                 }`}
@@ -316,6 +386,7 @@ const ClientVentas = ({ onBack }: ClientVentasProps) => {
             );
           })
         )}
+        </div>
       </div>
 
       <SellerLeadForm open={isFormOpen} onOpenChange={setIsFormOpen} mode="add" />

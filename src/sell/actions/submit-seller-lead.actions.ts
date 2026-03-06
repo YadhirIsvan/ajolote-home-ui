@@ -33,7 +33,8 @@ const PROPERTY_TYPE_MAP: Record<string, string> = {
 };
 
 export const submitSellerLeadAction = async (
-  data: SellerLeadData
+  data: SellerLeadData,
+  membershipId?: number
 ): Promise<SubmitSellerLeadResponse> => {
   const payload = {
     full_name: data.fullName,
@@ -45,6 +46,7 @@ export const submitSellerLeadAction = async (
     bedrooms: data.bedrooms ? parseInt(data.bedrooms, 10) : undefined,
     bathrooms: data.bathrooms ? parseInt(data.bathrooms, 10) : undefined,
     expected_price: data.expectedPrice ? parseFloat(data.expectedPrice) : undefined,
+    ...(membershipId && { created_by_membership: membershipId }),
   };
 
   try {

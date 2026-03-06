@@ -3,8 +3,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowRight, ArrowLeft, CheckCircle2, Home, Building2, Castle, Warehouse } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { ArrowRight, ArrowLeft, CheckCircle2, Home, Building2, Castle, Warehouse, Loader2 } from "lucide-react";
 import { useSellerLeadForm } from "@/sell/hooks/use-seller-lead-form.hook";
+import { getCitiesAction, type CityItem } from "@/buy/actions/get-cities.actions";
+import { useAuth } from "@/auth/hooks/use-auth.hook";
 
 const PROPERTY_TYPES = [
   { id: "casa", label: "Casa", icon: Home },
@@ -26,6 +29,7 @@ export interface SellerLeadFormProps {
 }
 
 const SellerLeadForm = ({ open, onOpenChange, mode = "default", onPropertyAdded }: SellerLeadFormProps) => {
+  const { user } = useAuth();
   const {
     currentStep,
     totalSteps,
@@ -33,11 +37,25 @@ const SellerLeadForm = ({ open, onOpenChange, mode = "default", onPropertyAdded 
     formData,
     errors,
     isSubmitted,
+    isSubmitting,
     updateFormData,
     handleNext,
     handleBack,
     handleClose,
-  } = useSellerLeadForm({ onOpenChange, mode, onPropertyAdded });
+  } = useSellerLeadForm({
+    onOpenChange,
+    mode,
+    onPropertyAdded,
+    membershipId: user?.membership_id
+  });
+
+  const { data: citiesData = [] } = useQuery({
+    queryKey: ["sell-cities"],
+    queryFn: getCitiesAction,
+    staleTime: 1000 * 60 * 60,
+  });
+
+  const cities: CityItem[] = citiesData ?? [];
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -80,6 +98,7 @@ const SellerLeadForm = ({ open, onOpenChange, mode = "default", onPropertyAdded 
               <DialogTitle className="text-2xl font-bold text-primary">
                 {currentStep === 1 && "La Propiedad"}
                 {currentStep === 2 && "Detalles"}
+                {currentStep === 3 && "Contacto"}
               </DialogTitle>
             </DialogHeader>
 
@@ -136,8 +155,8 @@ const SellerLeadForm = ({ open, onOpenChange, mode = "default", onPropertyAdded 
                       <SelectValue placeholder="Selecciona una ciudad" />
                     </SelectTrigger>
                     <SelectContent>
-                      {LOCATIONS.map((loc) => (
-                        <SelectItem key={loc} value={loc}>{loc}</SelectItem>
+                      {cities.map((city) => (
+                        <SelectItem key={city.id} value={city.name}>{city.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -148,7 +167,7 @@ const SellerLeadForm = ({ open, onOpenChange, mode = "default", onPropertyAdded 
 
                 {/* Square Meters */}
                 <div>
-                  <Label className="text-sm font-medium text-primary mb-3 block">Metros cuadrados</Label>
+                  <Label className="text-sm font-medium text-primary mb-3 block">Metros cuadrados de terreno</Label>
                   <Input
                     type="number"
                     inputMode="numeric"
@@ -171,7 +190,7 @@ const SellerLeadForm = ({ open, onOpenChange, mode = "default", onPropertyAdded 
                 <div>
                   <Label className="text-sm font-medium text-primary mb-3 block">Número de Recámaras</Label>
                   <div className="flex gap-3">
-                    {(["1", "2", "3", "4", "5+"] as const).map((num) => (
+                    {(["0", "1", "2", "3", "4", "5+"] as const).map((num) => (
                       <button
                         key={num}
                         type="button"
@@ -195,7 +214,7 @@ const SellerLeadForm = ({ open, onOpenChange, mode = "default", onPropertyAdded 
                 <div>
                   <Label className="text-sm font-medium text-primary mb-3 block">Número de Baños</Label>
                   <div className="flex gap-3">
-                    {(["1", "2", "3", "4+"] as const).map((num) => (
+                    {(["0", "1", "2", "3", "4+"] as const).map((num) => (
                       <button
                         key={num}
                         type="button"
@@ -224,15 +243,72 @@ const SellerLeadForm = ({ open, onOpenChange, mode = "default", onPropertyAdded 
                   <div className="relative">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
                     <Input
-                      type="number"
+                      type="text"
                       inputMode="numeric"
                       placeholder="Ej: 2,500,000"
-                      value={formData.expectedPrice}
-                      onChange={(e) => updateFormData("expectedPrice", e.target.value)}
+                      value={formData.expectedPrice ? new Intl.NumberFormat('es-MX').format(Number(formData.expectedPrice)) : ''}
+                      onChange={(e) => {
+                        const numValue = e.target.value.replace(/[^0-9]/g, '');
+                        updateFormData("expectedPrice", numValue);
+                      }}
                       className="h-12 pl-8 rounded-xl border-border focus:border-[hsl(var(--champagne-gold))] focus-visible:ring-[hsl(var(--champagne-gold))]"
                     />
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* Step 3: Contact Info */}
+            {currentStep === 3 && (
+              <div className="space-y-6">
+                {/* Full Name */}
+                <div>
+                  <Label className="text-sm font-medium text-primary mb-3 block">Nombre Completo</Label>
+                  <Input
+                    type="text"
+                    placeholder="Ej: Juan González"
+                    value={formData.fullName}
+                    onChange={(e) => updateFormData("fullName", e.target.value)}
+                    className="h-12 rounded-xl border-border focus:border-[hsl(var(--champagne-gold))] focus-visible:ring-[hsl(var(--champagne-gold))]"
+                  />
+                  {errors.fullName && (
+                    <p className="text-destructive text-sm mt-2">{errors.fullName}</p>
+                  )}
+                </div>
+
+                {/* Email */}
+                <div>
+                  <Label className="text-sm font-medium text-primary mb-3 block">Email</Label>
+                  <Input
+                    type="email"
+                    placeholder="Ej: juan@email.com"
+                    value={formData.email}
+                    onChange={(e) => updateFormData("email", e.target.value)}
+                    className="h-12 rounded-xl border-border focus:border-[hsl(var(--champagne-gold))] focus-visible:ring-[hsl(var(--champagne-gold))]"
+                  />
+                  {errors.email && (
+                    <p className="text-destructive text-sm mt-2">{errors.email}</p>
+                  )}
+                </div>
+
+                {/* Phone */}
+                <div>
+                  <Label className="text-sm font-medium text-primary mb-3 block">Teléfono</Label>
+                  <Input
+                    type="tel"
+                    placeholder="Ej: 272-1234567"
+                    value={formData.phone}
+                    onChange={(e) => updateFormData("phone", e.target.value)}
+                    className="h-12 rounded-xl border-border focus:border-[hsl(var(--champagne-gold))] focus-visible:ring-[hsl(var(--champagne-gold))]"
+                  />
+                  {errors.phone && (
+                    <p className="text-destructive text-sm mt-2">{errors.phone}</p>
+                  )}
+                </div>
+
+                {errors.submit && (
+                  <p className="text-destructive text-sm bg-destructive/10 p-3 rounded-lg">{errors.submit}</p>
+                )}
               </div>
             )}
 
@@ -252,10 +328,12 @@ const SellerLeadForm = ({ open, onOpenChange, mode = "default", onPropertyAdded 
               <Button
                 type="button"
                 onClick={handleNext}
-                className={`h-12 rounded-xl bg-[hsl(var(--champagne-gold))] hover:bg-[hsl(var(--champagne-gold-dark))] text-white font-semibold ${
+                disabled={isSubmitting}
+                className={`h-12 rounded-xl bg-[hsl(var(--champagne-gold))] hover:bg-[hsl(var(--champagne-gold-dark))] text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed ${
                   currentStep === 1 ? "w-full" : "flex-1"
                 }`}
               >
+                {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                 {currentStep === totalSteps ? (
                   mode === "add" ? "Agregar" : "Enviar mi propiedad"
                 ) : (

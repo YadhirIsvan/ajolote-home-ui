@@ -12,12 +12,28 @@ export interface PropertiesSaleResult {
 interface BackendSaleResult {
   id: number;
   status: string;
+  client_visible_status: 'registrar_propiedad' | 'aprobar_estado' | 'marketing' | 'vendida';
   progress_step: number;
   views: number;
   interested: number;
   days_listed: number;
   trend: string;
-  property: { id: number; title: string; address: string; price: string; image: string };
+  property: { 
+    id: number; 
+    title: string; 
+    address: string; 
+    price: string; 
+    image: string;
+    bedrooms?: number;
+    bathrooms?: number;
+    construction_sqm?: number;
+    land_sqm?: number;
+    address_street?: string;
+    address_number?: string;
+    address_neighborhood?: string;
+    city?: { id: number; name: string } | null;
+    currency?: string;
+  };
   agent: { name: string };
 }
 
@@ -38,11 +54,22 @@ const mapSaleItem = (item: BackendSaleResult): PropertySaleSummary => ({
   price: item.property.price,
   image: item.property.image ?? "",
   status: item.status,
+  client_visible_status: item.client_visible_status,
   views: item.views,
   interested: item.interested,
   daysListed: item.days_listed,
   trend: item.trend,
   progressStep: item.progress_step,
+  // Property detail fields
+  bedrooms: item.property.bedrooms,
+  bathrooms: item.property.bathrooms,
+  construction_sqm: item.property.construction_sqm,
+  land_sqm: item.property.land_sqm,
+  address_street: item.property.address_street,
+  address_number: item.property.address_number,
+  address_neighborhood: item.property.address_neighborhood,
+  city: item.property.city,
+  currency: item.property.currency,
 });
 
 export const getClientPropertiesSaleAction =
