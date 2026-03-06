@@ -4,9 +4,12 @@ import { SlidersHorizontal } from "lucide-react";
 import Navigation from "@/shared/components/custom/Navigation";
 import PropertyCard from "@/shared/components/custom/PropertyCard";
 import PropertyFilters from "@/buy/components/PropertyFilters";
+import MortgageCallToAction from "@/buy/components/MortgageCallToAction";
 import { useBuyProperties } from "@/buy/hooks/use-buy-properties.hook";
+import { useFinancialModal } from "@/contexts/FinancialModalContext";
 
 const BuyPage = () => {
+  const { openFinancialModal } = useFinancialModal();
   const {
     filteredProperties,
     isLoading,
@@ -43,18 +46,25 @@ const BuyPage = () => {
           <div className="flex gap-8">
             {/* Desktop Filters Sidebar */}
             <aside className="hidden md:block w-72 flex-shrink-0">
-              <div className="bg-card rounded-2xl p-6 border border-border sticky top-24 shadow-soft">
-                <h3 className="font-semibold text-primary mb-4">Filtros</h3>
-                <PropertyFilters
-                  filters={filters}
-                  cities={cities}
-                  onZoneChange={setZone}
-                  onTypeChange={setType}
-                  onStateChange={setState}
-                  onPriceRangeChange={setPriceRange}
-                  onAmenityToggle={toggleAmenity}
-                  onClearFilters={clearFilters}
-                />
+              <div className="bg-card rounded-2xl p-6 border border-border sticky top-24 shadow-soft space-y-6">
+                <div>
+                  <h3 className="font-semibold text-primary mb-4">Filtros</h3>
+                  <PropertyFilters
+                    filters={filters}
+                    cities={cities}
+                    onZoneChange={setZone}
+                    onTypeChange={setType}
+                    onStateChange={setState}
+                    onPriceRangeChange={setPriceRange}
+                    onAmenityToggle={toggleAmenity}
+                    onClearFilters={clearFilters}
+                  />
+                </div>
+                
+                {/* Mortgage CTA Sidebar */}
+                <div className="border-t border-border pt-6">
+                  <MortgageCallToAction onCalculateCredit={() => openFinancialModal()} />
+                </div>
               </div>
             </aside>
 

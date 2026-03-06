@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -13,6 +14,9 @@ import {
 import { usePropertyDetail } from "@/buy/hooks/use-property-detail.hook";
 import { TIME_SLOTS } from "@/buy/types/property.types";
 import AuthModal from "@/auth/components/AuthModal";
+import MortgageCallToAction from "@/buy/components/MortgageCallToAction";
+import MortgageCalculatorWidget from "@/buy/components/MortgageCalculatorWidget";
+import { useFinancialModal } from "@/contexts/FinancialModalContext";
 
 const getPOIIcon = (iconType: string) => {
   switch (iconType) {
@@ -62,6 +66,64 @@ const extractYouTubeId = (input: string | undefined): string | null => {
 };
 
 const PropertyDetailPage = () => {
+  const { openFinancialModal } = useFinancialModal();
+  const [financialProfile, setFinancialProfile] = useState<any>(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
+
+  // Cargar perfil financiero desde la API
+  useEffect(() => {
+    const fetchFinancialProfile = async () => {
+      try {
+        const token = localStorage.getItem("access_token");
+        if (!token) {
+          setLoadingProfile(false);
+          return;
+        }
+
+        const response = await fetch("http://localhost:8000/api/v1/client/financial-profile", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          // Convertir snake_case a camelCase para mantener compatibilidad con el widget
+          setFinancialProfile({
+            loanType: data.loan_type,
+            monthlyIncome: data.monthly_income.toString(),
+            partnerMonthlyIncome: data.partner_monthly_income?.toString() || "",
+            savingsForEnganche: data.savings_for_enganche.toString(),
+            hasInfonavit: data.has_infonavit,
+            infonautSubcuentaBalance: data.infonavit_subcuenta_balance?.toString() || "",
+            calculatedBudget: data.calculated_budget,
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching financial profile:", error);
+        // Fallback a localStorage si falla la API
+        try {
+          const stored = localStorage.getItem("financial_profile");
+          if (stored) {
+            setFinancialProfile(JSON.parse(stored));
+          }
+        } catch {
+          // Silent fail
+        }
+      } finally {
+        setLoadingProfile(false);
+      }
+    };
+
+    // Cargar perfil al montar componente
+    fetchFinancialProfile();
+  }, []);
+
+  const isAuthenticated = !!localStorage.getItem("access_token");
+  
+  // Show mortgage calculator if user is authenticated and has financial profile
+  const showMortgageCalculator = isAuthenticated && !loadingProfile && financialProfile;
+
   const {
     property,
     isLoading,
@@ -454,6 +516,21 @@ const PropertyDetailPage = () => {
                     <Button variant="gold" size="lg" className="w-full mb-4" onClick={handleScheduleClick}>
                       Agendar Visita
                     </Button>
+
+                    {/* Mortgage Calculator or CTA */}
+                    <div className="mb-4">
+                      {showMortgageCalculator && financialProfile ? (
+                        <MortgageCalculatorWidget
+                          propertyPrice={parseFloat(property.price.replace(/[^0-9.]/g, "")) || 0}
+                          monthlyIncome={parseFloat(financialProfile.monthlyIncome) || 0}
+                          partnerMonthlyIncome={financialProfile.loanType === "conyugal" ? parseFloat(financialProfile.partnerMonthlyIncome) || 0 : undefined}
+                          initialDownPayment={financialProfile.savingsForEnganche || "0"}
+                        />
+                      ) : (
+                        <MortgageCallToAction onCalculateCredit={() => openFinancialModal()} />
+                      )}
+                    </div>
+
                     <div className="pt-4 border-t border-border">
                       <div className="flex items-center gap-4 mb-4">
                         <img src={property.agent.photo} alt={property.agent.name} className="w-14 h-14 rounded-full object-cover border-2 border-champagne" />

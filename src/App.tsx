@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter } from "react-router-dom";
 import AppRouter from "@/router/app.router";
+import { FinancialModalProvider } from "@/contexts/FinancialModalContext";
 
 const queryClient = new QueryClient();
 
@@ -12,9 +13,11 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
-        <AppRouter />
-      </BrowserRouter>
+      <FinancialModalProvider>
+        <BrowserRouter>
+          <AppRouter />
+        </BrowserRouter>
+      </FinancialModalProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

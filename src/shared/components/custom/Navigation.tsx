@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Home, Search, Menu, User, CreditCard, Settings, LogOut, ChevronDown } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useFinancialModal } from "@/contexts/FinancialModalContext";
 import vakantaLogo from "@/assets/vakanta-logo.png";
 
 interface NavigationProps {
@@ -13,6 +14,7 @@ interface NavigationProps {
 }
 
 const Navigation = ({ isClientAuthenticated, onLogout, onNavigateConfig }: NavigationProps) => {
+  const { openFinancialModal } = useFinancialModal();
   const [isOpen, setIsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const location = useLocation();
@@ -87,11 +89,14 @@ const Navigation = ({ isClientAuthenticated, onLogout, onNavigateConfig }: Navig
               </PopoverContent>
             </Popover>
           ) : (
-            <Button variant="gold" size="default" asChild className="hidden md:flex">
-              <Link to="/credito">
-                <CreditCard className="w-4 h-4" />
-                Obtén tu Crédito
-              </Link>
+            <Button 
+              variant="gold" 
+              size="default" 
+              className="hidden md:flex"
+              onClick={openFinancialModal}
+            >
+              <CreditCard className="w-4 h-4" />
+              Obtén tu Crédito
             </Button>
           )}
 
@@ -152,11 +157,13 @@ const Navigation = ({ isClientAuthenticated, onLogout, onNavigateConfig }: Navig
                       </Button>
                     </>
                   ) : (
-                    <Button variant="gold" className="w-full" asChild onClick={() => setIsOpen(false)}>
-                      <Link to="/credito">
-                        <CreditCard className="w-4 h-4" />
-                        Obtén tu Crédito
-                      </Link>
+                    <Button 
+                      variant="gold" 
+                      className="w-full" 
+                      onClick={() => { setIsOpen(false); openFinancialModal(); }}
+                    >
+                      <CreditCard className="w-4 h-4" />
+                      Obtén tu Crédito
                     </Button>
                   )}
                 </div>
