@@ -148,23 +148,6 @@ const PropertyDetailPage = () => {
   const [savingInProgress, setSavingInProgress] = useState(false);
   const [showSaveAuthModal, setShowSaveAuthModal] = useState(false);
 
-  // Handle toggle save property
-  const handleToggleSave = async () => {
-    if (!property?.id) return;
-
-    if (!isAuthenticated) {
-      setShowSaveAuthModal(true);
-      return;
-    }
-
-    if (savingInProgress) return;
-    setSavingInProgress(true);
-
-    const result = await toggleSavedPropertyAction(property.id, isSaved);
-    setIsSaved(result.isSaved);
-    setSavingInProgress(false);
-  };
-
   const {
     property,
     isLoading,
@@ -201,6 +184,23 @@ const PropertyDetailPage = () => {
     isScheduling,
     scheduleError,
   } = usePropertyDetail();
+
+  // Handle toggle save property
+  const handleToggleSave = async () => {
+    if (!property?.id) return;
+
+    if (!isAuthenticated) {
+      setShowSaveAuthModal(true);
+      return;
+    }
+
+    if (savingInProgress) return;
+    setSavingInProgress(true);
+
+    const result = await toggleSavedPropertyAction(property.id, isSaved);
+    setIsSaved(result.isSaved);
+    setSavingInProgress(false);
+  };
 
   // Check if property is saved via API
   useEffect(() => {

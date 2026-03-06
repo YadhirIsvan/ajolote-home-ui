@@ -23,21 +23,43 @@ export const useAuthModal = ({ onLoginSuccess, onClose }: UseAuthModalOptions) =
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
 
-  const handleGoogleLogin = async () => {
-    setIsLoading(true);
+  const handleGoogleLogin = () => {
     setError("");
-    try {
-      const { data } = await authApi.loginWithGoogle("");
-      const authData = data as AuthTokens;
-      localStorage.setItem("access_token", authData.access);
-      localStorage.setItem("refresh_token", authData.refresh);
-      localStorage.setItem("user", JSON.stringify(authData.user));
-      onLoginSuccess();
-    } catch {
-      setError("Google Login no está disponible actualmente");
-    } finally {
+    setIsLoading(true);
+
+    const google = (window as any).google;
+    if (!google?.accounts?.oauth2) {
+      setError("Google Sign-In no se ha cargado. Recarga la página.");
       setIsLoading(false);
+      return;
     }
+
+    const client = google.accounts.oauth2.initTokenClient({
+      client_id: "475959109147-3dmiaob3u2dsn11r0tqh914l1rfh52hd.apps.googleusercontent.com",
+      scope: "email profile",
+      callback: async (tokenResponse: any) => {
+        if (tokenResponse.error) {
+          setError("Error al autenticar con Google");
+          setIsLoading(false);
+          return;
+        }
+
+        try {
+          const { data } = await authApi.loginWithGoogle(tokenResponse.access_token);
+          const authData = data as AuthTokens;
+          localStorage.setItem("access_token", authData.access);
+          localStorage.setItem("refresh_token", authData.refresh);
+          localStorage.setItem("user", JSON.stringify(authData.user));
+          onLoginSuccess();
+        } catch {
+          setError("Error al iniciar sesión con Google");
+        } finally {
+          setIsLoading(false);
+        }
+      },
+    });
+
+    client.requestAccessToken();
   };
 
   const handleAppleLogin = async () => {

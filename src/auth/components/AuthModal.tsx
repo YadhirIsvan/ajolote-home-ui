@@ -100,6 +100,9 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }: AuthModalProps) => {
                 </div>
               </Button>
 
+              {/* Contenedor oculto para Google Sign-In fallback */}
+              <div id="google-signin-btn" className="hidden" />
+
               {/* Error para Google/Apple */}
               {error && (
                 <div className="flex items-center gap-2 text-destructive text-sm">
