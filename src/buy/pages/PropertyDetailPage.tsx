@@ -9,7 +9,8 @@ import {
   ArrowLeft, Share2, MapPin, BedDouble, Bath, Maximize,
   CheckCircle2, Play, Phone, ChevronDown, ChevronUp,
   GraduationCap, ShoppingBag, Hospital, Train, Loader2,
-  MessageCircle,
+  MessageCircle, Waves, Dumbbell, Shield, ArrowUpDown,
+  Car, Leaf, Sun, Bookmark,
 } from "lucide-react";
 import { usePropertyDetail } from "@/buy/hooks/use-property-detail.hook";
 import { TIME_SLOTS } from "@/buy/types/property.types";
@@ -17,6 +18,8 @@ import AuthModal from "@/auth/components/AuthModal";
 import MortgageCallToAction from "@/buy/components/MortgageCallToAction";
 import MortgageCalculatorWidget from "@/buy/components/MortgageCalculatorWidget";
 import { useFinancialModal } from "@/contexts/FinancialModalContext";
+import { checkSavedPropertyAction } from "@/buy/actions/check-saved-property.actions";
+import { toggleSavedPropertyAction } from "@/buy/actions/toggle-saved-property.actions";
 
 const getPOIIcon = (iconType: string) => {
   switch (iconType) {
@@ -25,6 +28,19 @@ const getPOIIcon = (iconType: string) => {
     case "hospital": return <Hospital className="w-4 h-4" />;
     case "transport": return <Train className="w-4 h-4" />;
     default:         return <MapPin className="w-4 h-4" />;
+  }
+};
+
+const getAmenityIcon = (iconName: string) => {
+  switch (iconName) {
+    case "waves":    return <Waves className="w-5 h-5" />;
+    case "dumbbell": return <Dumbbell className="w-5 h-5" />;
+    case "shield":   return <Shield className="w-5 h-5" />;
+    case "arrow-up-down": return <ArrowUpDown className="w-5 h-5" />;
+    case "car":      return <Car className="w-5 h-5" />;
+    case "leaf":     return <Leaf className="w-5 h-5" />;
+    case "sun":      return <Sun className="w-5 h-5" />;
+    default:         return <MapPin className="w-5 h-5" />;
   }
 };
 
@@ -124,6 +140,31 @@ const PropertyDetailPage = () => {
   // Show mortgage calculator if user is authenticated and has financial profile
   const showMortgageCalculator = isAuthenticated && !loadingProfile && financialProfile;
 
+  // State for mortgage calculator expansion on mobile
+  const [expandMortgage, setExpandMortgage] = useState(false);
+
+  // State for saved properties
+  const [isSaved, setIsSaved] = useState(false);
+  const [savingInProgress, setSavingInProgress] = useState(false);
+  const [showSaveAuthModal, setShowSaveAuthModal] = useState(false);
+
+  // Handle toggle save property
+  const handleToggleSave = async () => {
+    if (!property?.id) return;
+
+    if (!isAuthenticated) {
+      setShowSaveAuthModal(true);
+      return;
+    }
+
+    if (savingInProgress) return;
+    setSavingInProgress(true);
+
+    const result = await toggleSavedPropertyAction(property.id, isSaved);
+    setIsSaved(result.isSaved);
+    setSavingInProgress(false);
+  };
+
   const {
     property,
     isLoading,
@@ -161,6 +202,15 @@ const PropertyDetailPage = () => {
     scheduleError,
   } = usePropertyDetail();
 
+  // Check if property is saved via API
+  useEffect(() => {
+    if (property?.id && isAuthenticated) {
+      checkSavedPropertyAction(property.id).then(({ isSaved: saved }) => {
+        setIsSaved(saved);
+      });
+    }
+  }, [property?.id, isAuthenticated]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -187,9 +237,14 @@ const PropertyDetailPage = () => {
               <ArrowLeft className="w-5 h-5" />
             </Link>
           </Button>
-          <Button variant="ghost" size="icon" className="text-primary">
-            <Share2 className="w-5 h-5" />
-          </Button>
+          <div className="flex gap-1">
+            <Button variant="ghost" size="icon" className="text-primary" onClick={handleToggleSave}>
+              <Bookmark className={`w-5 h-5 ${isSaved ? 'fill-champagne text-champagne' : ''}`} />
+            </Button>
+            <Button variant="ghost" size="icon" className="text-primary">
+              <Share2 className="w-5 h-5" />
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -271,6 +326,21 @@ const PropertyDetailPage = () => {
             </div>
           </div>
 
+          {/* Amenities - Mobile */}
+          {property.amenities && property.amenities.length > 0 && (
+            <div className="px-4 mb-6">
+              <h3 className="text-lg font-semibold text-primary mb-3">Amenidades</h3>
+              <div className="grid grid-cols-2 gap-3">
+                {property.amenities.map((amenity) => (
+                  <div key={amenity.id} className="flex items-center gap-3 bg-muted/50 rounded-xl px-3 py-3">
+                    <span className="text-champagne">{getAmenityIcon(amenity.icon)}</span>
+                    <span className="text-sm font-medium text-foreground">{amenity.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Video Tour */}
           <div className="px-4 mb-6">
             <h3 className="text-lg font-semibold text-primary mb-3">Recorrido Virtual</h3>
@@ -327,6 +397,41 @@ const PropertyDetailPage = () => {
                   <span className="text-foreground/70">{poi.label}</span>
                 </div>
               ))}
+            </div>
+          </div>
+
+          {/* Mortgage Calculator or CTA - Mobile Collapsible */}
+          <div className="px-4 mb-6">
+            <button
+              onClick={() => setExpandMortgage(!expandMortgage)}
+              className="w-full flex items-center justify-between bg-muted/50 rounded-2xl px-4 py-4 mb-2 transition-colors hover:bg-muted"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-lg font-semibold text-primary">Simula tu Hipoteca</span>
+              </div>
+              <ChevronDown className={`w-5 h-5 text-primary transition-transform duration-300 ${expandMortgage ? 'rotate-180' : ''}`} />
+            </button>
+            
+            {/* Collapsible Content */}
+            <div 
+              className="overflow-hidden transition-all duration-300 ease-in-out"
+              style={{
+                maxHeight: expandMortgage ? '1000px' : '0px',
+                opacity: expandMortgage ? 1 : 0,
+              }}
+            >
+              <div className="bg-muted/50 rounded-2xl px-4 py-4 mt-2">
+                {showMortgageCalculator && financialProfile ? (
+                  <MortgageCalculatorWidget
+                    propertyPrice={parseFloat(property.price.replace(/[^0-9.]/g, "")) || 0}
+                    monthlyIncome={parseFloat(financialProfile.monthlyIncome) || 0}
+                    partnerMonthlyIncome={financialProfile.loanType === "conyugal" ? parseFloat(financialProfile.partnerMonthlyIncome) || 0 : undefined}
+                    initialDownPayment={financialProfile.savingsForEnganche || "0"}
+                  />
+                ) : (
+                  <MortgageCallToAction onCalculateCredit={() => openFinancialModal()} />
+                )}
+              </div>
             </div>
           </div>
 
@@ -389,7 +494,17 @@ const PropertyDetailPage = () => {
                 {/* Title & Badge */}
                 <div>
                   <div className="flex items-start gap-3 mb-2">
-                    <h1 className="text-3xl font-bold text-primary">{property.title}</h1>
+                    <div className="flex-1">
+                      <h1 className="text-3xl font-bold text-primary">{property.title}</h1>
+                    </div>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="text-primary hover:text-champagne shrink-0 mt-1"
+                      onClick={handleToggleSave}
+                    >
+                      <Bookmark className={`w-6 h-6 ${isSaved ? 'fill-champagne text-champagne' : ''}`} />
+                    </Button>
                     {property.verified && (
                       <div className="flex items-center gap-1 bg-champagne/10 text-champagne px-3 py-1.5 rounded-full text-sm font-medium shrink-0">
                         <CheckCircle2 className="w-4 h-4" />
@@ -449,7 +564,7 @@ const PropertyDetailPage = () => {
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                       {property.amenities.map((amenity) => (
                         <div key={amenity.id} className="flex items-center gap-3 bg-muted/50 rounded-xl px-4 py-3">
-                          <span className="text-champagne text-xl">{amenity.icon}</span>
+                          <span className="text-champagne text-xl">{getAmenityIcon(amenity.icon)}</span>
                           <span className="text-sm font-medium text-foreground">{amenity.name}</span>
                         </div>
                       ))}
@@ -577,11 +692,25 @@ const PropertyDetailPage = () => {
         </Button>
       </div>
 
-      {/* Auth Modal — se abre si el usuario no está logueado */}
+      {/* Auth Modal — se abre si el usuario no está logueado (agendar visita) */}
       <AuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
         onLoginSuccess={handleAuthSuccess}
+      />
+
+      {/* Auth Modal — se abre si el usuario no está logueado (guardar propiedad) */}
+      <AuthModal
+        isOpen={showSaveAuthModal}
+        onClose={() => setShowSaveAuthModal(false)}
+        onLoginSuccess={() => {
+          setShowSaveAuthModal(false);
+          if (property?.id) {
+            toggleSavedPropertyAction(property.id, false).then((result) => {
+              setIsSaved(result.isSaved);
+            });
+          }
+        }}
       />
 
       {/* Diálogo de éxito después de agendar */}

@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { getClientPropertiesSaleAction } from "@/myAccount/client/actions/get-client-properties-sale.actions";
 import { getClientPropertiesBuyAction } from "@/myAccount/client/actions/get-client-properties-buy.actions";
-import { getClientRecentActivityAction } from "@/myAccount/client/actions/get-client-recent-activity.actions";
+import { getClientSavedPropertiesAction } from "@/myAccount/client/actions/get-client-saved-properties.actions";
+import { getClientFinancialProfileAction } from "@/myAccount/client/actions/get-client-financial-profile.actions";
 import type { PropertySaleItem } from "@/myAccount/client/types/client.types";
 
 export const useClientDashboard = () => {
@@ -15,9 +16,14 @@ export const useClientDashboard = () => {
     queryFn: getClientPropertiesBuyAction,
   });
 
-  const activityQuery = useQuery({
-    queryKey: ["client-recent-activity"],
-    queryFn: getClientRecentActivityAction,
+  const savedQuery = useQuery({
+    queryKey: ["client-saved-properties"],
+    queryFn: getClientSavedPropertiesAction,
+  });
+
+  const financialQuery = useQuery({
+    queryKey: ["client-financial-profile"],
+    queryFn: getClientFinancialProfileAction,
   });
 
   return {
@@ -26,7 +32,9 @@ export const useClientDashboard = () => {
     ventasLoading: ventasQuery.isLoading,
     comprasList: comprasQuery.data ?? [],
     comprasLoading: comprasQuery.isLoading,
-    activityData: activityQuery.data ?? [],
-    activityLoading: activityQuery.isLoading,
+    savedProperties: savedQuery.data ?? [],
+    savedLoading: savedQuery.isLoading,
+    financialProfile: financialQuery.data ?? null,
+    financialLoading: financialQuery.isLoading,
   };
 };

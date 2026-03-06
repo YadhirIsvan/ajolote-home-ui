@@ -28,4 +28,15 @@ export const clientApi = {
 
   updateNotificationPreferences: (prefs: Record<string, boolean>) =>
     axiosInstance.put("/client/notification-preferences", prefs),
+
+  getSavedProperties: () => axiosInstance.get("/client/saved-properties"),
+
+  saveProperty: (propertyId: number) =>
+    axiosInstance.post("/client/saved-properties", { property_id: propertyId }),
+
+  unsaveProperty: (propertyId: number) =>
+    axiosInstance.delete(`/client/saved-properties/${propertyId}`),
+
+  checkSavedProperty: (propertyId: number) =>
+    axiosInstance.get(`/client/saved-properties/check?property_id=${propertyId}`),
 };

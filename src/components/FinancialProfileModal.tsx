@@ -6,9 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
-import { Calculator, Info } from "lucide-react";
+import { Calculator, Info, Loader2 } from "lucide-react";
 import { useFinancialModal } from "@/contexts/FinancialModalContext";
+import AuthModal from "@/auth/components/AuthModal";
 
 interface FormData {
   loanType: string;
@@ -19,77 +19,90 @@ interface FormData {
   infonautSubcuentaBalance: string;
 }
 
-const FinancialProfileModal = () => {
-  const { isOpen, closeFinancialModal } = useFinancialModal();
-  
-  const [formData, setFormData] = useState<FormData>({
-    loanType: "",
-    monthlyIncome: "",
-    partnerMonthlyIncome: "",
-    savingsForEnganche: "",
-    hasInfonavit: false,
-    infonautSubcuentaBalance: "",
-  });
+const emptyForm: FormData = {
+  loanType: "",
+  monthlyIncome: "",
+  partnerMonthlyIncome: "",
+  savingsForEnganche: "",
+  hasInfonavit: false,
+  infonautSubcuentaBalance: "",
+};
 
+const FinancialProfileModal = () => {
+  const { isOpen, showAuthFirst, closeFinancialModal, closeAuthModal, onAuthSuccess } = useFinancialModal();
+
+  const [formData, setFormData] = useState<FormData>({ ...emptyForm });
   const [loading, setLoading] = useState(false);
+  const [fetchingProfile, setFetchingProfile] = useState(false);
   const [showResult, setShowResult] = useState(false);
   const [calculatedBudget, setCalculatedBudget] = useState(0);
 
-  // Restaurar showResult desde localStorage al abrir el modal
+  // Al abrir el modal, consultar la API para ver si ya tiene perfil financiero
   useEffect(() => {
-    if (isOpen) {
+    if (!isOpen) return;
+
+    const token = localStorage.getItem("access_token");
+    if (!token) return;
+
+    const fetchProfile = async () => {
+      setFetchingProfile(true);
       try {
-        const savedShowResult = localStorage.getItem("financial_profile_show_result");
-        const savedBudget = localStorage.getItem("financial_profile_calculated_budget");
-        if (savedShowResult === "true" && savedBudget) {
-          setShowResult(true);
-          setCalculatedBudget(parseFloat(savedBudget));
+        const response = await fetch("http://localhost:8000/api/v1/client/financial-profile", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.calculated_budget) {
+            setCalculatedBudget(data.calculated_budget);
+            setShowResult(true);
+            setFormData({
+              loanType: data.loan_type || "",
+              monthlyIncome: data.monthly_income?.toString() || "",
+              partnerMonthlyIncome: data.partner_monthly_income?.toString() || "",
+              savingsForEnganche: data.savings_for_enganche?.toString() || "",
+              hasInfonavit: data.has_infonavit || false,
+              infonautSubcuentaBalance: data.infonavit_subcuenta_balance?.toString() || "",
+            });
+          } else {
+            // Tiene perfil pero sin presupuesto calculado
+            setShowResult(false);
+          }
+        } else {
+          // 404 o error = no tiene perfil, mostrar formulario
+          setShowResult(false);
         }
       } catch {
-        // Silent fail
+        setShowResult(false);
+      } finally {
+        setFetchingProfile(false);
       }
-    }
-  }, [isOpen]);
+    };
 
-  // Guardar showResult en localStorage cuando cambie
-  useEffect(() => {
-    if (showResult && calculatedBudget > 0) {
-      localStorage.setItem("financial_profile_show_result", "true");
-      localStorage.setItem("financial_profile_calculated_budget", calculatedBudget.toString());
-    }
-  }, [showResult, calculatedBudget]);
+    fetchProfile();
+  }, [isOpen]);
 
   const handleLoanTypeChange = (value: string) => {
     setFormData((prev) => ({
       ...prev,
       loanType: value,
-      // Reset partner income when changing loan type
       partnerMonthlyIncome: value !== "conyugal" ? "" : prev.partnerMonthlyIncome,
     }));
   };
 
   const handleMonthlyIncomeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/[^0-9]/g, "");
-    setFormData((prev) => ({
-      ...prev,
-      monthlyIncome: value,
-    }));
+    setFormData((prev) => ({ ...prev, monthlyIncome: value }));
   };
 
   const handlePartnerIncomeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/[^0-9]/g, "");
-    setFormData((prev) => ({
-      ...prev,
-      partnerMonthlyIncome: value,
-    }));
+    setFormData((prev) => ({ ...prev, partnerMonthlyIncome: value }));
   };
 
   const handleSavingsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/[^0-9]/g, "");
-    setFormData((prev) => ({
-      ...prev,
-      savingsForEnganche: value,
-    }));
+    setFormData((prev) => ({ ...prev, savingsForEnganche: value }));
   };
 
   const handleInfonavitChange = (checked: boolean) => {
@@ -102,22 +115,17 @@ const FinancialProfileModal = () => {
 
   const handleSubcuentaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/[^0-9]/g, "");
-    setFormData((prev) => ({
-      ...prev,
-      infonautSubcuentaBalance: value,
-    }));
+    setFormData((prev) => ({ ...prev, infonautSubcuentaBalance: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validar campos requeridos
     if (!formData.loanType || !formData.monthlyIncome || !formData.savingsForEnganche) {
       alert("Por favor completa todos los campos requeridos");
       return;
     }
 
-    // Validar ingreso de pareja si es conyugal
     if (formData.loanType === "conyugal" && !formData.partnerMonthlyIncome) {
       alert("Por favor ingresa el ingreso de la persona con la que vas a comprar");
       return;
@@ -146,14 +154,12 @@ const FinancialProfileModal = () => {
         infonavit_subcuenta_balance: formData.hasInfonavit ? parseFloat(formData.infonautSubcuentaBalance) : null,
       };
 
-      // Intentar actualizar primero (PUT), si no existe, crear (POST)
       let response = await fetch("http://localhost:8000/api/v1/client/financial-profile", {
         method: "PUT",
         headers,
         body: JSON.stringify(payload),
       });
 
-      // Si retorna 404, es la primera vez, así que creamos con POST
       if (response.status === 404) {
         response = await fetch("http://localhost:8000/api/v1/client/financial-profile", {
           method: "POST",
@@ -170,17 +176,6 @@ const FinancialProfileModal = () => {
       setCalculatedBudget(data.calculated_budget);
       setLoading(false);
       setShowResult(true);
-
-      // También guardar en localStorage para acceso rápido
-      localStorage.setItem("financial_profile", JSON.stringify({
-        loanType: formData.loanType,
-        monthlyIncome: formData.monthlyIncome,
-        partnerMonthlyIncome: formData.partnerMonthlyIncome,
-        savingsForEnganche: formData.savingsForEnganche,
-        hasInfonavit: formData.hasInfonavit,
-        infonautSubcuentaBalance: formData.infonautSubcuentaBalance,
-        createdAt: new Date().toISOString(),
-      }));
     } catch (error) {
       console.error("Error:", error);
       alert("Hubo un error al guardar tu perfil. Intenta de nuevo.");
@@ -189,33 +184,14 @@ const FinancialProfileModal = () => {
   };
 
   const handleClose = () => {
-    // Mantener showResult en localStorage si el usuario cierra el modal
-    // Solo limpiar form data
-    setFormData({
-      loanType: "",
-      monthlyIncome: "",
-      partnerMonthlyIncome: "",
-      savingsForEnganche: "",
-      hasInfonavit: false,
-      infonautSubcuentaBalance: "",
-    });
+    setFormData({ ...emptyForm });
+    setShowResult(false);
+    setCalculatedBudget(0);
     closeFinancialModal();
   };
 
   const handleUpdateData = () => {
-    // Reset para mostrar formulario de nuevo
     setShowResult(false);
-    // Limpiar localStorage del resultado
-    localStorage.removeItem("financial_profile_show_result");
-    localStorage.removeItem("financial_profile_calculated_budget");
-    setFormData({
-      loanType: "",
-      monthlyIncome: "",
-      partnerMonthlyIncome: "",
-      savingsForEnganche: "",
-      hasInfonavit: false,
-      infonautSubcuentaBalance: "",
-    });
   };
 
   const formatCurrency = (value: number) => {
@@ -228,75 +204,83 @@ const FinancialProfileModal = () => {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px] bg-white rounded-2xl border border-border/20 shadow-lg">
-        {/* Result View */}
-        {showResult ? (
-          <>
-            <DialogHeader>
-              <div className="flex items-center gap-2">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-champagne-gold to-amber-500 flex items-center justify-center">
-                  <span className="text-white text-xl">✓</span>
-                </div>
-                <DialogTitle className="text-2xl font-bold text-midnight">Tu Pre-aprobación Estimada</DialogTitle>
-              </div>
-            </DialogHeader>
+    <>
+      {/* Auth Modal — si el usuario no está logueado */}
+      <AuthModal
+        isOpen={showAuthFirst}
+        onClose={closeAuthModal}
+        onLoginSuccess={onAuthSuccess}
+      />
 
-            <Separator className="my-4" />
-
-            {/* Result Content */}
-            <div className="space-y-6 py-6">
-              {/* Budget Amount */}
-              <div className="text-center space-y-2">
-                <p className="text-foreground/60 text-sm">Presupuesto Máximo Estimado</p>
-                <p className="text-5xl font-bold text-champagne-gold">
-                  {formatCurrency(calculatedBudget)}
-                </p>
-                <p className="text-sm text-foreground/50">MXN</p>
-              </div>
-
-              {/* Info Box */}
-              <div className="p-4 bg-blue-50 rounded-xl border border-blue-200 space-y-2">
-                <p className="text-sm font-semibold text-blue-900">¿Cómo se calcula?</p>
-                <p className="text-xs text-blue-800">
-                  Este presupuesto incluye tu ahorro actual más lo que podrías financiar en 15 años con una tasa de interés estimada del 11% anual.
-                </p>
-              </div>
-
-              {/* Buttons Section */}
-              <div className="space-y-3 pt-2">
-                <Button
-                  onClick={handleClose}
-                  className="w-full h-11 bg-champagne-gold hover:bg-champagne-gold-dark text-white font-semibold rounded-lg transition-colors"
-                >
-                  🏠 Explorar Propiedades
-                </Button>
-
-                <button
-                  onClick={handleUpdateData}
-                  className="w-full h-10 text-sm font-medium text-champagne-gold hover:text-champagne-gold-dark hover:bg-champagne-gold/5 rounded-lg transition-colors py-2 px-4"
-                >
-                  🔄 ¿Quieres calcular con otros datos? Actualizar información
-                </button>
-              </div>
+      <Dialog open={isOpen} onOpenChange={handleClose}>
+        <DialogContent className="sm:max-w-[500px] bg-white rounded-2xl border border-border/20 shadow-lg">
+          {/* Loading while fetching profile */}
+          {fetchingProfile ? (
+            <div className="flex flex-col items-center justify-center py-12 space-y-4">
+              <Loader2 className="w-8 h-8 text-champagne-gold animate-spin" />
+              <p className="text-sm text-foreground/60">Consultando tu perfil financiero...</p>
             </div>
-          </>
-        ) : (
-          <>
-            {/* Form View */}
-            <DialogHeader>
-              <div className="flex items-center gap-2">
-                <Calculator className="w-5 h-5 text-champagne-gold" />
-                <DialogTitle className="text-2xl font-bold text-midnight">Calcula tu Presupuesto</DialogTitle>
+          ) : showResult ? (
+            <>
+              <DialogHeader>
+                <div className="flex items-center gap-2">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-champagne-gold to-amber-500 flex items-center justify-center">
+                    <span className="text-white text-xl">✓</span>
+                  </div>
+                  <DialogTitle className="text-2xl font-bold text-midnight">Tu Pre-aprobación Estimada</DialogTitle>
+                </div>
+              </DialogHeader>
+
+              <Separator className="my-4" />
+
+              <div className="space-y-6 py-6">
+                <div className="text-center space-y-2">
+                  <p className="text-foreground/60 text-sm">Presupuesto Máximo Estimado</p>
+                  <p className="text-5xl font-bold text-champagne-gold">
+                    {formatCurrency(calculatedBudget)}
+                  </p>
+                  <p className="text-sm text-foreground/50">MXN</p>
+                </div>
+
+                <div className="p-4 bg-blue-50 rounded-xl border border-blue-200 space-y-2">
+                  <p className="text-sm font-semibold text-blue-900">¿Cómo se calcula?</p>
+                  <p className="text-xs text-blue-800">
+                    Este presupuesto incluye tu ahorro actual más lo que podrías financiar en 15 años con una tasa de interés estimada del 11% anual.
+                  </p>
+                </div>
+
+                <div className="space-y-3 pt-2">
+                  <Button
+                    onClick={handleClose}
+                    className="w-full h-11 bg-champagne-gold hover:bg-champagne-gold-dark text-white font-semibold rounded-lg transition-colors"
+                  >
+                    Explorar Propiedades
+                  </Button>
+
+                  <button
+                    onClick={handleUpdateData}
+                    className="w-full h-10 text-sm font-medium text-champagne-gold hover:text-champagne-gold-dark hover:bg-champagne-gold/5 rounded-lg transition-colors py-2 px-4"
+                  >
+                    ¿Quieres calcular con otros datos? Actualizar información
+                  </button>
+                </div>
               </div>
-              <DialogDescription className="text-foreground/60">
-                Ingresa tus datos financieros para calcular tu presupuesto máximo de compra
-              </DialogDescription>
-            </DialogHeader>
+            </>
+          ) : (
+            <>
+              <DialogHeader>
+                <div className="flex items-center gap-2">
+                  <Calculator className="w-5 h-5 text-champagne-gold" />
+                  <DialogTitle className="text-2xl font-bold text-midnight">Calcula tu Presupuesto</DialogTitle>
+                </div>
+                <DialogDescription className="text-foreground/60">
+                  Ingresa tus datos financieros para calcular tu presupuesto máximo de compra
+                </DialogDescription>
+              </DialogHeader>
 
-            <Separator className="my-4" />
+              <Separator className="my-4" />
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+              <form onSubmit={handleSubmit} className="space-y-5">
           {/* Tipo de Crédito */}
           <div className="space-y-2">
             <div className="flex items-center gap-2">
@@ -309,23 +293,18 @@ const FinancialProfileModal = () => {
                 <SelectValue placeholder="Selecciona tu tipo de crédito" />
               </SelectTrigger>
               <SelectContent className="w-full">
-                {/* Individual */}
                 <SelectItem value="individual" className="py-3">
                   <div className="flex flex-col gap-1">
                     <span className="font-semibold">Individual (Banco, Infonavit o Fovissste)</span>
                     <span className="text-xs text-foreground/60">Para comprar yo solo.</span>
                   </div>
                 </SelectItem>
-
-                {/* Conyugal */}
                 <SelectItem value="conyugal" className="py-3">
                   <div className="flex flex-col gap-1">
                     <span className="font-semibold">Conyugal o Familiar (Unir créditos)</span>
                     <span className="text-xs text-foreground/60">Para comprar con mi pareja, padre o hijos.</span>
                   </div>
                 </SelectItem>
-
-                {/* Cofinavit */}
                 <SelectItem value="cofinavit" className="py-3">
                   <div className="flex flex-col gap-1">
                     <span className="font-semibold">Cofinavit (Banco + Mi ahorro Infonavit)</span>
@@ -335,7 +314,6 @@ const FinancialProfileModal = () => {
               </SelectContent>
             </Select>
 
-            {/* Tooltips de Ayuda */}
             <div className="grid grid-cols-1 gap-2 mt-3">
               {formData.loanType === "individual" && (
                 <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
@@ -400,7 +378,7 @@ const FinancialProfileModal = () => {
                 />
               </div>
               <p className="text-xs text-foreground/60 mt-2">
-                💡 Sumaremos ambos ingresos para calcular tu capacidad de crédito.
+                Sumaremos ambos ingresos para calcular tu capacidad de crédito.
               </p>
             </div>
           )}
@@ -457,7 +435,6 @@ const FinancialProfileModal = () => {
 
           <Separator className="my-6" />
 
-          {/* Submit Button */}
           <Button
             type="submit"
             disabled={loading}
@@ -471,10 +448,11 @@ const FinancialProfileModal = () => {
             )}
           </Button>
         </form>
-          </>
-        )}
-      </DialogContent>
-    </Dialog>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 

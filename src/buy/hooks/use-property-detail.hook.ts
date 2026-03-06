@@ -59,7 +59,7 @@ export const usePropertyDetail = () => {
   const property = data?.data ?? null;
 
   const truncatedDescription = property?.description
-    ? property.description.slice(0, 150) + "..."
+    ? property.description.slice(0, 80) + "..."
     : "";
   const displayImages = property?.images?.length
     ? property.images
