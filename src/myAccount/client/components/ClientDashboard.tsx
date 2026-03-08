@@ -1,12 +1,18 @@
-import { User, Bookmark, Home, ShoppingCart, ChevronRight, Calculator, TrendingUp, BedDouble, Bath, Maximize, Phone, RefreshCw } from "lucide-react";
+import { useRef, useState } from "react";
+import { Camera, Bookmark, Home, ShoppingCart, ChevronRight, Calculator, TrendingUp, BedDouble, Bath, Maximize, Phone, RefreshCw, Briefcase, MapPin, CreditCard } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useNavigate } from "react-router-dom";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useClientDashboard } from "@/myAccount/client/hooks/use-client-dashboard.hook";
 import { useFinancialModal } from "@/contexts/FinancialModalContext";
 import { getLoanTypeLabel } from "@/myAccount/client/actions/get-client-financial-profile.actions";
-import type { PropertySaleItem, PropertyBuySummary } from "@/myAccount/client/types/client.types";
+import { updateClientProfileFieldAction } from "@/myAccount/client/actions/get-client-profile-detail.actions";
+import { clientApi } from "@/myAccount/client/api/client.api";
+import ProfileFieldModal from "./ProfileFieldModal";
+import type { AuthUser } from "@/auth/types/auth.types";
+import type { PropertySaleItem, PropertyBuySummary, ClientProfileDetail } from "@/myAccount/client/types/client.types";
 
 const formatPrice = (price: string | number | undefined): string => {
   if (!price) return "$0";
@@ -25,9 +31,34 @@ interface ClientDashboardProps {
   onNavigateCompras?: () => void;
 }
 
+const getUser = (): AuthUser | null => {
+  try { return JSON.parse(localStorage.getItem("user") ?? "null"); } catch { return null; }
+};
+
 const ClientDashboard = ({ onNavigateVentas, onNavigateCompras }: ClientDashboardProps) => {
   const navigate = useNavigate();
   const { openFinancialModal } = useFinancialModal();
+  const [user, setUser] = useState(getUser);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+  const userName = user ? `${user.first_name} ${user.last_name}`.trim() || user.email : "";
+  const userInitial = (user?.first_name?.[0] || user?.email?.[0] || "?").toUpperCase();
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    // Preview inmediato
+    const previewUrl = URL.createObjectURL(file);
+    setAvatarUrl(previewUrl);
+    try {
+      const { data } = await clientApi.uploadAvatar(file);
+      setAvatarUrl(data.avatar);
+    } catch {
+      setAvatarUrl(null);
+    }
+  };
+
   const {
     ventasList,
     ventasLoading,
@@ -37,20 +68,123 @@ const ClientDashboard = ({ onNavigateVentas, onNavigateCompras }: ClientDashboar
     savedLoading,
     financialProfile,
     financialLoading,
+    clientProfile,
+    clientProfileLoading,
+    userAvatar,
   } = useClientDashboard();
+
+  const displayAvatar = avatarUrl || userAvatar;
+
+  const queryClient = useQueryClient();
+
+  const [modalField, setModalField] = useState<{
+    key: keyof ClientProfileDetail;
+    title: string;
+    description: string;
+  } | null>(null);
+  const [modalValue, setModalValue] = useState("");
+
+  const profileFields: {
+    key: keyof ClientProfileDetail;
+    label: string;
+    icon: React.ReactNode;
+    title: string;
+    description: string;
+  }[] = [
+    { key: "occupation", label: "Ocupacion", icon: <Briefcase className="w-5 h-5 text-champagne-gold" />, title: "¿A que te dedicas?", description: "Cuentanos sobre tu ocupacion actual" },
+    { key: "residence_location", label: "Ubicacion", icon: <MapPin className="w-5 h-5 text-champagne-gold" />, title: "¿Donde vives actualmente?", description: "Indica tu ciudad o zona de residencia" },
+    { key: "desired_credit_type", label: "Tipo de credito", icon: <CreditCard className="w-5 h-5 text-champagne-gold" />, title: "¿Que tipo de credito buscas?", description: "Ej: Infonavit, bancario, conyugal..." },
+    { key: "desired_property_type", label: "Tipo de propiedad", icon: <Home className="w-5 h-5 text-champagne-gold" />, title: "¿Que tipo de propiedad buscas?", description: "Ej: Casa, departamento, terreno..." },
+  ];
+
+  const completedCount = clientProfile
+    ? profileFields.filter((f) => clientProfile[f.key]?.trim()).length
+    : 0;
+
+  const updateFieldMutation = useMutation({
+    mutationFn: ({ field, value }: { field: string; value: string }) =>
+      updateClientProfileFieldAction(field, value),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["client-profile-detail"] });
+      setModalField(null);
+    },
+  });
+
+  const openFieldModal = (field: typeof profileFields[number]) => {
+    setModalField({ key: field.key, title: field.title, description: field.description });
+    setModalValue(clientProfile?.[field.key] ?? "");
+  };
+
+  const [showAvatarMenu, setShowAvatarMenu] = useState(false);
+
+  const handleAvatarClick = () => {
+    if (displayAvatar) {
+      setShowAvatarMenu((prev) => !prev);
+    } else {
+      fileInputRef.current?.click();
+    }
+  };
+
+  const handleDeleteAvatar = async () => {
+    setShowAvatarMenu(false);
+    setAvatarUrl(null);
+    try {
+      await clientApi.updateProfile({ avatar: "" });
+      queryClient.invalidateQueries({ queryKey: ["client-user-profile"] });
+    } catch { /* silent */ }
+  };
 
   return (
     <div className="space-y-6">
-      {/* Welcome Header */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 bg-gradient-to-r from-champagne-gold/5 to-transparent rounded-2xl border border-champagne-gold/10">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-champagne-gold/20 flex items-center justify-center">
-            <User className="w-6 h-6 text-champagne-gold" />
+      {/* Profile Avatar Header */}
+      <div className="flex flex-col items-center gap-3 py-2">
+        <div className="relative">
+          <div
+            className="relative w-24 h-24 rounded-full cursor-pointer group"
+            onClick={handleAvatarClick}
+          >
+            {displayAvatar ? (
+              <img
+                src={displayAvatar}
+                alt="Avatar"
+                className="w-full h-full rounded-full object-cover border-2 border-champagne-gold/30"
+              />
+            ) : (
+              <div className="w-full h-full rounded-full bg-champagne-gold/20 flex items-center justify-center border-2 border-champagne-gold/30">
+                <span className="text-3xl font-bold text-champagne-gold">{userInitial}</span>
+              </div>
+            )}
+            <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <Camera className="w-6 h-6 text-white" />
+            </div>
           </div>
-          <div>
-            <h2 className="text-lg font-semibold text-midnight">¡Bienvenido de nuevo!</h2>
-            <p className="text-sm text-foreground/60">Gestiona tu cuenta y propiedades</p>
-          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => { handleAvatarChange(e); setShowAvatarMenu(false); }}
+          />
+          {showAvatarMenu && (
+            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-white rounded-xl shadow-lg border border-border/30 py-1 z-50 min-w-[160px]">
+              <button
+                className="w-full text-left px-4 py-2.5 text-sm text-midnight hover:bg-muted/20 transition-colors"
+                onClick={() => { setShowAvatarMenu(false); fileInputRef.current?.click(); }}
+              >
+                Cambiar foto
+              </button>
+              <button
+                className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                onClick={handleDeleteAvatar}
+              >
+                Eliminar foto
+              </button>
+            </div>
+          )}
+        </div>
+        <div className="text-center">
+          <h2 className="text-lg font-semibold text-midnight">{userName}</h2>
+          <p className="text-sm text-foreground/50">Cliente</p>
         </div>
       </div>
 
@@ -334,6 +468,62 @@ const ClientDashboard = ({ onNavigateVentas, onNavigateCompras }: ClientDashboar
           </Card>
         </div>
       </div>
+
+      {/* Completa tu Perfil */}
+      {!clientProfileLoading && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-midnight">Completa tu Perfil</h3>
+            <span className="text-xs text-foreground/50">{completedCount} de {profileFields.length} completados</span>
+          </div>
+          <div className="w-full h-2 bg-muted/20 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-champagne-gold rounded-full transition-all duration-300"
+              style={{ width: `${(completedCount / profileFields.length) * 100}%` }}
+            />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {profileFields.map((field) => {
+              const val = clientProfile?.[field.key]?.trim();
+              return (
+                <Card
+                  key={field.key}
+                  className="border border-border/30 bg-white shadow-sm hover:shadow-md hover:border-champagne-gold/30 transition-all rounded-2xl cursor-pointer"
+                  onClick={() => openFieldModal(field)}
+                >
+                  <CardContent className="p-5 flex items-start gap-3">
+                    <div className="p-2 rounded-xl bg-champagne-gold/10 shrink-0">
+                      {field.icon}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-midnight">{field.label}</p>
+                      <p className={`text-sm truncate ${val ? "text-foreground/70" : "text-foreground/40 italic"}`}>
+                        {val || "Sin completar"}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <ProfileFieldModal
+        isOpen={!!modalField}
+        onClose={() => setModalField(null)}
+        title={modalField?.title ?? ""}
+        description={modalField?.description ?? ""}
+        value={modalValue}
+        onChange={setModalValue}
+        maxLength={200}
+        onSave={() => {
+          if (modalField) {
+            updateFieldMutation.mutate({ field: modalField.key, value: modalValue });
+          }
+        }}
+        isLoading={updateFieldMutation.isPending}
+      />
     </div>
   );
 };

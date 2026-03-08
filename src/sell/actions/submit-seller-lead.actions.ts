@@ -9,7 +9,6 @@ export interface SellerLeadData {
   expectedPrice: string;
   fullName: string;
   phone: string;
-  email: string;
 }
 
 export interface SubmitSellerLeadResponse {
@@ -37,29 +36,27 @@ export const submitSellerLeadAction = async (
   membershipId?: number
 ): Promise<SubmitSellerLeadResponse> => {
   const payload = {
-    full_name: data.fullName,
-    email: data.email,
-    phone: data.phone,
+    name_form: data.fullName,
+    phone_form: data.phone,
     property_type: PROPERTY_TYPE_MAP[data.propertyType] ?? data.propertyType,
     location: data.location,
     square_meters: data.squareMeters ? parseFloat(data.squareMeters) : undefined,
     bedrooms: data.bedrooms ? parseInt(data.bedrooms, 10) : undefined,
     bathrooms: data.bathrooms ? parseInt(data.bathrooms, 10) : undefined,
     expected_price: data.expectedPrice ? parseFloat(data.expectedPrice) : undefined,
-    ...(membershipId && { created_by_membership: membershipId }),
   };
 
   try {
-    const { data: response } = await sellApi.post<BackendSellerLeadResponse>(
+    const { data: response } = await sellApi.post(
       ENDPOINTS.SUBMIT_LEAD,
       payload
     );
     return {
       success: true,
-      leadId: String(response.id),
-      message: response.message,
+      leadId: String((response as any).id),
+      message: (response as any).message,
     };
-  } catch {
+  } catch (err: any) {
     return {
       success: false,
       message: "No se pudo enviar tu solicitud. Intenta de nuevo.",

@@ -276,21 +276,6 @@ const SellerLeadForm = ({ open, onOpenChange, mode = "default", onPropertyAdded 
                   )}
                 </div>
 
-                {/* Email */}
-                <div>
-                  <Label className="text-sm font-medium text-primary mb-3 block">Email</Label>
-                  <Input
-                    type="email"
-                    placeholder="Ej: juan@email.com"
-                    value={formData.email}
-                    onChange={(e) => updateFormData("email", e.target.value)}
-                    className="h-12 rounded-xl border-border focus:border-[hsl(var(--champagne-gold))] focus-visible:ring-[hsl(var(--champagne-gold))]"
-                  />
-                  {errors.email && (
-                    <p className="text-destructive text-sm mt-2">{errors.email}</p>
-                  )}
-                </div>
-
                 {/* Phone */}
                 <div>
                   <Label className="text-sm font-medium text-primary mb-3 block">Teléfono</Label>

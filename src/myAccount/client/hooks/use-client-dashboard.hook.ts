@@ -3,6 +3,8 @@ import { getClientPropertiesSaleAction } from "@/myAccount/client/actions/get-cl
 import { getClientPropertiesBuyAction } from "@/myAccount/client/actions/get-client-properties-buy.actions";
 import { getClientSavedPropertiesAction } from "@/myAccount/client/actions/get-client-saved-properties.actions";
 import { getClientFinancialProfileAction } from "@/myAccount/client/actions/get-client-financial-profile.actions";
+import { getClientProfileDetailAction } from "@/myAccount/client/actions/get-client-profile-detail.actions";
+import { clientApi } from "@/myAccount/client/api/client.api";
 import type { PropertySaleItem } from "@/myAccount/client/types/client.types";
 
 export const useClientDashboard = () => {
@@ -26,6 +28,19 @@ export const useClientDashboard = () => {
     queryFn: getClientFinancialProfileAction,
   });
 
+  const clientProfileQuery = useQuery({
+    queryKey: ["client-profile-detail"],
+    queryFn: getClientProfileDetailAction,
+  });
+
+  const userProfileQuery = useQuery({
+    queryKey: ["client-user-profile"],
+    queryFn: async () => {
+      const { data } = await clientApi.getUserProfile();
+      return data as { avatar: string | null };
+    },
+  });
+
   return {
     ventasList: (ventasQuery.data?.list ?? []) as PropertySaleItem[],
     ventasSummary: ventasQuery.data?.summary ?? null,
@@ -36,5 +51,8 @@ export const useClientDashboard = () => {
     savedLoading: savedQuery.isLoading,
     financialProfile: financialQuery.data ?? null,
     financialLoading: financialQuery.isLoading,
+    clientProfile: clientProfileQuery.data ?? null,
+    clientProfileLoading: clientProfileQuery.isLoading,
+    userAvatar: userProfileQuery.data?.avatar ?? null,
   };
 };

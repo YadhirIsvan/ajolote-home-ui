@@ -14,6 +14,7 @@ const MiCuenta = () => {
   const {
     isAuthenticated,
     role,
+    user,
     showAuthModal,
     openAuthModal,
     closeAuthModal,
@@ -38,6 +39,7 @@ const MiCuenta = () => {
       <div className="min-h-screen bg-white">
         <Navigation
           isClientAuthenticated={isClientAuth}
+          user={user}
           onLogout={handleLogout}
           onNavigateConfig={() => setClientSubView("config")}
         />
@@ -50,24 +52,26 @@ const MiCuenta = () => {
                   role !== "client" ? "hidden md:block" : ""
                 }`}
               >
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-champagne-gold/10 text-champagne-gold text-sm font-medium mb-4">
-                  <RoleIcon className="w-4 h-4" />
-                  <span>{role ? roleLabels[role] : ""}</span>
-                </div>
+                {role !== "client" && (
+                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-champagne-gold/10 text-champagne-gold text-sm font-medium mb-4">
+                    <RoleIcon className="w-4 h-4" />
+                    <span>{role ? roleLabels[role] : ""}</span>
+                  </div>
+                )}
                 <h1 className="text-2xl md:text-4xl font-bold text-midnight mb-2 md:mb-4">
                   {role === "admin"
                     ? "Panel de Administración"
                     : role === "agent"
                     ? "Panel del Agente"
-                    : "Mi Cuenta"}
+                    : "Perfil"}
                 </h1>
-                <p className="text-sm md:text-lg text-foreground/60 max-w-xl mx-auto">
-                  {role === "admin"
-                    ? "Control total de la plataforma"
-                    : role === "agent"
-                    ? "Gestiona tus propiedades y prospectos"
-                    : "Gestiona tu perfil, crédito y propiedades en un solo lugar"}
-                </p>
+                {role !== "client" && (
+                  <p className="text-sm md:text-lg text-foreground/60 max-w-xl mx-auto">
+                    {role === "admin"
+                      ? "Control total de la plataforma"
+                      : "Gestiona tus propiedades y prospectos"}
+                  </p>
+                )}
               </div>
             )}
 

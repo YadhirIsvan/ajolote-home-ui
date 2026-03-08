@@ -24,7 +24,7 @@ export interface PropertySaleSummary {
   price: string;
   image: string;
   status: string;
-  client_visible_status: 'registrar_propiedad' | 'aprobar_estado' | 'marketing' | 'vendida';
+  client_visible_status: 'registrar_propiedad' | 'aprobar_estado' | 'marketing' | 'vendida' | 'cancelado';
   views: number;
   interested: number;
   daysListed: number;
@@ -111,4 +111,11 @@ export interface Step {
   done: boolean;
   current?: boolean;
   allowUpload?: boolean;
+}
+
+export interface ClientProfileDetail {
+  occupation: string;
+  residence_location: string;
+  desired_credit_type: string;
+  desired_property_type: string;
 }

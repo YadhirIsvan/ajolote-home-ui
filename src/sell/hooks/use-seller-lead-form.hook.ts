@@ -20,7 +20,6 @@ const step2Schema = z.object({
 
 const step3Schema = z.object({
   fullName: z.string().min(1, "Ingresa tu nombre completo"),
-  email: z.string().email("Ingresa un email válido"),
   phone: z.string().min(1, "Ingresa tu teléfono"),
 });
 
@@ -33,7 +32,6 @@ const EMPTY_FORM: SellerLeadData = {
   expectedPrice: "",
   fullName: "",
   phone: "",
-  email: "",
 };
 
 interface UseSellerLeadFormOptions {
@@ -83,7 +81,6 @@ export const useSellerLeadForm = ({
       } else if (step === 3) {
         step3Schema.parse({
           fullName: formData.fullName,
-          email: formData.email,
           phone: formData.phone,
         });
       }

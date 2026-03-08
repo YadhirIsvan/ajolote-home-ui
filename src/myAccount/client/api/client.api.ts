@@ -39,4 +39,17 @@ export const clientApi = {
 
   checkSavedProperty: (propertyId: number) =>
     axiosInstance.get(`/client/saved-properties/check?property_id=${propertyId}`),
+
+  getClientProfile: () => axiosInstance.get("/client/client-profile"),
+
+  updateClientProfile: (data: Record<string, string>) =>
+    axiosInstance.patch("/client/client-profile", data),
+
+  uploadAvatar: (file: File) => {
+    const formData = new FormData();
+    formData.append("avatar", file);
+    return axiosInstance.post("/client/avatar", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
 };

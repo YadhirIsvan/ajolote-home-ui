@@ -46,7 +46,7 @@ const PropertyFilters = ({
           <SelectItem value="Todas las zonas" className="py-3 cursor-pointer">
             Todas las zonas
           </SelectItem>
-          {cities.map((city) => (
+          {(cities ?? []).map((city) => (
             <SelectItem key={city.id} value={city.name} className="py-3 cursor-pointer">
               {city.name}
             </SelectItem>

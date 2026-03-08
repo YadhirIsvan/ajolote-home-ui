@@ -12,7 +12,7 @@ export interface PropertiesSaleResult {
 interface BackendSaleResult {
   id: number;
   status: string;
-  client_visible_status: 'registrar_propiedad' | 'aprobar_estado' | 'marketing' | 'vendida';
+  client_visible_status: 'registrar_propiedad' | 'aprobar_estado' | 'marketing' | 'vendida' | 'cancelado';
   progress_step: number;
   views: number;
   interested: number;

@@ -23,17 +23,20 @@ const formatPrice = (price: string | number | undefined): string => {
   }).format(num);
 };
 
-const getClientVisibleStatusLabel = (status: 'registrar_propiedad' | 'aprobar_estado' | 'marketing' | 'vendida'): string => {
-  const labels: Record<'registrar_propiedad' | 'aprobar_estado' | 'marketing' | 'vendida', string> = {
+type ClientVisibleStatus = 'registrar_propiedad' | 'aprobar_estado' | 'marketing' | 'vendida' | 'cancelado';
+
+const getClientVisibleStatusLabel = (status: ClientVisibleStatus): string => {
+  const labels: Record<ClientVisibleStatus, string> = {
     'registrar_propiedad': 'Registrar propiedad',
     'aprobar_estado': 'Aprobar estado',
     'marketing': 'Marketing',
     'vendida': 'Vendida',
+    'cancelado': 'Cancelado',
   };
   return labels[status];
 };
 
-const getStatusBadgeColor = (status: 'registrar_propiedad' | 'aprobar_estado' | 'marketing' | 'vendida') => {
+const getStatusBadgeColor = (status: ClientVisibleStatus) => {
   switch (status) {
     case 'vendida':
       return 'bg-emerald-500 text-white';
@@ -41,18 +44,21 @@ const getStatusBadgeColor = (status: 'registrar_propiedad' | 'aprobar_estado' | 
       return 'bg-blue-500 text-white';
     case 'aprobar_estado':
       return 'bg-yellow-500 text-white';
+    case 'cancelado':
+      return 'bg-red-500 text-white';
     case 'registrar_propiedad':
     default:
       return 'bg-amber-100 text-amber-700';
   }
 };
 
-const getProgressStepIndex = (status: 'registrar_propiedad' | 'aprobar_estado' | 'marketing' | 'vendida'): number => {
-  const map: Record<'registrar_propiedad' | 'aprobar_estado' | 'marketing' | 'vendida', number> = {
+const getProgressStepIndex = (status: ClientVisibleStatus): number => {
+  const map: Record<ClientVisibleStatus, number> = {
     'registrar_propiedad': 0,
     'aprobar_estado': 1,
     'marketing': 2,
     'vendida': 3,
+    'cancelado': -1,
   };
   return map[status];
 };
@@ -297,6 +303,7 @@ const ClientVentas = ({ onBack }: ClientVentasProps) => {
           ventasList.map((prop) => {
             const clientVisibleStatus = prop.client_visible_status;
             const isVendida = clientVisibleStatus === 'vendida';
+            const isCancelado = clientVisibleStatus === 'cancelado';
             const progressIndex = getProgressStepIndex(clientVisibleStatus);
             return (
               <Card
@@ -334,7 +341,13 @@ const ClientVentas = ({ onBack }: ClientVentasProps) => {
                         <span className="text-xl font-bold text-champagne-gold">{formatPrice(prop.price)}</span>
                       </div>
 
-                      {isVendida ? (
+                      {isCancelado ? (
+                        <div className="mt-4 pt-4 border-t border-red-200">
+                          <p className="text-sm text-red-600 font-medium">
+                            Este proceso ha sido cancelado.
+                          </p>
+                        </div>
+                      ) : isVendida ? (
                         <div className="flex flex-wrap items-center gap-4 mt-4 pt-4 border-t border-border/10">
                           <div className="flex items-center gap-1.5 text-sm text-foreground/60">
                             <Eye className="w-4 h-4" />

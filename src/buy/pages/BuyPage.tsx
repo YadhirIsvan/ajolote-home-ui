@@ -123,6 +123,7 @@ const BuyPage = () => {
             <div className="overflow-y-auto h-[calc(100%-140px)] py-4">
               <PropertyFilters
                 filters={filters}
+                cities={cities}
                 onZoneChange={setZone}
                 onTypeChange={setType}
                 onStateChange={setState}
