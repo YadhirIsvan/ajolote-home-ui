@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getAdminClientsAction } from "@/myAccount/admin/actions/get-admin-clients.actions";
-import type { AdminClient } from "@/myAccount/admin/types/admin.types";
-import { 
-  User, 
-  Search, 
-  Phone, 
+import { getAdminClientsAction, getAdminClientDetailAction } from "@/myAccount/admin/actions/get-admin-clients.actions";
+import type { AdminClient, AdminClientDetail } from "@/myAccount/admin/types/admin.types";
+import {
+  User,
+  Search,
+  Phone,
   Mail,
   ShoppingCart,
   Home,
@@ -17,111 +17,117 @@ import {
   Save,
   Check,
   Lock,
-  Upload
+  Upload,
+  MapPin,
+  Calendar,
+  Loader2,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from "@/components/ui/drawer";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-interface ClientDocument {
-  id: string;
-  name: string;
-  uploadedAt: string;
-}
+// ─── helpers ────────────────────────────────────────────────────────────────
 
-interface ClientProperty {
-  id: string;
-  title: string;
-  image: string;
-  stage: string;
-  documents: ClientDocument[];
-}
+const getMediaUrl = (url: string | null | undefined): string | null => {
+  if (!url) return null;
+  if (url.startsWith("http")) return url;
+  if (url.startsWith("/media/")) return `http://localhost:8000${url}`;
+  return null;
+};
 
-interface Client {
-  id: string;
-  rawId: number;
-  name: string;
-  email: string;
-  phone: string;
-  avatar: string;
-  buyingProperties: ClientProperty[];
-  sellingProperties: ClientProperty[];
-}
+const getInitials = (name: string): string =>
+  name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
 
-const buyingStages = ["Lead", "Visita", "Interés", "Pre-Aprob", "Avalúo", "Crédito", "Docs Finales", "Escrituras", "Cerrado"];
-const sellingStages = ["Contacto Inicial", "Evaluación", "Valuación", "Presentación", "Firma Contrato", "Marketing", "Publicación"];
+const PURCHASE_STATUS_LABELS: Record<string, string> = {
+  lead: "Lead",
+  visita: "Visita",
+  interes: "Interés",
+  pre_aprobacion: "Pre-aprobación",
+  avaluo: "Avalúo",
+  credito: "Crédito",
+  docs_finales: "Docs Finales",
+  escrituras: "Escrituras",
+  cerrado: "Cerrado",
+  cancelado: "Cancelado",
+};
 
-const sellingStagesInfo = [
-  { stage: "Contacto Inicial", duration: "1-2 días" },
-  { stage: "Evaluación", duration: "2-7 días" },
-  { stage: "Valuación", duration: "1-3 días" },
-  { stage: "Presentación", duration: "1-2 días" },
-  { stage: "Firma Contrato", duration: "1-7 días" },
-  { stage: "Marketing", duration: "3-7 días" },
-  { stage: "Publicación", duration: "1-2 días" },
+const PURCHASE_PIPELINE = [
+  "lead", "visita", "interes", "pre_aprobacion",
+  "avaluo", "credito", "docs_finales", "escrituras", "cerrado",
 ];
 
-const mapAdminClient = (item: AdminClient): Client => ({
-  id: String(item.membership_id),
-  rawId: item.membership_id,
-  name: item.name,
-  email: item.email,
-  phone: item.phone ?? "",
-  avatar: item.avatar ?? item.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2),
-  buyingProperties: [],
-  sellingProperties: [],
-});
-
-const emptyClient: Omit<Client, "id" | "rawId" | "buyingProperties" | "sellingProperties" | "avatar"> = {
-  name: "",
-  email: "",
-  phone: "",
+const SALE_STATUS_LABELS: Record<string, string> = {
+  nuevo: "Nuevo",
+  contactado: "Contactado",
+  en_revision: "En Revisión",
+  vendedor_completado: "Vendedor Completado",
+  contacto_inicial: "Contacto Inicial",
+  evaluacion: "Evaluación",
+  valuacion: "Valuación",
+  firma_contrato: "Firma Contrato",
+  marketing: "Marketing",
+  publicar: "Publicar",
+  cancelado: "Cancelado",
 };
+
+const SALE_PIPELINE = [
+  "nuevo", "contactado", "en_revision", "vendedor_completado",
+  "contacto_inicial", "evaluacion", "valuacion",
+  "firma_contrato", "marketing", "publicar",
+];
+
+// ─── component ───────────────────────────────────────────────────────────────
 
 const ClientesSection = () => {
   const isMobile = useIsMobile();
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [formData, setFormData] = useState({ name: "", email: "", phone: "" });
+
+  // ─── queries ──────────────────────────────────────────────────────────────
 
   const clientsQuery = useQuery({
     queryKey: ["admin-clients", searchTerm],
     queryFn: () => getAdminClientsAction({ search: searchTerm || undefined, limit: 200 }),
   });
-  const clients = (clientsQuery.data?.results ?? []).map(mapAdminClient);
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
-  const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState(emptyClient);
 
-  const filteredClients = clients;
+  const clients = clientsQuery.data?.results ?? [];
 
-  const handleClientClick = (client: Client) => {
-    setSelectedClient(client);
+  const detailQuery = useQuery({
+    queryKey: ["admin-client-detail", selectedClientId],
+    queryFn: () => getAdminClientDetailAction(selectedClientId!),
+    enabled: selectedClientId !== null && isDetailOpen,
+  });
+
+  const clientDetail = detailQuery.data;
+
+  // ─── handlers ─────────────────────────────────────────────────────────────
+
+  const handleClientClick = (client: AdminClient) => {
+    setSelectedClientId(client.id);
     setIsDetailOpen(true);
   };
 
   const handleCreate = () => {
     setEditingId(null);
-    setFormData(emptyClient);
+    setFormData({ name: "", email: "", phone: "" });
     setIsFormOpen(true);
   };
 
-  const handleEdit = (client: Client) => {
+  const handleEdit = (client: AdminClientDetail) => {
     setEditingId(client.id);
-    setFormData({
-      name: client.name,
-      email: client.email,
-      phone: client.phone,
-    });
+    setFormData({ name: client.name, email: client.email, phone: client.phone });
     setIsFormOpen(true);
     setIsDetailOpen(false);
   };
@@ -131,150 +137,126 @@ const ClientesSection = () => {
     setIsFormOpen(false);
   };
 
-  const handleDelete = (_id: string) => {
+  const handleDelete = () => {
     toast.info("Eliminación de clientes disponible próximamente");
     setIsDetailOpen(false);
   };
 
-  const handleChangeStage = (_clientId: string, _propertyId: string, _newStage: string, _type: "buying" | "selling") => {
-    toast.info("Actualización de etapa disponible próximamente");
-  };
+  // ─── avatar render helper ─────────────────────────────────────────────────
 
-  const handleUploadDocument = (_clientId: string, _propertyId: string, _type: "buying" | "selling") => {
-    toast.info("Subida de documentos disponible próximamente");
-  };
+  const AvatarCircle = ({ avatar, name, size = "md" }: { avatar: string | null; name: string; size?: "sm" | "md" | "lg" }) => {
+    const sizeClasses = { sm: "w-10 h-10 text-sm", md: "w-14 h-14 text-xl", lg: "w-16 h-16 text-xl" };
+    const imgUrl = getMediaUrl(avatar);
 
-  const handleDeleteDocument = (_clientId: string, _propertyId: string, _docId: string, _type: "buying" | "selling") => {
-    toast.info("Eliminación de documentos disponible próximamente");
-  };
+    if (imgUrl) {
+      return (
+        <img
+          src={imgUrl}
+          alt={name}
+          className={cn("rounded-full object-cover", sizeClasses[size])}
+        />
+      );
+    }
 
-  const PropertyCard = ({ property, stages, clientId, type }: { property: ClientProperty; stages: string[]; clientId: string; type: "buying" | "selling" }) => {
-    const currentStageIndex = stages.indexOf(property.stage);
-    
     return (
-      <Card className="border-border/30 hover:border-champagne-gold/50 transition-all">
-        <CardContent className="p-4">
-          <div className="flex gap-4 mb-4">
-            <img 
-              src={property.image} 
-              alt={property.title}
-              className="w-20 h-20 rounded-lg object-cover"
-            />
-            <div className="flex-1 min-w-0">
-              <h4 className="font-semibold text-midnight truncate">{property.title}</h4>
-              <Badge className="bg-champagne-gold/20 text-champagne-gold-dark mt-1">
-                {property.stage}
-              </Badge>
-            </div>
-          </div>
-
-          {/* Pipeline Visualization */}
-          <div className="space-y-2 mb-4">
-            <p className="text-xs font-medium text-foreground/60">Pipeline</p>
-            <div className="space-y-1">
-              {stages.map((stage, idx) => {
-                const isCompleted = idx < currentStageIndex;
-                const isCurrent = idx === currentStageIndex;
-                const stageInfo = type === "selling" ? sellingStagesInfo.find(s => s.stage === stage) : null;
-                
-                return (
-                  <div 
-                    key={stage}
-                    className={cn(
-                      "flex items-center gap-2 p-2 rounded-lg text-xs transition-all cursor-pointer",
-                      isCompleted && "bg-green-50 text-green-700",
-                      isCurrent && "bg-champagne-gold/20 text-champagne-gold-dark border border-champagne-gold/30",
-                      !isCompleted && !isCurrent && "bg-muted/30 text-foreground/50"
-                    )}
-                    onClick={() => handleChangeStage(clientId, property.id, stage, type)}
-                  >
-                    {isCompleted ? (
-                      <Check className="w-3 h-3" />
-                    ) : isCurrent ? (
-                      <div className="w-3 h-3 rounded-full bg-champagne-gold" />
-                    ) : (
-                      <Lock className="w-3 h-3" />
-                    )}
-                    <span className="flex-1">{stage}</span>
-                    {stageInfo && <span className="text-foreground/40">{stageInfo.duration}</span>}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Documents */}
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-midnight">Documentos ({property.documents.length})</p>
-            {property.documents.length > 0 ? (
-              <div className="space-y-1">
-                {property.documents.map((doc) => (
-                  <div key={doc.id} className="flex items-center justify-between p-2 bg-muted/20 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <FileText className="w-3 h-3 text-champagne-gold" />
-                      <span className="text-xs text-midnight truncate">{doc.name}</span>
-                    </div>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-6 w-6 text-red-400 hover:text-red-500"
-                      onClick={() => handleDeleteDocument(clientId, property.id, doc.id, type)}
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-xs text-foreground/50">Sin documentos</p>
-            )}
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="w-full border-dashed border-champagne-gold text-champagne-gold"
-              onClick={() => handleUploadDocument(clientId, property.id, type)}
-            >
-              <Upload className="w-3 h-3 mr-1" />
-              Subir Documento
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <div className={cn("rounded-full bg-champagne-gold flex items-center justify-center text-white font-bold", sizeClasses[size])}>
+        {getInitials(name)}
+      </div>
     );
   };
 
+  // ─── pipeline visualization ───────────────────────────────────────────────
+
+  const PipelineSteps = ({ currentStatus, pipeline, labels }: { currentStatus: string; pipeline: string[]; labels: Record<string, string> }) => {
+    const currentIdx = pipeline.indexOf(currentStatus);
+    const isCancelled = currentStatus === "cancelado";
+
+    return (
+      <div className="space-y-1">
+        {pipeline.map((status, idx) => {
+          const isCompleted = !isCancelled && idx < currentIdx;
+          const isCurrent = !isCancelled && idx === currentIdx;
+
+          return (
+            <div
+              key={status}
+              className={cn(
+                "flex items-center gap-2 p-2 rounded-lg text-xs transition-all",
+                isCompleted && "bg-green-50 text-green-700",
+                isCurrent && "bg-champagne-gold/20 text-champagne-gold-dark border border-champagne-gold/30",
+                !isCompleted && !isCurrent && "bg-muted/30 text-foreground/50"
+              )}
+            >
+              {isCompleted ? (
+                <Check className="w-3 h-3" />
+              ) : isCurrent ? (
+                <div className="w-3 h-3 rounded-full bg-champagne-gold" />
+              ) : (
+                <Lock className="w-3 h-3" />
+              )}
+              <span className="flex-1">{labels[status] ?? status}</span>
+            </div>
+          );
+        })}
+        {isCancelled && (
+          <div className="flex items-center gap-2 p-2 rounded-lg text-xs bg-red-50 text-red-600 border border-red-200">
+            <div className="w-3 h-3 rounded-full bg-red-500" />
+            <span>Cancelado</span>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // ─── detail content ───────────────────────────────────────────────────────
+
   const ClientDetailContent = () => {
-    if (!selectedClient) return null;
+    if (detailQuery.isLoading) {
+      return (
+        <div className="flex flex-col items-center justify-center py-12 text-foreground/50">
+          <Loader2 className="w-8 h-8 animate-spin mb-3 text-champagne-gold" />
+          <p>Cargando datos del cliente...</p>
+        </div>
+      );
+    }
+
+    if (!clientDetail) return null;
 
     return (
       <div className="space-y-6">
         {/* Client Header */}
         <div className="flex items-center justify-between p-4 bg-muted/20 rounded-xl">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-champagne-gold flex items-center justify-center text-white text-xl font-bold">
-              {selectedClient.avatar}
-            </div>
+            <AvatarCircle avatar={clientDetail.avatar} name={clientDetail.name} size="lg" />
             <div className="flex-1 min-w-0">
-              <h3 className="text-xl font-bold text-midnight">{selectedClient.name}</h3>
+              <h3 className="text-xl font-bold text-midnight">{clientDetail.name}</h3>
               <div className="flex items-center gap-2 text-sm text-foreground/60 mt-1">
                 <Mail className="w-4 h-4" />
-                <span className="truncate">{selectedClient.email}</span>
+                <span className="truncate">{clientDetail.email}</span>
               </div>
-              <div className="flex items-center gap-2 text-sm text-foreground/60">
-                <Phone className="w-4 h-4" />
-                <span>{selectedClient.phone}</span>
-              </div>
+              {clientDetail.phone && (
+                <div className="flex items-center gap-2 text-sm text-foreground/60">
+                  <Phone className="w-4 h-4" />
+                  <span>{clientDetail.phone}</span>
+                </div>
+              )}
+              {clientDetail.city && (
+                <div className="flex items-center gap-2 text-sm text-foreground/60">
+                  <MapPin className="w-4 h-4" />
+                  <span>{clientDetail.city}</span>
+                </div>
+              )}
             </div>
           </div>
           <div className="flex gap-2">
-            <Button variant="ghost" size="icon" onClick={() => handleEdit(selectedClient)}>
+            <Button variant="ghost" size="icon" onClick={() => handleEdit(clientDetail)}>
               <Edit className="w-4 h-4" />
             </Button>
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               className="text-red-400 hover:text-red-500"
-              onClick={() => handleDelete(selectedClient.id)}
+              onClick={handleDelete}
             >
               <Trash2 className="w-4 h-4" />
             </Button>
@@ -284,66 +266,145 @@ const ClientesSection = () => {
         {/* Properties Tabs */}
         <Tabs defaultValue="buying" className="space-y-4">
           <TabsList className="w-full grid grid-cols-2 bg-muted/30">
-            <TabsTrigger 
-              value="buying" 
+            <TabsTrigger
+              value="buying"
               className="data-[state=active]:bg-champagne-gold data-[state=active]:text-white gap-2"
             >
               <ShoppingCart className="w-4 h-4" />
-              En Compra ({selectedClient.buyingProperties.length})
+              En Compra ({clientDetail.purchase_processes.length})
             </TabsTrigger>
-            <TabsTrigger 
-              value="selling" 
+            <TabsTrigger
+              value="selling"
               className="data-[state=active]:bg-champagne-gold data-[state=active]:text-white gap-2"
             >
               <Home className="w-4 h-4" />
-              En Venta ({selectedClient.sellingProperties.length})
+              En Venta ({clientDetail.sale_processes.length})
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="buying" className="space-y-4 mt-4">
-            {selectedClient.buyingProperties.length === 0 ? (
+            {clientDetail.purchase_processes.length === 0 ? (
               <div className="text-center py-8 text-foreground/50">
                 <ShoppingCart className="w-12 h-12 mx-auto mb-3" />
                 <p>No hay propiedades en proceso de compra</p>
               </div>
             ) : (
-              selectedClient.buyingProperties.map((prop) => (
-                <PropertyCard 
-                  key={prop.id} 
-                  property={prop} 
-                  stages={buyingStages} 
-                  clientId={selectedClient.id}
-                  type="buying"
-                />
-              ))
+              clientDetail.purchase_processes.map((proc) => {
+                const propImg = getMediaUrl(proc.property.image);
+                return (
+                  <Card key={proc.id} className="border-border/30 hover:border-champagne-gold/50 transition-all">
+                    <CardContent className="p-4">
+                      <div className="flex gap-4 mb-4">
+                        {propImg ? (
+                          <img src={propImg} alt={proc.property.title} className="w-20 h-20 rounded-lg object-cover" />
+                        ) : (
+                          <div className="w-20 h-20 rounded-lg bg-muted flex items-center justify-center">
+                            <Home className="w-8 h-8 text-foreground/30" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold text-midnight truncate">{proc.property.title}</h4>
+                          <Badge className="bg-champagne-gold/20 text-champagne-gold-dark mt-1">
+                            {PURCHASE_STATUS_LABELS[proc.status] ?? proc.status}
+                          </Badge>
+                          <div className="flex items-center gap-1 mt-1 text-xs text-foreground/50">
+                            <User className="w-3 h-3" />
+                            <span>{proc.agent.name}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Progress bar */}
+                      <div className="mb-3">
+                        <div className="flex justify-between text-xs text-foreground/60 mb-1">
+                          <span>Progreso</span>
+                          <span className="font-medium text-midnight">{proc.overall_progress}%</span>
+                        </div>
+                        <div className="h-2 rounded-full bg-muted overflow-hidden">
+                          <div
+                            className="h-full bg-champagne-gold transition-all rounded-full"
+                            style={{ width: `${proc.overall_progress}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Pipeline */}
+                      <div className="space-y-2 mb-3">
+                        <p className="text-xs font-medium text-foreground/60">Pipeline</p>
+                        <PipelineSteps
+                          currentStatus={proc.status}
+                          pipeline={PURCHASE_PIPELINE}
+                          labels={PURCHASE_STATUS_LABELS}
+                        />
+                      </div>
+
+                      {/* Documents */}
+                      {proc.documents && proc.documents.length > 0 && (
+                        <div className="space-y-2">
+                          <p className="text-sm font-medium text-midnight">Documentos ({proc.documents.length})</p>
+                          <div className="space-y-1">
+                            {proc.documents.map((doc) => (
+                              <div key={doc.id} className="flex items-center gap-2 p-2 bg-muted/20 rounded-lg">
+                                <FileText className="w-3 h-3 text-champagne-gold" />
+                                <span className="text-xs text-midnight truncate">{doc.name}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })
             )}
-            <Button variant="outline" className="w-full border-dashed border-champagne-gold text-champagne-gold">
-              <Plus className="w-4 h-4 mr-2" />
-              Agregar Propiedad en Compra
-            </Button>
           </TabsContent>
 
           <TabsContent value="selling" className="space-y-4 mt-4">
-            {selectedClient.sellingProperties.length === 0 ? (
+            {clientDetail.sale_processes.length === 0 ? (
               <div className="text-center py-8 text-foreground/50">
                 <Home className="w-12 h-12 mx-auto mb-3" />
                 <p>No hay propiedades en proceso de venta</p>
               </div>
             ) : (
-              selectedClient.sellingProperties.map((prop) => (
-                <PropertyCard 
-                  key={prop.id} 
-                  property={prop} 
-                  stages={sellingStages} 
-                  clientId={selectedClient.id}
-                  type="selling"
-                />
-              ))
+              clientDetail.sale_processes.map((proc) => {
+                const propImg = getMediaUrl(proc.property.image);
+                return (
+                  <Card key={proc.id} className="border-border/30 hover:border-champagne-gold/50 transition-all">
+                    <CardContent className="p-4">
+                      <div className="flex gap-4 mb-4">
+                        {propImg ? (
+                          <img src={propImg} alt={proc.property.title} className="w-20 h-20 rounded-lg object-cover" />
+                        ) : (
+                          <div className="w-20 h-20 rounded-lg bg-muted flex items-center justify-center">
+                            <Home className="w-8 h-8 text-foreground/30" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold text-midnight truncate">{proc.property.title}</h4>
+                          <Badge className="bg-champagne-gold/20 text-champagne-gold-dark mt-1">
+                            {SALE_STATUS_LABELS[proc.status] ?? proc.status}
+                          </Badge>
+                          <div className="flex items-center gap-1 mt-1 text-xs text-foreground/50">
+                            <User className="w-3 h-3" />
+                            <span>{proc.agent.name}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Pipeline */}
+                      <div className="space-y-2">
+                        <p className="text-xs font-medium text-foreground/60">Pipeline</p>
+                        <PipelineSteps
+                          currentStatus={proc.status}
+                          pipeline={SALE_PIPELINE}
+                          labels={SALE_STATUS_LABELS}
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })
             )}
-            <Button variant="outline" className="w-full border-dashed border-champagne-gold text-champagne-gold">
-              <Plus className="w-4 h-4 mr-2" />
-              Agregar Propiedad en Venta
-            </Button>
           </TabsContent>
         </Tabs>
       </div>
@@ -357,11 +418,10 @@ const ClientesSection = () => {
         <Input
           value={formData.name}
           onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-          placeholder="María García"
+          placeholder="Maria Garcia"
           className="h-12"
         />
       </div>
-
       <div className="space-y-2">
         <Label>Email</Label>
         <Input
@@ -372,9 +432,8 @@ const ClientesSection = () => {
           className="h-12"
         />
       </div>
-
       <div className="space-y-2">
-        <Label>Teléfono</Label>
+        <Label>Telefono</Label>
         <Input
           value={formData.phone}
           onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
@@ -414,17 +473,15 @@ const ClientesSection = () => {
         {clientsQuery.isLoading && (
           <p className="col-span-3 text-center text-foreground/60 py-8">Cargando clientes...</p>
         )}
-        {filteredClients.map((client) => (
-          <Card 
-            key={client.id} 
+        {clients.map((client) => (
+          <Card
+            key={client.id}
             className="border-border/50 hover:border-champagne-gold/50 hover:shadow-lg transition-all cursor-pointer"
             onClick={() => handleClientClick(client)}
           >
             <CardContent className="p-5">
               <div className="flex items-center gap-4 mb-4">
-                <div className="w-14 h-14 rounded-full bg-champagne-gold flex items-center justify-center text-white text-xl font-bold">
-                  {client.avatar}
-                </div>
+                <AvatarCircle avatar={client.avatar} name={client.name} />
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-midnight truncate">{client.name}</h3>
                   <p className="text-sm text-foreground/60 truncate">{client.email}</p>
@@ -435,13 +492,20 @@ const ClientesSection = () => {
               <div className="flex gap-4">
                 <div className="flex items-center gap-2 text-sm">
                   <ShoppingCart className="w-4 h-4 text-champagne-gold" />
-                  <span className="text-midnight">{client.buyingProperties.length} comprando</span>
+                  <span className="text-midnight">{client.purchase_processes_count} comprando</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <Home className="w-4 h-4 text-champagne-gold" />
-                  <span className="text-midnight">{client.sellingProperties.length} vendiendo</span>
+                  <span className="text-midnight">{client.sale_processes_count} vendiendo</span>
                 </div>
               </div>
+
+              {client.city && (
+                <div className="flex items-center gap-1.5 mt-2 text-xs text-foreground/50">
+                  <MapPin className="w-3.5 h-3.5" />
+                  <span>{client.city}</span>
+                </div>
+              )}
             </CardContent>
           </Card>
         ))}

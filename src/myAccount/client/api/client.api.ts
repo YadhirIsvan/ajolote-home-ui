@@ -45,6 +45,11 @@ export const clientApi = {
   updateClientProfile: (data: Record<string, string>) =>
     axiosInstance.patch("/client/client-profile", data),
 
+  getAppointments: () => axiosInstance.get("/client/appointments"),
+
+  cancelAppointment: (id: number, reason?: string) =>
+    axiosInstance.patch(`/client/appointments/${id}/cancel`, { reason }),
+
   uploadAvatar: (file: File) => {
     const formData = new FormData();
     formData.append("avatar", file);

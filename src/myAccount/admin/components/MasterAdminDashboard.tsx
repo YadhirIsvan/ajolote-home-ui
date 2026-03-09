@@ -16,8 +16,10 @@ import PropiedadesSection from "@/myAccount/admin/components/sections/Propiedade
 import AgentesSection from "@/myAccount/admin/components/sections/AgentesSection";
 import CitasSection from "@/myAccount/admin/components/sections/CitasSection";
 import AsignarSection from "@/myAccount/admin/components/sections/AsignarSection";
+import AsignarVentasSection from "@/myAccount/admin/components/sections/AsignarVentasSection";
 import ClientesSection from "@/myAccount/admin/components/sections/ClientesSection";
 import KanbanSection from "@/myAccount/admin/components/sections/KanbanSection";
+import KanbanVentasSection from "@/myAccount/admin/components/sections/KanbanVentasSection";
 import HistorialSection from "@/myAccount/admin/components/sections/HistorialSection";
 import InsightsSection from "@/myAccount/admin/components/sections/InsightsSection";
 import { useAdminDashboard } from "@/myAccount/admin/hooks/use-admin-dashboard.hook";
@@ -40,10 +42,14 @@ const MasterAdminDashboard = ({ onLogout }: MasterAdminDashboardProps) => {
         return <CitasSection />;
       case "asignar":
         return <AsignarSection />;
+      case "asignar-ventas":
+        return <AsignarVentasSection />;
       case "clientes":
         return <ClientesSection />;
       case "kanban":
         return <KanbanSection />;
+      case "kanban-ventas":
+        return <KanbanVentasSection />;
       case "historial":
         return <HistorialSection />;
       case "insights":

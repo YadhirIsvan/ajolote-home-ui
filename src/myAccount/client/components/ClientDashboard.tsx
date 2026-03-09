@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Camera, Bookmark, Home, ShoppingCart, ChevronRight, Calculator, TrendingUp, BedDouble, Bath, Maximize, Phone, RefreshCw, Briefcase, MapPin, CreditCard } from "lucide-react";
+import { Camera, Bookmark, Home, ShoppingCart, ChevronRight, Calculator, TrendingUp, BedDouble, Bath, Maximize, Phone, RefreshCw, Briefcase, MapPin, CreditCard, CalendarCheck, Calendar, Clock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -12,7 +12,7 @@ import { updateClientProfileFieldAction } from "@/myAccount/client/actions/get-c
 import { clientApi } from "@/myAccount/client/api/client.api";
 import ProfileFieldModal from "./ProfileFieldModal";
 import type { AuthUser } from "@/auth/types/auth.types";
-import type { PropertySaleItem, PropertyBuySummary, ClientProfileDetail } from "@/myAccount/client/types/client.types";
+import type { PropertySaleItem, PropertyBuySummary, ClientProfileDetail, ClientAppointment } from "@/myAccount/client/types/client.types";
 
 const formatPrice = (price: string | number | undefined): string => {
   if (!price) return "$0";
@@ -29,13 +29,14 @@ interface ClientDashboardProps {
   onLogout: () => void;
   onNavigateVentas?: () => void;
   onNavigateCompras?: () => void;
+  onNavigateCitas?: () => void;
 }
 
 const getUser = (): AuthUser | null => {
   try { return JSON.parse(localStorage.getItem("user") ?? "null"); } catch { return null; }
 };
 
-const ClientDashboard = ({ onNavigateVentas, onNavigateCompras }: ClientDashboardProps) => {
+const ClientDashboard = ({ onNavigateVentas, onNavigateCompras, onNavigateCitas }: ClientDashboardProps) => {
   const navigate = useNavigate();
   const { openFinancialModal } = useFinancialModal();
   const [user, setUser] = useState(getUser);
@@ -71,6 +72,8 @@ const ClientDashboard = ({ onNavigateVentas, onNavigateCompras }: ClientDashboar
     clientProfile,
     clientProfileLoading,
     userAvatar,
+    appointmentsList,
+    appointmentsLoading,
   } = useClientDashboard();
 
   const displayAvatar = avatarUrl || userAvatar;
@@ -81,6 +84,7 @@ const ClientDashboard = ({ onNavigateVentas, onNavigateCompras }: ClientDashboar
     key: keyof ClientProfileDetail;
     title: string;
     description: string;
+    icon: React.ReactNode;
   } | null>(null);
   const [modalValue, setModalValue] = useState("");
 
@@ -91,10 +95,10 @@ const ClientDashboard = ({ onNavigateVentas, onNavigateCompras }: ClientDashboar
     title: string;
     description: string;
   }[] = [
-    { key: "occupation", label: "Ocupacion", icon: <Briefcase className="w-5 h-5 text-champagne-gold" />, title: "¿A que te dedicas?", description: "Cuentanos sobre tu ocupacion actual" },
-    { key: "residence_location", label: "Ubicacion", icon: <MapPin className="w-5 h-5 text-champagne-gold" />, title: "¿Donde vives actualmente?", description: "Indica tu ciudad o zona de residencia" },
-    { key: "desired_credit_type", label: "Tipo de credito", icon: <CreditCard className="w-5 h-5 text-champagne-gold" />, title: "¿Que tipo de credito buscas?", description: "Ej: Infonavit, bancario, conyugal..." },
-    { key: "desired_property_type", label: "Tipo de propiedad", icon: <Home className="w-5 h-5 text-champagne-gold" />, title: "¿Que tipo de propiedad buscas?", description: "Ej: Casa, departamento, terreno..." },
+    { key: "occupation", label: "Ocupación", icon: <Briefcase className="w-5 h-5 text-[hsl(var(--champagne-gold))]" />, title: "¿A qué te dedicas?", description: "Esto nos ayuda a conectarte con las mejores opciones de crédito para tu perfil." },
+    { key: "residence_location", label: "Ubicación", icon: <MapPin className="w-5 h-5 text-[hsl(var(--champagne-gold))]" />, title: "¿En qué zona buscas propiedad?", description: "Cuéntanos tu ciudad o zona preferida para encontrar opciones cerca de ti." },
+    { key: "desired_credit_type", label: "Tipo de crédito", icon: <CreditCard className="w-5 h-5 text-[hsl(var(--champagne-gold))]" />, title: "¿Qué tipo de crédito te interesa?", description: "Infonavit, bancario, cofinanciamiento, conyugal... elige el que mejor se adapte." },
+    { key: "desired_property_type", label: "Tipo de propiedad", icon: <Home className="w-5 h-5 text-[hsl(var(--champagne-gold))]" />, title: "¿Qué tipo de propiedad buscas?", description: "Casa, departamento, terreno, local comercial... dinos qué tienes en mente." },
   ];
 
   const completedCount = clientProfile
@@ -111,7 +115,7 @@ const ClientDashboard = ({ onNavigateVentas, onNavigateCompras }: ClientDashboar
   });
 
   const openFieldModal = (field: typeof profileFields[number]) => {
-    setModalField({ key: field.key, title: field.title, description: field.description });
+    setModalField({ key: field.key, title: field.title, description: field.description, icon: field.icon });
     setModalValue(clientProfile?.[field.key] ?? "");
   };
 
@@ -134,24 +138,46 @@ const ClientDashboard = ({ onNavigateVentas, onNavigateCompras }: ClientDashboar
     } catch { /* silent */ }
   };
 
+  const progressPercent = (completedCount / profileFields.length) * 100;
+  const ringRadius = 62;
+  const ringCircumference = 2 * Math.PI * ringRadius;
+  const ringOffset = ringCircumference - (progressPercent / 100) * ringCircumference;
+
   return (
     <div className="space-y-6">
-      {/* Profile Avatar Header */}
+      {/* Profile Avatar Header with Progress Ring */}
       <div className="flex flex-col items-center gap-3 py-2">
         <div className="relative">
+          {/* SVG progress ring around avatar */}
+          <svg className="absolute -inset-3 w-[calc(100%+24px)] h-[calc(100%+24px)]" viewBox="0 0 136 136">
+            {/* Track */}
+            <circle cx="68" cy="68" r={ringRadius} fill="none" stroke="hsl(var(--border))" strokeWidth="3" opacity="0.3" />
+            {/* Progress */}
+            <circle
+              cx="68" cy="68" r={ringRadius} fill="none"
+              stroke="hsl(var(--champagne-gold))"
+              strokeWidth="3.5"
+              strokeLinecap="round"
+              strokeDasharray={ringCircumference}
+              strokeDashoffset={ringOffset}
+              className="transition-all duration-700 ease-out"
+              transform="rotate(-90 68 68)"
+            />
+          </svg>
+
           <div
-            className="relative w-24 h-24 rounded-full cursor-pointer group"
+            className="relative w-32 h-32 rounded-full cursor-pointer group"
             onClick={handleAvatarClick}
           >
             {displayAvatar ? (
               <img
                 src={displayAvatar}
                 alt="Avatar"
-                className="w-full h-full rounded-full object-cover border-2 border-champagne-gold/30"
+                className="w-full h-full rounded-full object-cover"
               />
             ) : (
-              <div className="w-full h-full rounded-full bg-champagne-gold/20 flex items-center justify-center border-2 border-champagne-gold/30">
-                <span className="text-3xl font-bold text-champagne-gold">{userInitial}</span>
+              <div className="w-full h-full rounded-full bg-gradient-to-br from-[hsl(var(--champagne-gold))]/20 to-[hsl(var(--champagne-gold))]/10 flex items-center justify-center">
+                <span className="text-4xl font-bold text-[hsl(var(--champagne-gold))]">{userInitial}</span>
               </div>
             )}
             <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -184,7 +210,14 @@ const ClientDashboard = ({ onNavigateVentas, onNavigateCompras }: ClientDashboar
         </div>
         <div className="text-center">
           <h2 className="text-lg font-semibold text-midnight">{userName}</h2>
-          <p className="text-sm text-foreground/50">Cliente</p>
+          {!clientProfileLoading && completedCount < profileFields.length && (
+            <p className="text-xs text-[hsl(var(--champagne-gold))] font-medium mt-0.5">
+              Completa tu perfil {completedCount}/{profileFields.length}
+            </p>
+          )}
+          {(clientProfileLoading || completedCount >= profileFields.length) && (
+            <p className="text-sm text-foreground/50">Cliente</p>
+          )}
         </div>
       </div>
 
@@ -362,8 +395,8 @@ const ClientDashboard = ({ onNavigateVentas, onNavigateCompras }: ClientDashboar
           </CardContent>
         </Card>
 
-        {/* Propiedades Section */}
-        <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
+        {/* Propiedades & Citas Section */}
+        <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* En Venta */}
           <Card className="border border-border/30 bg-white shadow-sm hover:shadow-md transition-shadow rounded-2xl overflow-hidden group cursor-pointer">
             <CardContent className="p-6">
@@ -466,43 +499,120 @@ const ClientDashboard = ({ onNavigateVentas, onNavigateCompras }: ClientDashboar
               </Button>
             </CardContent>
           </Card>
+
+          {/* Mis Citas */}
+          <Card className="border border-border/30 bg-white shadow-sm hover:shadow-md transition-shadow rounded-2xl overflow-hidden group cursor-pointer">
+            <CardContent className="p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div className="p-2.5 rounded-xl bg-violet-50">
+                  <CalendarCheck className="w-5 h-5 text-violet-600" />
+                </div>
+                <span className="text-xs font-medium px-2 py-1 rounded-full bg-violet-50 text-violet-600">
+                  {appointmentsLoading ? "..." : appointmentsList.length} citas
+                </span>
+              </div>
+              <h3 className="text-lg font-semibold text-midnight mb-2">Mis Citas</h3>
+              <p className="text-sm text-foreground/60 mb-4">
+                Visitas agendadas a propiedades
+              </p>
+              <div className="space-y-2 mb-4">
+                {appointmentsLoading ? (
+                  <p className="text-sm text-foreground/50">Cargando...</p>
+                ) : appointmentsList.length ? (
+                  (appointmentsList as ClientAppointment[]).slice(0, 3).map((apt) => {
+                    const d = new Date(apt.scheduled_date + "T00:00:00");
+                    const dateStr = d.toLocaleDateString("es-MX", { day: "numeric", month: "short" });
+                    const [h, m] = apt.scheduled_time.split(":");
+                    const hour = parseInt(h, 10);
+                    const timeStr = `${hour % 12 || 12}:${m} ${hour >= 12 ? "PM" : "AM"}`;
+                    return (
+                      <div
+                        key={apt.id}
+                        className="flex items-center gap-3 p-2.5 bg-muted/20 rounded-lg"
+                      >
+                        <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-muted/30">
+                          {apt.property_image ? (
+                            <img src={apt.property_image} alt={apt.property_title} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <Home className="w-4 h-4 text-foreground/20" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-midnight font-medium truncate">{apt.property_title}</p>
+                          <div className="flex items-center gap-2 text-xs text-foreground/45">
+                            <span className="flex items-center gap-0.5">
+                              <Calendar className="w-3 h-3" /> {dateStr}
+                            </span>
+                            <span className="flex items-center gap-0.5">
+                              <Clock className="w-3 h-3" /> {timeStr}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <p className="text-sm text-foreground/50">No tienes citas agendadas</p>
+                )}
+              </div>
+              <Button
+                variant="outline"
+                className="w-full border-violet-200 text-violet-600 hover:bg-violet-50"
+                onClick={onNavigateCitas}
+              >
+                Ver Citas
+                <ChevronRight className="w-4 h-4 ml-1" />
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </div>
 
       {/* Completa tu Perfil */}
       {!clientProfileLoading && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-midnight">Completa tu Perfil</h3>
-            <span className="text-xs text-foreground/50">{completedCount} de {profileFields.length} completados</span>
-          </div>
-          <div className="w-full h-2 bg-muted/20 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-champagne-gold rounded-full transition-all duration-300"
-              style={{ width: `${(completedCount / profileFields.length) * 100}%` }}
-            />
-          </div>
+        <div className="space-y-5">
+          <h3 className="text-lg font-semibold text-midnight">Completa tu Perfil</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {profileFields.map((field) => {
               const val = clientProfile?.[field.key]?.trim();
+              const isCompleted = !!val;
               return (
-                <Card
+                <button
                   key={field.key}
-                  className="border border-border/30 bg-white shadow-sm hover:shadow-md hover:border-champagne-gold/30 transition-all rounded-2xl cursor-pointer"
+                  className={`group relative text-left w-full p-5 rounded-2xl border transition-all duration-300 cursor-pointer
+                    ${isCompleted
+                      ? "bg-white border-border/20 hover:border-[hsl(var(--champagne-gold))]/30 hover:shadow-md"
+                      : "bg-[hsl(var(--champagne-gold))]/[0.03] border-dashed border-[hsl(var(--champagne-gold))]/25 hover:border-[hsl(var(--champagne-gold))]/50 hover:bg-[hsl(var(--champagne-gold))]/[0.06]"
+                    }
+                    hover:scale-[1.02] hover:shadow-lg active:scale-[0.99]`}
                   onClick={() => openFieldModal(field)}
                 >
-                  <CardContent className="p-5 flex items-start gap-3">
-                    <div className="p-2 rounded-xl bg-champagne-gold/10 shrink-0">
+                  <div className="flex items-start gap-3.5">
+                    <div className={`p-2.5 rounded-xl shrink-0 transition-colors duration-300
+                      ${isCompleted
+                        ? "bg-[hsl(var(--champagne-gold))]/10 group-hover:bg-[hsl(var(--champagne-gold))]/20"
+                        : "bg-[hsl(var(--champagne-gold))]/10 group-hover:bg-[hsl(var(--champagne-gold))]/15"
+                      }`}
+                    >
                       {field.icon}
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-midnight">{field.label}</p>
-                      <p className={`text-sm truncate ${val ? "text-foreground/70" : "text-foreground/40 italic"}`}>
-                        {val || "Sin completar"}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-midnight mb-0.5">{field.label}</p>
+                      <p className={`text-sm truncate ${isCompleted ? "text-foreground/60" : "text-[hsl(var(--champagne-gold))]/70 font-medium"}`}>
+                        {val || "Toca para completar"}
                       </p>
                     </div>
-                  </CardContent>
-                </Card>
+                    {isCompleted && (
+                      <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
+                        <svg className="w-3 h-3 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                </button>
               );
             })}
           </div>
@@ -523,6 +633,7 @@ const ClientDashboard = ({ onNavigateVentas, onNavigateCompras }: ClientDashboar
           }
         }}
         isLoading={updateFieldMutation.isPending}
+        icon={modalField?.icon}
       />
     </div>
   );

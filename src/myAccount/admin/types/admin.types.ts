@@ -3,8 +3,10 @@ export type AdminTab =
   | "agentes"
   | "citas"
   | "asignar"
+  | "asignar-ventas"
   | "clientes"
   | "kanban"
+  | "kanban-ventas"
   | "historial"
   | "insights";
 
@@ -187,6 +189,26 @@ export interface AdminAssignmentsResponse {
   assignments: AdminAssignment[];
 }
 
+// ─── Asignaciones SaleProcess ────────────────────────────────────────────────
+export interface SaleProcessAssignmentEntry {
+  sale_process_id: number;
+  property: {
+    id: number;
+    title: string;
+    property_type: string;
+    image: string | null;
+    price: string | null;
+    address: string;
+  };
+  status: string;
+  agent: { membership_id: number; name: string } | null;
+}
+
+export interface SaleProcessAssignmentsResponse {
+  unassigned: SaleProcessAssignmentEntry[];
+  assigned: SaleProcessAssignmentEntry[];
+}
+
 // ─── Clientes ────────────────────────────────────────────────────────────────
 export interface AdminClient {
   id: number;
@@ -199,6 +221,37 @@ export interface AdminClient {
   purchase_processes_count: number;
   sale_processes_count: number;
   date_joined: string;
+}
+
+// ─── Detalle de cliente ──────────────────────────────────────────────────────
+export interface AdminClientPurchaseProcess {
+  id: number;
+  status: PurchaseProcessStatus;
+  overall_progress: number;
+  property: { id: number; title: string; image: string | null };
+  agent: { name: string };
+  documents: { id: number; name: string; uploaded_at: string }[];
+  created_at: string;
+}
+
+export interface AdminClientSaleProcess {
+  id: number;
+  status: SaleProcessStatus;
+  property: { id: number; title: string; image: string | null };
+  agent: { name: string };
+  created_at: string;
+}
+
+export interface AdminClientDetail {
+  id: number;
+  membership_id: number;
+  name: string;
+  email: string;
+  phone: string;
+  avatar: string | null;
+  city: string;
+  purchase_processes: AdminClientPurchaseProcess[];
+  sale_processes: AdminClientSaleProcess[];
 }
 
 // ─── Pipeline de compra ──────────────────────────────────────────────────────
@@ -227,21 +280,24 @@ export interface AdminPurchaseProcess {
 
 // ─── Pipeline de venta ───────────────────────────────────────────────────────
 export type SaleProcessStatus =
+  | "nuevo"
+  | "contactado"
+  | "en_revision"
+  | "vendedor_completado"
   | "contacto_inicial"
   | "evaluacion"
   | "valuacion"
-  | "presentacion"
   | "firma_contrato"
   | "marketing"
-  | "publicacion"
+  | "publicar"
   | "cancelado";
 
 export interface AdminSaleProcess {
   id: number;
   status: SaleProcessStatus;
   property: { id: number; title: string; image: string | null };
-  client: { id: number; name: string };
-  agent: { id: number; name: string };
+  client: { id: number; name: string } | null;
+  agent: { id: number; name: string } | null;
   created_at: string;
   updated_at: string;
 }

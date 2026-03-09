@@ -20,6 +20,8 @@ import {
   X,
   Star,
   Loader2,
+  Tag,
+  ShoppingBag,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -58,11 +60,14 @@ import type {
 type PropertyType = "casa" | "departamento" | "terreno" | "local";
 type PropertyStatus = "pendiente" | "activa" | "vendida";
 
+type ListingType = "sale" | "pending_listing";
+
 interface Property {
   id: string;
   rawId: number;
   title: string;
   type: PropertyType;
+  listingType: ListingType;
   address: string;
   price: string;
   image: string;
@@ -138,6 +143,7 @@ const mapAdminProperty = (p: AdminProperty): Property => ({
   price: p.price,
   image: getMediaUrl(p.image),
   type: mapPropertyType(p.property_type),
+  listingType: (p.listing_type === "pending_listing" ? "pending_listing" : "sale") as ListingType,
   status: mapPropertyStatus(p),
   agent: p.agent?.name ?? null,
   submittedAt: p.created_at.split("T")[0],
@@ -195,6 +201,7 @@ const PropiedadesSection = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState<PropertyType | "all">("all");
   const [filterStatus, setFilterStatus] = useState<"pendiente" | "activa" | "all">("all");
+  const [filterListing, setFilterListing] = useState<ListingType | "all">("all");
   const [showFilters, setShowFilters] = useState(false);
 
   // Detail modal
@@ -273,11 +280,14 @@ const PropiedadesSection = () => {
       p.address.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = filterType === "all" || p.type === filterType;
     const matchesStatus = filterStatus === "all" || p.status === filterStatus;
-    return matchesSearch && matchesType && matchesStatus;
+    const matchesListing = filterListing === "all" || p.listingType === filterListing;
+    return matchesSearch && matchesType && matchesStatus && matchesListing;
   });
 
   const pendingCount = properties.filter(p => p.status === "pendiente").length;
   const activeCount = properties.filter(p => p.status === "activa").length;
+  const pendingListingCount = properties.filter(p => p.listingType === "pending_listing").length;
+  const saleCount = properties.filter(p => p.listingType === "sale").length;
 
   // ─── Handlers — list ─────────────────────────────────────────────────────────
 
@@ -994,7 +1004,7 @@ const PropiedadesSection = () => {
       </div>
 
       {/* Status Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         <Card
           className={`cursor-pointer border-2 transition-all ${filterStatus === "pendiente" ? "border-orange-400 bg-orange-50" : "border-border/50 hover:border-orange-300"}`}
           onClick={() => setFilterStatus(filterStatus === "pendiente" ? "all" : "pendiente")}
@@ -1023,14 +1033,42 @@ const PropiedadesSection = () => {
             </div>
           </CardContent>
         </Card>
-        <Card className="border-border/50 md:col-span-2">
+        <Card
+          className={`cursor-pointer border-2 transition-all ${filterListing === "pending_listing" ? "border-violet-400 bg-violet-50" : "border-border/50 hover:border-violet-300"}`}
+          onClick={() => setFilterListing(filterListing === "pending_listing" ? "all" : "pending_listing")}
+        >
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-violet-100">
+              <Tag className="w-5 h-5 text-violet-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-midnight">{pendingListingCount}</p>
+              <p className="text-xs text-foreground/60">Pending Listing</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card
+          className={`cursor-pointer border-2 transition-all ${filterListing === "sale" ? "border-blue-400 bg-blue-50" : "border-border/50 hover:border-blue-300"}`}
+          onClick={() => setFilterListing(filterListing === "sale" ? "all" : "sale")}
+        >
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-blue-100">
+              <ShoppingBag className="w-5 h-5 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-midnight">{saleCount}</p>
+              <p className="text-xs text-foreground/60">En Venta</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-border/50">
           <CardContent className="p-4 flex items-center gap-3">
             <div className="p-2 rounded-lg bg-champagne-gold/10">
               <Home className="w-5 h-5 text-champagne-gold" />
             </div>
             <div>
               <p className="text-2xl font-bold text-midnight">{properties.length}</p>
-              <p className="text-xs text-foreground/60">Total Propiedades</p>
+              <p className="text-xs text-foreground/60">Total</p>
             </div>
           </CardContent>
         </Card>
@@ -1076,10 +1114,26 @@ const PropiedadesSection = () => {
               </SelectContent>
             </Select>
           </div>
+          <div className="flex items-center gap-2">
+            <Label className="text-sm whitespace-nowrap">Listado:</Label>
+            <Select
+              value={filterListing}
+              onValueChange={(value: ListingType | "all") => setFilterListing(value)}
+            >
+              <SelectTrigger className="w-[160px] h-10">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="pending_listing">Pending Listing</SelectItem>
+                <SelectItem value="sale">En Venta</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => { setFilterType("all"); setFilterStatus("all"); setSearchTerm(""); }}
+            onClick={() => { setFilterType("all"); setFilterStatus("all"); setFilterListing("all"); setSearchTerm(""); }}
             className="text-foreground/60"
           >
             Limpiar filtros

@@ -1,4 +1,4 @@
-export type ClientSubView = "dashboard" | "config" | "ventas" | "compras";
+export type ClientSubView = "dashboard" | "config" | "ventas" | "compras" | "citas";
 
 export interface UserProfile {
   id: number;
@@ -118,4 +118,28 @@ export interface ClientProfileDetail {
   residence_location: string;
   desired_credit_type: string;
   desired_property_type: string;
+}
+
+export type AppointmentStatus =
+  | "programada"
+  | "confirmada"
+  | "en_progreso"
+  | "completada"
+  | "cancelada"
+  | "no_show"
+  | "reagendada";
+
+export interface ClientAppointment {
+  id: number;
+  matricula: string;
+  scheduled_date: string;
+  scheduled_time: string;
+  duration_minutes: number | null;
+  status: AppointmentStatus;
+  appointment_type: string;
+  property_title: string;
+  property_image: string | null;
+  property_address: string;
+  agent_name: string;
+  created_at: string;
 }

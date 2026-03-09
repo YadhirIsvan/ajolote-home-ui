@@ -114,3 +114,21 @@
     transform: translateY(0) scale(1);
   }
 }
+
+/* Infinite horizontal scroll for trust bar */
+@keyframes scroll-x {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-scroll-x {
+  animation: scroll-x 25s linear infinite;
+}
+
+.animate-scroll-x:hover {
+  animation-play-state: paused;
+}

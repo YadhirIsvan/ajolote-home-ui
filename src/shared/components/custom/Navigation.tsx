@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Home, Search, Menu, User, CreditCard, Settings, LogOut, ChevronDown } from "lucide-react";
+import { Home, Search, Menu, User, CreditCard, LogOut, ChevronDown, Headset } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useFinancialModal } from "@/contexts/FinancialModalContext";
 import vakantaLogo from "@/assets/vakanta-logo.png";
@@ -18,7 +18,6 @@ interface NavigationProps {
   isClientAuthenticated?: boolean;
   user?: UserInfo | null;
   onLogout?: () => void;
-  onNavigateConfig?: () => void;
 }
 
 const getInitial = (user?: UserInfo | null): string => {
@@ -33,7 +32,7 @@ const getDisplayName = (user?: UserInfo | null): string => {
   return user.email.split("@")[0];
 };
 
-const Navigation = ({ isClientAuthenticated, user, onLogout, onNavigateConfig }: NavigationProps) => {
+const Navigation = ({ isClientAuthenticated, user, onLogout }: NavigationProps) => {
   const { openFinancialModal } = useFinancialModal();
   const [isOpen, setIsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -113,11 +112,11 @@ const Navigation = ({ isClientAuthenticated, user, onLogout, onNavigateConfig }:
                   </>
                 )}
                 <button
-                  onClick={() => { setProfileOpen(false); onNavigateConfig?.(); }}
+                  onClick={() => { setProfileOpen(false); window.open("mailto:soporte@avakanta.com", "_blank"); }}
                   className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-midnight rounded-lg hover:bg-champagne-gold/5 transition-colors mt-0.5"
                 >
-                  <Settings className="w-4 h-4 text-champagne-gold" />
-                  Configuración
+                  <Headset className="w-4 h-4 text-champagne-gold" />
+                  Soporte Técnico
                 </button>
                 <div className="h-px bg-border/40 mx-1.5" />
                 <button
@@ -203,10 +202,10 @@ const Navigation = ({ isClientAuthenticated, user, onLogout, onNavigateConfig }:
                       <Button
                         variant="outline"
                         className="w-full justify-start gap-3 border-champagne-gold/30"
-                        onClick={() => { setIsOpen(false); onNavigateConfig?.(); }}
+                        onClick={() => { setIsOpen(false); window.open("mailto:soporte@avakanta.com", "_blank"); }}
                       >
-                        <Settings className="w-4 h-4 text-champagne-gold" />
-                        Configuración
+                        <Headset className="w-4 h-4 text-champagne-gold" />
+                        Soporte Técnico
                       </Button>
                       <Button
                         variant="ghost"

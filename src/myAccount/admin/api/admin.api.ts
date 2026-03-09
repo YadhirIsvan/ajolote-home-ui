@@ -115,6 +115,18 @@ export const adminApi = {
   deleteAssignment: (id: number) =>
     axiosInstance.delete(`/admin/assignments/${id}`),
 
+  // ─── Asignaciones SaleProcess ────────────────────────────────────────────────
+  getSaleProcessAssignments: () =>
+    axiosInstance.get("/admin/sale-processes/assignments"),
+
+  assignSaleProcessAgent: (saleProcessId: number, agentMembershipId: number) =>
+    axiosInstance.post(`/admin/sale-processes/${saleProcessId}/assign`, {
+      agent_membership_id: agentMembershipId,
+    }),
+
+  unassignSaleProcessAgent: (saleProcessId: number) =>
+    axiosInstance.post(`/admin/sale-processes/${saleProcessId}/unassign`),
+
   // ─── Clientes ───────────────────────────────────────────────────────────────
   getClients: (params?: Record<string, unknown>) =>
     axiosInstance.get("/admin/clients", { params }),

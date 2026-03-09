@@ -3,9 +3,11 @@ import Navigation from "@/shared/components/custom/Navigation";
 import AuthGuard from "@/auth/guardian/AuthGuard";
 import { useAuth } from "@/auth/hooks/use-auth.hook";
 import MyAccountRouter from "@/myAccount/router/my-account.router";
+import { useQuery } from "@tanstack/react-query";
+import { clientApi } from "@/myAccount/client/api/client.api";
 
 type ClientSubView = "dashboard" | "config" | "ventas" | "compras";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 const roleIcons = { client: User, agent: Briefcase, admin: Shield };
 const roleLabels = { client: "Cliente", agent: "Agente", admin: "Administrador" };
@@ -27,6 +29,20 @@ const MiCuenta = () => {
   const isClientAuth = isAuthenticated && role === "client";
   const RoleIcon = role ? roleIcons[role] : User;
 
+  const { data: userProfile } = useQuery({
+    queryKey: ["client-user-profile"],
+    queryFn: async () => {
+      const { data } = await clientApi.getUserProfile();
+      return data as { avatar: string | null };
+    },
+    enabled: isClientAuth,
+  });
+
+  const userWithAvatar = useMemo(() => {
+    if (!user) return null;
+    return { ...user, avatar_url: userProfile?.avatar ?? null };
+  }, [user, userProfile]);
+
   return (
     <AuthGuard
       isAuthenticated={isAuthenticated}
@@ -39,9 +55,8 @@ const MiCuenta = () => {
       <div className="min-h-screen bg-white">
         <Navigation
           isClientAuthenticated={isClientAuth}
-          user={user}
+          user={userWithAvatar}
           onLogout={handleLogout}
-          onNavigateConfig={() => setClientSubView("config")}
         />
 
         <div className="pt-20 md:pt-24 pb-16">

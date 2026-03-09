@@ -4,8 +4,9 @@ import { getClientPropertiesBuyAction } from "@/myAccount/client/actions/get-cli
 import { getClientSavedPropertiesAction } from "@/myAccount/client/actions/get-client-saved-properties.actions";
 import { getClientFinancialProfileAction } from "@/myAccount/client/actions/get-client-financial-profile.actions";
 import { getClientProfileDetailAction } from "@/myAccount/client/actions/get-client-profile-detail.actions";
+import { getClientAppointmentsAction } from "@/myAccount/client/actions/get-client-appointments.actions";
 import { clientApi } from "@/myAccount/client/api/client.api";
-import type { PropertySaleItem } from "@/myAccount/client/types/client.types";
+import type { PropertySaleItem, ClientAppointment } from "@/myAccount/client/types/client.types";
 
 export const useClientDashboard = () => {
   const ventasQuery = useQuery({
@@ -41,6 +42,12 @@ export const useClientDashboard = () => {
     },
   });
 
+  const appointmentsQuery = useQuery({
+    queryKey: ["client-appointments"],
+    queryFn: getClientAppointmentsAction,
+    staleTime: 1000 * 60 * 3,
+  });
+
   return {
     ventasList: (ventasQuery.data?.list ?? []) as PropertySaleItem[],
     ventasSummary: ventasQuery.data?.summary ?? null,
@@ -54,5 +61,7 @@ export const useClientDashboard = () => {
     clientProfile: clientProfileQuery.data ?? null,
     clientProfileLoading: clientProfileQuery.isLoading,
     userAvatar: userProfileQuery.data?.avatar ?? null,
+    appointmentsList: (appointmentsQuery.data ?? []) as ClientAppointment[],
+    appointmentsLoading: appointmentsQuery.isLoading,
   };
 };

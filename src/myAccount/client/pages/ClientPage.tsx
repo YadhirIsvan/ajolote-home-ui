@@ -3,6 +3,7 @@ import ClientDashboard from "@/myAccount/client/components/ClientDashboard";
 import ClientConfigScreen from "@/myAccount/client/components/ClientConfigScreen";
 import ClientVentas from "@/myAccount/client/components/ClientVentas";
 import ClientCompras from "@/myAccount/client/components/ClientCompras";
+import ClientCitas from "@/myAccount/client/components/ClientCitas";
 import type { ClientSubView } from "@/myAccount/client/types/client.types";
 
 interface ClientPageProps {
@@ -21,12 +22,15 @@ const ClientPage = ({ onLogout, onNavigateConfig: _ }: ClientPageProps) => {
         return <ClientVentas onBack={() => setSubView("dashboard")} />;
       case "compras":
         return <ClientCompras onBack={() => setSubView("dashboard")} />;
+      case "citas":
+        return <ClientCitas onBack={() => setSubView("dashboard")} />;
       default:
         return (
           <ClientDashboard
             onLogout={onLogout}
             onNavigateVentas={() => setSubView("ventas")}
             onNavigateCompras={() => setSubView("compras")}
+            onNavigateCitas={() => setSubView("citas")}
           />
         );
     }
