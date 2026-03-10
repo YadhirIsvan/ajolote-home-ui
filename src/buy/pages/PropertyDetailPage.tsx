@@ -436,6 +436,7 @@ const PropertyDetailPage = () => {
           </div>
 
           {/* Agent Card */}
+          {property.agent && (
           <div className="px-4 mb-6">
             <h3 className="text-lg font-semibold text-primary mb-3">Agente Inmobiliario</h3>
             <Card className="p-4 rounded-2xl shadow-soft">
@@ -451,7 +452,7 @@ const PropertyDetailPage = () => {
                   variant="outline"
                   className="flex-1 border-primary text-primary hover:bg-primary hover:text-white"
                   onClick={() => {
-                    const phone = property.agent.phone.replace(/\D/g, '');
+                    const phone = property.agent!.phone.replace(/\D/g, '');
                     const message = `Hola, me interesa la propiedad:\n\n📍 ${property.title}\n💰 ${property.price} MXN\n📌 ${property.address}\n\n🛏️ ${property.beds} Recámaras | 🚿 ${property.baths} Baños | 📐 ${property.sqm}m²\n\n¿Puedes brindarme más información?`;
                     const encodedMessage = encodeURIComponent(message);
                     window.open(`https://wa.me/${phone}?text=${encodedMessage}`, '_blank');
@@ -462,7 +463,7 @@ const PropertyDetailPage = () => {
                 </Button>
                 <Button
                   className="flex-1 bg-[#25D366] hover:bg-[#20BD5A] text-white"
-                  onClick={() => handleCallClick(property.agent.phone)}
+                  onClick={() => handleCallClick(property.agent!.phone)}
                 >
                   <Phone className="w-4 h-4 mr-2" />
                   Llamar
@@ -470,6 +471,7 @@ const PropertyDetailPage = () => {
               </div>
             </Card>
           </div>
+          )}
         </div>
 
         {/* Desktop Layout */}
@@ -646,6 +648,7 @@ const PropertyDetailPage = () => {
                       )}
                     </div>
 
+                    {property.agent && (
                     <div className="pt-4 border-t border-border">
                       <div className="flex items-center gap-4 mb-4">
                         <img src={property.agent.photo} alt={property.agent.name} className="w-14 h-14 rounded-full object-cover border-2 border-champagne" />
@@ -660,7 +663,7 @@ const PropertyDetailPage = () => {
                           size="sm"
                           className="flex-1 border-primary text-primary hover:bg-primary hover:text-white"
                           onClick={() => {
-                            const phone = property.agent.phone.replace(/\D/g, '');
+                            const phone = property.agent!.phone.replace(/\D/g, '');
                             const message = `Hola, me interesa la propiedad:\n\n📍 ${property.title}\n💰 ${property.price} MXN\n📌 ${property.address}\n\n🛏️ ${property.beds} Recámaras | 🚿 ${property.baths} Baños | 📐 ${property.sqm}m²\n\n¿Puedes brindarme más información?`;
                             const encodedMessage = encodeURIComponent(message);
                             window.open(`https://wa.me/${phone}?text=${encodedMessage}`, '_blank');
@@ -671,12 +674,13 @@ const PropertyDetailPage = () => {
                         <Button
                           size="sm"
                           className="flex-1 bg-[#25D366] hover:bg-[#20BD5A] text-white"
-                          onClick={() => handleCallClick(property.agent.phone)}
+                          onClick={() => handleCallClick(property.agent!.phone)}
                         >
                           <Phone className="w-4 h-4" />
                         </Button>
                       </div>
                     </div>
+                    )}
                   </Card>
                 </div>
               </div>
@@ -865,7 +869,7 @@ const PropertyDetailPage = () => {
           </DialogHeader>
           <div className="space-y-4 pt-2 pb-2">
             <p className="text-sm text-muted-foreground">
-              ¿Deseas llamar al agente al número {property.agent.phone}?
+              ¿Deseas llamar al agente al número {property.agent?.phone}?
             </p>
             <div className="flex gap-3">
               <Button

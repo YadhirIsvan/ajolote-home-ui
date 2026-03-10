@@ -39,6 +39,8 @@ export interface PropertyFormPayload {
   city: number | null;
   zone: string;
   video_id: string;
+  latitude: string | null;
+  longitude: string | null;
   is_featured: boolean;
   amenity_ids: number[];
 }

@@ -98,6 +98,8 @@ interface PropertyFormData {
   city_id: number | "";
   zone: string;
   video_id: string;
+  latitude: string;
+  longitude: string;
   is_featured: boolean;
   amenity_ids: number[];
 }
@@ -186,6 +188,8 @@ const emptyForm: PropertyFormData = {
   city_id: "",
   zone: "",
   video_id: "",
+  latitude: "",
+  longitude: "",
   is_featured: false,
   amenity_ids: [],
 };
@@ -344,6 +348,8 @@ const PropiedadesSection = () => {
         city_id: cityId,
         zone: detail.zone ?? "",
         video_id: detail.video_id ?? "",
+        latitude: detail.latitude ?? "",
+        longitude: detail.longitude ?? "",
         is_featured: detail.is_featured ?? false,
         amenity_ids: (detail.amenities ?? []).map((a) => a.id),
       });
@@ -439,6 +445,8 @@ const PropiedadesSection = () => {
         city: formData.city_id !== "" ? formData.city_id : null,
         zone: formData.zone,
         video_id: extractYouTubeId(formData.video_id),
+        latitude: formData.latitude || null,
+        longitude: formData.longitude || null,
         is_featured: formData.is_featured,
         amenity_ids: formData.amenity_ids,
       };
@@ -839,6 +847,24 @@ const PropiedadesSection = () => {
                 className="h-11"
               />
             </div>
+            <div className="space-y-1">
+              <Label>Latitud</Label>
+              <Input
+                value={formData.latitude}
+                onChange={(e) => setFormData((p) => ({ ...p, latitude: e.target.value }))}
+                placeholder="18.8500"
+                className="h-11"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Longitud</Label>
+              <Input
+                value={formData.longitude}
+                onChange={(e) => setFormData((p) => ({ ...p, longitude: e.target.value }))}
+                placeholder="-97.1000"
+                className="h-11"
+              />
+            </div>
           </div>
         </div>
 
@@ -853,9 +879,9 @@ const PropiedadesSection = () => {
               <Input
                 value={formData.video_id}
                 onChange={(e) =>
-                  setFormData((p) => ({ ...p, video_id: extractYouTubeId(e.target.value) }))
+                  setFormData((p) => ({ ...p, video_id: e.target.value }))
                 }
-                placeholder="URL o ID del video (ej: dQw4w9WgXcQ)"
+                placeholder="URL o ID del video (ej: https://youtube.com/watch?v=dQw4w9WgXcQ)"
                 className="h-11"
               />
             </div>

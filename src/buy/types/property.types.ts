@@ -35,7 +35,7 @@ export interface PropertyDetailData {
   coordinates: { lat: number; lng: number };
   "nearby-places"?: { icon: string; label: string }[];
   amenities?: { id: number; name: string; icon: string }[];
-  agent: { name: string; photo: string; phone: string; email: string };
+  agent: { name: string; photo: string; phone: string; email: string } | null;
 }
 
 export interface AppointmentData {

@@ -85,12 +85,14 @@ const mapDetail = (item: BackendPropertyDetail): PropertyDetailData => ({
     label: `${place.name} - ${parseFloat(place.distance_km).toFixed(1)} km`,
   })),
   amenities: item.amenities,
-  agent: {
-    name: item.agent.name,
-    photo: item.agent.photo,
-    phone: item.agent.phone,
-    email: item.agent.email,
-  },
+  agent: item.agent
+    ? {
+        name: item.agent.name,
+        photo: item.agent.photo,
+        phone: item.agent.phone,
+        email: item.agent.email,
+      }
+    : null,
 });
 
 export const getPropertyDetailAction = async (
