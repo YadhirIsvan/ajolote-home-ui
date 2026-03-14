@@ -8,6 +8,7 @@ import { ArrowRight, ArrowLeft, CheckCircle2, Home, Building2, Castle, Warehouse
 import { useSellerLeadForm } from "@/sell/hooks/use-seller-lead-form.hook";
 import { getCitiesAction, type CityItem } from "@/buy/actions/get-cities.actions";
 import { useAuth } from "@/auth/hooks/use-auth.hook";
+import { formatMoney, formatSqm, formatPhone, parseRawNumber, parseRawDecimal } from "@/shared/utils/format-input";
 
 const PROPERTY_TYPES = [
   { id: "casa", label: "Casa", icon: Home },
@@ -59,7 +60,7 @@ const SellerLeadForm = ({ open, onOpenChange, mode = "default", onPropertyAdded 
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto p-0 gap-0 bg-background border-0 shadow-2xl rounded-2xl">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto scrollbar-desktop p-0 gap-0 bg-background border-0 shadow-2xl rounded-2xl">
         {/* Progress Bar */}
         {!isSubmitted && (
           <div className="h-1 bg-secondary w-full rounded-t-2xl overflow-hidden">
@@ -169,11 +170,11 @@ const SellerLeadForm = ({ open, onOpenChange, mode = "default", onPropertyAdded 
                 <div>
                   <Label className="text-sm font-medium text-primary mb-3 block">Metros cuadrados de terreno</Label>
                   <Input
-                    type="number"
+                    type="text"
                     inputMode="numeric"
                     placeholder="Ej: 150"
-                    value={formData.squareMeters}
-                    onChange={(e) => updateFormData("squareMeters", e.target.value)}
+                    value={formatSqm(formData.squareMeters)}
+                    onChange={(e) => updateFormData("squareMeters", parseRawDecimal(e.target.value))}
                     className="h-12 rounded-xl border-border focus:border-[hsl(var(--champagne-gold))] focus-visible:ring-[hsl(var(--champagne-gold))]"
                   />
                   {errors.squareMeters && (
@@ -246,11 +247,8 @@ const SellerLeadForm = ({ open, onOpenChange, mode = "default", onPropertyAdded 
                       type="text"
                       inputMode="numeric"
                       placeholder="Ej: 2,500,000"
-                      value={formData.expectedPrice ? new Intl.NumberFormat('es-MX').format(Number(formData.expectedPrice)) : ''}
-                      onChange={(e) => {
-                        const numValue = e.target.value.replace(/[^0-9]/g, '');
-                        updateFormData("expectedPrice", numValue);
-                      }}
+                      value={formatMoney(formData.expectedPrice)}
+                      onChange={(e) => updateFormData("expectedPrice", parseRawNumber(e.target.value))}
                       className="h-12 pl-8 rounded-xl border-border focus:border-[hsl(var(--champagne-gold))] focus-visible:ring-[hsl(var(--champagne-gold))]"
                     />
                   </div>
@@ -281,9 +279,9 @@ const SellerLeadForm = ({ open, onOpenChange, mode = "default", onPropertyAdded 
                   <Label className="text-sm font-medium text-primary mb-3 block">Teléfono</Label>
                   <Input
                     type="tel"
-                    placeholder="Ej: 272-1234567"
-                    value={formData.phone}
-                    onChange={(e) => updateFormData("phone", e.target.value)}
+                    placeholder="Ej: 272 123 4567"
+                    value={formatPhone(formData.phone)}
+                    onChange={(e) => updateFormData("phone", e.target.value.replace(/[^0-9+]/g, ""))}
                     className="h-12 rounded-xl border-border focus:border-[hsl(var(--champagne-gold))] focus-visible:ring-[hsl(var(--champagne-gold))]"
                   />
                   {errors.phone && (

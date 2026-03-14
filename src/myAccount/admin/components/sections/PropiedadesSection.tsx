@@ -36,6 +36,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from "@/components/ui/drawer";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
+import { formatMoney, formatSqm, parseRawNumber, parseRawDecimal } from "@/shared/utils/format-input";
 import {
   getAdminPropertiesAction,
   deleteAdminPropertyAction,
@@ -696,19 +697,17 @@ const PropiedadesSection = () => {
             <div className="space-y-1">
               <Label>Precio (MXN)</Label>
               <Input
-                type="number"
-                value={formData.price}
-                onChange={(e) => setFormData((p) => ({ ...p, price: e.target.value }))}
-                placeholder="12500000"
+                value={formatMoney(formData.price)}
+                onChange={(e) => setFormData((p) => ({ ...p, price: parseRawNumber(e.target.value) }))}
+                placeholder="12,500,000"
                 className="h-11"
               />
             </div>
             <div className="space-y-1">
               <Label>m² construcción</Label>
               <Input
-                type="number"
-                value={formData.construction_sqm}
-                onChange={(e) => setFormData((p) => ({ ...p, construction_sqm: e.target.value }))}
+                value={formatSqm(formData.construction_sqm)}
+                onChange={(e) => setFormData((p) => ({ ...p, construction_sqm: parseRawDecimal(e.target.value) }))}
                 placeholder="200"
                 className="h-11"
               />
@@ -716,9 +715,8 @@ const PropiedadesSection = () => {
             <div className="space-y-1">
               <Label>m² terreno</Label>
               <Input
-                type="number"
-                value={formData.land_sqm}
-                onChange={(e) => setFormData((p) => ({ ...p, land_sqm: e.target.value }))}
+                value={formatSqm(formData.land_sqm)}
+                onChange={(e) => setFormData((p) => ({ ...p, land_sqm: parseRawDecimal(e.target.value) }))}
                 placeholder="300"
                 className="h-11"
               />

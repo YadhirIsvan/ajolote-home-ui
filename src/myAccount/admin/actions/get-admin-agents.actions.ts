@@ -9,6 +9,15 @@ export interface AgentFormPayload {
   bio: string;
 }
 
+export interface CreateAgentPayload {
+  email: string;
+  first_name: string;
+  last_name: string;
+  phone: string;
+  zone: string;
+  bio: string;
+}
+
 export interface ScheduleBreakPayload {
   break_type: string;
   name: string;
@@ -69,6 +78,13 @@ export const deleteAdminAgentScheduleAction = async (
   scheduleId: number
 ): Promise<void> => {
   await adminApi.deleteAgentSchedule(agentId, scheduleId);
+};
+
+export const createAdminAgentAction = async (
+  payload: CreateAgentPayload
+): Promise<AdminAgent> => {
+  const { data } = await adminApi.createAgent(payload as Record<string, unknown>);
+  return data as AdminAgent;
 };
 
 export const updateAdminAgentAction = async (

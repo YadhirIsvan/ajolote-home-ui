@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { SlidersHorizontal } from "lucide-react";
-import Navigation from "@/shared/components/custom/Navigation";
+import { SlidersHorizontal, Loader2 } from "lucide-react";
 import PropertyCard from "@/shared/components/custom/PropertyCard";
 import PropertyFilters from "@/buy/components/PropertyFilters";
 import MortgageCallToAction from "@/buy/components/MortgageCallToAction";
@@ -12,6 +11,7 @@ const BuyPage = () => {
   const { openFinancialModal } = useFinancialModal();
   const {
     filteredProperties,
+    totalCount,
     isLoading,
     filters,
     isFilterOpen,
@@ -25,12 +25,13 @@ const BuyPage = () => {
     setType,
     mapStateToStatus,
     cities,
+    sentinelRef,
+    isFetchingNextPage,
+    hasNextPage,
   } = useBuyProperties();
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
-
       <div className="pt-20 pb-24 md:pb-8">
         <div className="container mx-auto px-4">
           {/* Header */}
@@ -38,32 +39,36 @@ const BuyPage = () => {
             <div>
               <h1 className="text-2xl md:text-3xl font-bold text-primary">Propiedades en Venta</h1>
               <p className="text-muted-foreground text-sm mt-1">
-                {filteredProperties.length} propiedades encontradas
+                {totalCount} propiedades encontradas
               </p>
             </div>
           </div>
 
           <div className="flex gap-8">
-            {/* Desktop Filters Sidebar */}
+            {/* Desktop Filters Sidebar — sticky que scrollea con el contenido */}
             <aside className="hidden md:block w-72 flex-shrink-0">
-              <div className="bg-card rounded-2xl p-6 border border-border sticky top-24 shadow-soft space-y-6">
-                <div>
-                  <h3 className="font-semibold text-primary mb-4">Filtros</h3>
-                  <PropertyFilters
-                    filters={filters}
-                    cities={cities}
-                    onZoneChange={setZone}
-                    onTypeChange={setType}
-                    onStateChange={setState}
-                    onPriceRangeChange={setPriceRange}
-                    onAmenityToggle={toggleAmenity}
-                    onClearFilters={clearFilters}
-                  />
-                </div>
-                
-                {/* Mortgage CTA Sidebar */}
-                <div className="border-t border-border pt-6">
-                  <MortgageCallToAction onCalculateCredit={() => openFinancialModal()} />
+              <div className="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto scrollbar-thin">
+                <div className="bg-card rounded-2xl p-6 border border-border shadow-soft space-y-6">
+                  <div>
+                    <h3 className="font-semibold text-primary mb-4">Filtros</h3>
+                    <PropertyFilters
+                      filters={filters}
+                      cities={cities}
+                      onZoneChange={setZone}
+                      onTypeChange={setType}
+                      onStateChange={setState}
+                      onPriceRangeChange={setPriceRange}
+                      onAmenityToggle={toggleAmenity}
+                      onClearFilters={clearFilters}
+                    />
+                  </div>
+
+                  {/* Mortgage CTA Sidebar — solo para usuarios autenticados */}
+                  {!!localStorage.getItem("access_token") && (
+                  <div className="border-t border-border pt-6">
+                    <MortgageCallToAction onCalculateCredit={() => openFinancialModal()} />
+                  </div>
+                  )}
                 </div>
               </div>
             </aside>
@@ -71,7 +76,11 @@ const BuyPage = () => {
             {/* Property Grid */}
             <div className="flex-1">
               {isLoading ? (
-                <div className="text-center py-16 text-muted-foreground">Cargando propiedades...</div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {[...Array(6)].map((_, i) => (
+                    <div key={i} className="aspect-[4/5] rounded-2xl bg-secondary/30 animate-pulse" />
+                  ))}
+                </div>
               ) : filteredProperties.length === 0 ? (
                 <div className="text-center py-16">
                   <p className="text-muted-foreground mb-4">No se encontraron propiedades con estos filtros</p>
@@ -80,22 +89,40 @@ const BuyPage = () => {
                   </Button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredProperties.map((property) => (
-                    <PropertyCard
-                      key={property.id}
-                      id={property.id}
-                      image={property.image}
-                      price={property.price}
-                      title={property.title}
-                      location={property.address}
-                      beds={property.beds}
-                      baths={property.baths}
-                      area={property.sqm}
-                      status={mapStateToStatus(property.state)}
-                    />
-                  ))}
-                </div>
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredProperties.map((property) => (
+                      <PropertyCard
+                        key={property.id}
+                        id={property.id}
+                        image={property.image}
+                        price={property.price}
+                        title={property.title}
+                        location={property.address}
+                        beds={property.beds}
+                        baths={property.baths}
+                        area={property.sqm}
+                        status={mapStateToStatus(property.state)}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Sentinel para infinite scroll */}
+                  <div ref={sentinelRef} className="h-1" />
+
+                  {isFetchingNextPage && (
+                    <div className="flex items-center justify-center py-8 gap-2 text-muted-foreground">
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span className="text-sm">Cargando más propiedades...</span>
+                    </div>
+                  )}
+
+                  {!hasNextPage && filteredProperties.length > 0 && (
+                    <p className="text-center text-muted-foreground text-sm py-8">
+                      Has visto todas las propiedades
+                    </p>
+                  )}
+                </>
               )}
             </div>
           </div>

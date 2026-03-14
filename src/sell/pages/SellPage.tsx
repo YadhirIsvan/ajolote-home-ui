@@ -7,7 +7,6 @@ import {
   ClipboardEdit, ShieldCheck, Megaphone, FileSignature,
   ArrowRight, Play, X, Check, Star,
 } from "lucide-react";
-import Navigation from "@/shared/components/custom/Navigation";
 import SellerLeadForm from "@/sell/components/SellerLeadForm";
 import { useSellPage } from "@/sell/hooks/use-sell-page.hook";
 
@@ -134,8 +133,6 @@ const SellPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
-
       {/* ═══ HERO SECTION ═══ */}
       <section className="relative pt-28 md:pt-36 pb-20 md:pb-28 px-6 overflow-hidden">
         {/* Background decoration */}

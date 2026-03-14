@@ -3,6 +3,8 @@ import type { BuyPropertyListItem, GetPropertiesParams } from "@/buy/types/prope
 
 export interface GetPropertiesResponse {
   data: BuyPropertyListItem[];
+  totalCount: number;
+  hasMore: boolean;
   fromFallback: boolean;
 }
 
@@ -92,8 +94,13 @@ export const getPropertiesAction = async (
   try {
     const url = `${ENDPOINTS.PROPERTIES}?${searchParams.toString()}`;
     const { data } = await buyApi.get<BackendPaginatedResponse>(url);
-    return { data: data.results.map(mapItem), fromFallback: false };
+    return {
+      data: data.results.map(mapItem),
+      totalCount: data.count,
+      hasMore: data.next !== null,
+      fromFallback: false,
+    };
   } catch {
-    return { data: [], fromFallback: true };
+    return { data: [], totalCount: 0, hasMore: false, fromFallback: true };
   }
 };

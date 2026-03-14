@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useMemo, useCallback, useRef, useEffect } from "react";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { getPropertiesAction } from "@/buy/actions/get-properties.actions";
 import { getCitiesAction, type CityItem } from "@/buy/actions/get-cities.actions";
 import {
@@ -11,6 +11,7 @@ import {
 import type { PropertyStatus } from "@/shared/components/custom/PropertyCard";
 
 export const BUY_PROPERTIES_QUERY_KEY = "buy-properties";
+const PAGE_SIZE = 20;
 
 const mapStateToStatus = (state: string): PropertyStatus => {
   if (state === "used") return "oportunidad";
@@ -28,38 +29,84 @@ export const useBuyProperties = () => {
   const [filters, setFilters] = useState<BuyFilters>(DEFAULT_BUY_FILTERS);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  // Fetch cities for zone filter
   const { data: citiesData } = useQuery({
     queryKey: ["buy-cities"],
     queryFn: getCitiesAction,
-    staleTime: 1000 * 60 * 60, // Cache for 1 hour
+    staleTime: 1000 * 60 * 60,
   });
 
   const cities: CityItem[] = citiesData ?? [];
 
-  const { data, isLoading, isError } = useQuery({
-    queryKey: [BUY_PROPERTIES_QUERY_KEY, {
-      zone: filters.zone,
-      type: filters.type,
-      state: filters.state,
-      amenities: filters.amenities,
-    }],
-    queryFn: () =>
+  const {
+    data,
+    isLoading,
+    isError,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: [
+      BUY_PROPERTIES_QUERY_KEY,
+      {
+        zone: filters.zone,
+        type: filters.type,
+        state: filters.state,
+        amenities: filters.amenities,
+      },
+    ],
+    queryFn: ({ pageParam = 0 }) =>
       getPropertiesAction({
         zone: filters.zone === "Todas las zonas" ? undefined : filters.zone,
         type: filters.type === "all" ? undefined : filters.type,
         state: filters.state === "all" ? undefined : filters.state,
         amenities: filters.amenities.length > 0 ? filters.amenities : undefined,
-        limit: 50,
-        offset: 0,
+        limit: PAGE_SIZE,
+        offset: pageParam,
       }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => {
+      if (!lastPage.hasMore) return undefined;
+      return allPages.reduce((total, page) => total + page.data.length, 0);
+    },
     staleTime: 1000 * 60 * 5,
   });
 
-  const filteredProperties: BuyPropertyListItem[] = (data?.data ?? []).filter(
-    (p) =>
-      p.priceNum >= filters.priceRange[0] && p.priceNum <= filters.priceRange[1]
+  const allProperties = useMemo(
+    () => data?.pages.flatMap((page) => page.data) ?? [],
+    [data]
   );
+
+  const totalCount = data?.pages[0]?.totalCount ?? 0;
+
+  const filteredProperties: BuyPropertyListItem[] = useMemo(
+    () =>
+      allProperties.filter(
+        (p) =>
+          p.priceNum >= filters.priceRange[0] &&
+          p.priceNum <= filters.priceRange[1]
+      ),
+    [allProperties, filters.priceRange]
+  );
+
+  // Infinite scroll — observe a sentinel element
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { rootMargin: "400px" }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const activeFiltersCount = [
     filters.zone !== "Todas las zonas",
@@ -89,6 +136,7 @@ export const useBuyProperties = () => {
 
   return {
     filteredProperties,
+    totalCount,
     isLoading,
     isError,
     filters,
@@ -103,5 +151,9 @@ export const useBuyProperties = () => {
     setType,
     mapStateToStatus,
     cities,
+    // Infinite scroll
+    sentinelRef,
+    isFetchingNextPage,
+    hasNextPage,
   };
 };

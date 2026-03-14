@@ -104,28 +104,20 @@ const PropertyDetailPage = () => {
 
         if (response.ok) {
           const data = await response.json();
-          // Convertir snake_case a camelCase para mantener compatibilidad con el widget
-          setFinancialProfile({
-            loanType: data.loan_type,
-            monthlyIncome: data.monthly_income.toString(),
-            partnerMonthlyIncome: data.partner_monthly_income?.toString() || "",
-            savingsForEnganche: data.savings_for_enganche.toString(),
-            hasInfonavit: data.has_infonavit,
-            infonautSubcuentaBalance: data.infonavit_subcuenta_balance?.toString() || "",
-            calculatedBudget: data.calculated_budget,
-          });
-        }
-      } catch (error) {
-        console.error("Error fetching financial profile:", error);
-        // Fallback a localStorage si falla la API
-        try {
-          const stored = localStorage.getItem("financial_profile");
-          if (stored) {
-            setFinancialProfile(JSON.parse(stored));
+          if (data && data.calculated_budget) {
+            setFinancialProfile({
+              loanType: data.loan_type,
+              monthlyIncome: data.monthly_income.toString(),
+              partnerMonthlyIncome: data.partner_monthly_income?.toString() || "",
+              savingsForEnganche: data.savings_for_enganche.toString(),
+              hasInfonavit: data.has_infonavit,
+              infonautSubcuentaBalance: data.infonavit_subcuenta_balance?.toString() || "",
+              calculatedBudget: data.calculated_budget,
+            });
           }
-        } catch {
-          // Silent fail
         }
+      } catch {
+        // No fallback a localStorage — solo usar datos de la API
       } finally {
         setLoadingProfile(false);
       }
@@ -400,7 +392,8 @@ const PropertyDetailPage = () => {
             </div>
           </div>
 
-          {/* Mortgage Calculator or CTA - Mobile Collapsible */}
+          {/* Mortgage Calculator or CTA - Mobile Collapsible — solo para usuarios autenticados */}
+          {isAuthenticated && (
           <div className="px-4 mb-6">
             <button
               onClick={() => setExpandMortgage(!expandMortgage)}
@@ -411,9 +404,9 @@ const PropertyDetailPage = () => {
               </div>
               <ChevronDown className={`w-5 h-5 text-primary transition-transform duration-300 ${expandMortgage ? 'rotate-180' : ''}`} />
             </button>
-            
+
             {/* Collapsible Content */}
-            <div 
+            <div
               className="overflow-hidden transition-all duration-300 ease-in-out"
               style={{
                 maxHeight: expandMortgage ? '1000px' : '0px',
@@ -434,6 +427,7 @@ const PropertyDetailPage = () => {
               </div>
             </div>
           </div>
+          )}
 
           {/* Agent Card */}
           {property.agent && (
@@ -634,7 +628,8 @@ const PropertyDetailPage = () => {
                       Agendar Visita
                     </Button>
 
-                    {/* Mortgage Calculator or CTA */}
+                    {/* Mortgage Calculator or CTA — solo para usuarios autenticados */}
+                    {isAuthenticated && (
                     <div className="mb-4">
                       {showMortgageCalculator && financialProfile ? (
                         <MortgageCalculatorWidget
@@ -647,6 +642,7 @@ const PropertyDetailPage = () => {
                         <MortgageCallToAction onCalculateCredit={() => openFinancialModal()} />
                       )}
                     </div>
+                    )}
 
                     {property.agent && (
                     <div className="pt-4 border-t border-border">

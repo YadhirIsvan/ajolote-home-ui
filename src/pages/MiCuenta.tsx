@@ -1,5 +1,4 @@
 import { User, Briefcase, Shield } from "lucide-react";
-import Navigation from "@/shared/components/custom/Navigation";
 import AuthGuard from "@/auth/guardian/AuthGuard";
 import { useAuth } from "@/auth/hooks/use-auth.hook";
 import MyAccountRouter from "@/myAccount/router/my-account.router";
@@ -53,12 +52,6 @@ const MiCuenta = () => {
       onLoginSuccess={handleLoginSuccess}
     >
       <div className="min-h-screen bg-white">
-        <Navigation
-          isClientAuthenticated={isClientAuth}
-          user={userWithAvatar}
-          onLogout={handleLogout}
-        />
-
         <div className="pt-20 md:pt-24 pb-16">
           <div className="container mx-auto px-4 md:px-6 max-w-7xl">
             {clientSubView === "dashboard" && (

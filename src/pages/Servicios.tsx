@@ -1,12 +1,9 @@
-import Navigation from "@/shared/components/custom/Navigation";
 import { Card } from "@/components/ui/card";
 import { AlertCircle, CheckCircle, Clock, FileText, MessageCircle, Shield } from "lucide-react";
 
 const Servicios = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-tuatara via-tuatara-dark to-tuatara">
-      <Navigation />
-      
       <main className="container mx-auto px-4 pt-32 pb-20">
         {/* Hero Section */}
         <div className="text-center mb-16">

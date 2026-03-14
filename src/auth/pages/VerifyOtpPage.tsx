@@ -4,7 +4,6 @@ import { Mail, AlertCircle, ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import Navigation from "@/shared/components/custom/Navigation";
 import { verifyOtpAction } from "@/auth/actions/verify-otp.actions";
 
 const VerifyOtpPage = () => {
@@ -37,8 +36,6 @@ const VerifyOtpPage = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      <Navigation />
-
       <div className="pt-24 pb-16">
         <div className="container mx-auto px-6 max-w-lg">
           <div className="text-center mb-8">

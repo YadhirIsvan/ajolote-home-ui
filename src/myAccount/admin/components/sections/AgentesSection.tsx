@@ -26,12 +26,14 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/u
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { formatPhone } from "@/shared/utils/format-input";
 import {
   getAdminAgentsAction,
   getAdminAgentSchedulesAction,
   createAdminAgentScheduleAction,
   updateAdminAgentScheduleAction,
   deleteAdminAgentScheduleAction,
+  createAdminAgentAction,
   updateAdminAgentAction,
   uploadAdminAgentAvatarAction,
   deleteAdminAgentAction,
@@ -90,6 +92,7 @@ interface ScheduleFormData {
 }
 
 interface AgentFormData {
+  email: string;
   first_name: string;
   last_name: string;
   phone: string;
@@ -119,7 +122,7 @@ const emptyScheduleForm: ScheduleFormData = {
   is_active: true, priority: 0, breaks: [],
 };
 
-const emptyAgentForm: AgentFormData = { first_name: "", last_name: "", phone: "", zone: "", bio: "" };
+const emptyAgentForm: AgentFormData = { email: "", first_name: "", last_name: "", phone: "", zone: "", bio: "" };
 
 const mapAdminAgent = (item: AdminAgent): MappedAgent => {
   const parts = item.name.split(" ");
@@ -237,10 +240,19 @@ const AgentesSection = () => {
   const [isSavingSchedule, setIsSavingSchedule] = useState(false);
 
   // ── agent handlers ──
+  const handleCreate = () => {
+    setEditingAgentId(null);
+    setAgentForm(emptyAgentForm);
+    setAvatarFile(null);
+    setAvatarPreview(null);
+    setIsFormOpen(true);
+  };
+
   const handleEdit = (agent: MappedAgent) => {
     const parts = agent.name.split(" ");
     setEditingAgentId(agent.rawId);
     setAgentForm({
+      email: agent.email,
       first_name: parts[0] ?? "",
       last_name: parts.slice(1).join(" "),
       phone: agent.phone,
@@ -254,12 +266,44 @@ const AgentesSection = () => {
 
   const handleSaveAgent = async () => {
     if (!editingAgentId) {
-      toast.info("La creación de agentes estará disponible próximamente");
+      // Crear agente nuevo
+      if (!agentForm.email.trim()) {
+        toast.error("El email es requerido");
+        return;
+      }
+      if (!agentForm.first_name.trim()) {
+        toast.error("El nombre es requerido");
+        return;
+      }
+      setIsSavingAgent(true);
+      try {
+        const created = await createAdminAgentAction({
+          email: agentForm.email,
+          first_name: agentForm.first_name,
+          last_name: agentForm.last_name,
+          phone: agentForm.phone,
+          zone: agentForm.zone,
+          bio: agentForm.bio,
+        });
+        if (avatarFile && created.id) {
+          await avatarMutation.mutateAsync({ id: created.id, file: avatarFile });
+        }
+        queryClient.invalidateQueries({ queryKey: ["admin-agents"] });
+        toast.success("Agente creado exitosamente");
+        setIsFormOpen(false);
+      } catch (err: unknown) {
+        const error = err as { response?: { data?: { error?: string } } };
+        toast.error(error?.response?.data?.error || "Error al crear el agente");
+      } finally {
+        setIsSavingAgent(false);
+      }
       return;
     }
+    // Editar agente existente
     setIsSavingAgent(true);
     try {
-      await updateAgentMutation.mutateAsync({ id: editingAgentId, payload: agentForm });
+      const { email: _email, ...updatePayload } = agentForm;
+      await updateAgentMutation.mutateAsync({ id: editingAgentId, payload: updatePayload });
       if (avatarFile) {
         await avatarMutation.mutateAsync({ id: editingAgentId, file: avatarFile });
       }
@@ -712,9 +756,18 @@ const AgentesSection = () => {
         <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
       </div>
 
+      {!editingAgentId && (
+        <div className="space-y-2">
+          <Label>Email *</Label>
+          <Input value={agentForm.email}
+            onChange={e => setAgentForm(p => ({ ...p, email: e.target.value }))}
+            placeholder="agente@ejemplo.com" type="email" className="h-12" />
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-2">
-          <Label>Nombre</Label>
+          <Label>Nombre *</Label>
           <Input value={agentForm.first_name}
             onChange={e => setAgentForm(p => ({ ...p, first_name: e.target.value }))}
             placeholder="Carlos" className="h-12" />
@@ -729,9 +782,9 @@ const AgentesSection = () => {
 
       <div className="space-y-2">
         <Label>Teléfono</Label>
-        <Input value={agentForm.phone}
-          onChange={e => setAgentForm(p => ({ ...p, phone: e.target.value }))}
-          placeholder="+52 55 1234 5678" className="h-12" />
+        <Input value={formatPhone(agentForm.phone)}
+          onChange={e => setAgentForm(p => ({ ...p, phone: e.target.value.replace(/[^0-9+]/g, "") }))}
+          placeholder="272 123 4567" className="h-12" />
       </div>
 
       <div className="space-y-2">
@@ -834,6 +887,10 @@ const AgentesSection = () => {
           <h1 className="text-2xl md:text-3xl font-bold text-midnight">Gestión de Agentes</h1>
           <p className="text-foreground/60">Administra cuentas y horarios</p>
         </div>
+        <Button variant="gold" onClick={handleCreate}>
+          <Plus className="w-4 h-4 mr-2" />
+          Nuevo Agente
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">

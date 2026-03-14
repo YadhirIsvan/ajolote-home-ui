@@ -8,7 +8,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import Navigation from "@/shared/components/custom/Navigation";
 import PropertyCard from "@/shared/components/custom/PropertyCard";
 import {
   Search,
@@ -82,8 +81,6 @@ const HomePage = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
-
       {/* ═══ HERO — IMMERSIVE VIDEO ═══ */}
       <section className="relative min-h-[75vh] sm:min-h-[80vh] md:min-h-[85vh] flex items-center justify-center overflow-hidden">
         {/* Video bg */}

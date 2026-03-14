@@ -5,6 +5,8 @@ import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/s
 import { Home, Search, Menu, User, CreditCard, LogOut, ChevronDown, Headset } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useFinancialModal } from "@/contexts/FinancialModalContext";
+import { useScrollDirection } from "@/shared/hooks/use-scroll-direction.hook";
+import { useAuth } from "@/auth/hooks/use-auth.hook";
 import vakantaLogo from "@/assets/vakanta-logo.png";
 
 interface UserInfo {
@@ -12,12 +14,6 @@ interface UserInfo {
   last_name: string;
   email: string;
   avatar_url?: string | null;
-}
-
-interface NavigationProps {
-  isClientAuthenticated?: boolean;
-  user?: UserInfo | null;
-  onLogout?: () => void;
 }
 
 const getInitial = (user?: UserInfo | null): string => {
@@ -32,16 +28,18 @@ const getDisplayName = (user?: UserInfo | null): string => {
   return user.email.split("@")[0];
 };
 
-const Navigation = ({ isClientAuthenticated, user, onLogout }: NavigationProps) => {
+const Navigation = () => {
   const { openFinancialModal } = useFinancialModal();
+  const { isAuthenticated, user, handleLogout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const location = useLocation();
+  const navVisible = useScrollDirection();
 
   const isActive = (path: string) => location.pathname === path;
   const isOnMiCuenta = location.pathname.startsWith("/mi-cuenta");
 
-  const showProfileButton = isClientAuthenticated && isOnMiCuenta;
+  const showProfileButton = isAuthenticated && isOnMiCuenta;
 
   const navLinks = [
     { path: "/", label: "Inicio", icon: Home },
@@ -51,7 +49,10 @@ const Navigation = ({ isClientAuthenticated, user, onLogout }: NavigationProps) 
   ];
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
+    <nav
+      style={{ transform: navVisible ? "translateY(0)" : "translateY(-100%)", transition: "transform 0.3s ease" }}
+      className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border"
+    >
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           {/* Logo */}
@@ -120,7 +121,7 @@ const Navigation = ({ isClientAuthenticated, user, onLogout }: NavigationProps) 
                 </button>
                 <div className="h-px bg-border/40 mx-1.5" />
                 <button
-                  onClick={() => { setProfileOpen(false); onLogout?.(); }}
+                  onClick={() => { setProfileOpen(false); handleLogout(); }}
                   className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-red-600 rounded-lg hover:bg-red-50 transition-colors mb-0.5"
                 >
                   <LogOut className="w-4 h-4" />
@@ -136,7 +137,7 @@ const Navigation = ({ isClientAuthenticated, user, onLogout }: NavigationProps) 
               onClick={openFinancialModal}
             >
               <CreditCard className="w-4 h-4" />
-              Obtén tu Crédito
+              Simula tu Crédito
             </Button>
           )}
 
@@ -210,7 +211,7 @@ const Navigation = ({ isClientAuthenticated, user, onLogout }: NavigationProps) 
                       <Button
                         variant="ghost"
                         className="w-full justify-start gap-3 text-red-600 hover:bg-red-50"
-                        onClick={() => { setIsOpen(false); onLogout?.(); }}
+                        onClick={() => { setIsOpen(false); handleLogout(); }}
                       >
                         <LogOut className="w-4 h-4" />
                         Cerrar Sesión
@@ -223,7 +224,7 @@ const Navigation = ({ isClientAuthenticated, user, onLogout }: NavigationProps) 
                       onClick={() => { setIsOpen(false); openFinancialModal(); }}
                     >
                       <CreditCard className="w-4 h-4" />
-                      Obtén tu Crédito
+                      Simula tu Crédito
                     </Button>
                   )}
                 </div>

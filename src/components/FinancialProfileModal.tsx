@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Calculator, Info, Loader2 } from "lucide-react";
 import { useFinancialModal } from "@/contexts/FinancialModalContext";
 import AuthModal from "@/auth/components/AuthModal";
+import { formatMoney, parseRawNumber } from "@/shared/utils/format-input";
 
 interface FormData {
   loanType: string;
@@ -53,7 +54,7 @@ const FinancialProfileModal = () => {
 
         if (response.ok) {
           const data = await response.json();
-          if (data.calculated_budget) {
+          if (data && data.calculated_budget) {
             setCalculatedBudget(data.calculated_budget);
             setShowResult(true);
             setFormData({
@@ -91,17 +92,17 @@ const FinancialProfileModal = () => {
   };
 
   const handleMonthlyIncomeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/[^0-9]/g, "");
+    const value = parseRawNumber(e.target.value);
     setFormData((prev) => ({ ...prev, monthlyIncome: value }));
   };
 
   const handlePartnerIncomeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/[^0-9]/g, "");
+    const value = parseRawNumber(e.target.value);
     setFormData((prev) => ({ ...prev, partnerMonthlyIncome: value }));
   };
 
   const handleSavingsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/[^0-9]/g, "");
+    const value = parseRawNumber(e.target.value);
     setFormData((prev) => ({ ...prev, savingsForEnganche: value }));
   };
 
@@ -114,7 +115,7 @@ const FinancialProfileModal = () => {
   };
 
   const handleSubcuentaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/[^0-9]/g, "");
+    const value = parseRawNumber(e.target.value);
     setFormData((prev) => ({ ...prev, infonautSubcuentaBalance: value }));
   };
 
@@ -213,7 +214,7 @@ const FinancialProfileModal = () => {
       />
 
       <Dialog open={isOpen} onOpenChange={handleClose}>
-        <DialogContent className="sm:max-w-[500px] bg-white rounded-2xl border border-border/20 shadow-lg">
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto scrollbar-desktop bg-white rounded-2xl border border-border/20 shadow-lg">
           {/* Loading while fetching profile */}
           {fetchingProfile ? (
             <div className="flex flex-col items-center justify-center py-12 space-y-4">
@@ -352,8 +353,8 @@ const FinancialProfileModal = () => {
               <Input
                 id="monthlyIncome"
                 type="text"
-                placeholder="Ej. 40000"
-                value={formData.monthlyIncome}
+                placeholder="Ej. 40,000"
+                value={formatMoney(formData.monthlyIncome)}
                 onChange={handleMonthlyIncomeChange}
                 className="pl-7 h-10 rounded-lg"
               />
@@ -371,8 +372,8 @@ const FinancialProfileModal = () => {
                 <Input
                   id="partnerIncome"
                   type="text"
-                  placeholder="Ej. 35000"
-                  value={formData.partnerMonthlyIncome}
+                  placeholder="Ej. 35,000"
+                  value={formatMoney(formData.partnerMonthlyIncome)}
                   onChange={handlePartnerIncomeChange}
                   className="pl-7 h-10 rounded-lg"
                 />
@@ -393,8 +394,8 @@ const FinancialProfileModal = () => {
               <Input
                 id="savings"
                 type="text"
-                placeholder="Ej. 150000"
-                value={formData.savingsForEnganche}
+                placeholder="Ej. 150,000"
+                value={formatMoney(formData.savingsForEnganche)}
                 onChange={handleSavingsChange}
                 className="pl-7 h-10 rounded-lg"
               />
@@ -424,8 +425,8 @@ const FinancialProfileModal = () => {
                 <Input
                   id="subcuenta"
                   type="text"
-                  placeholder="Ej. 85000"
-                  value={formData.infonautSubcuentaBalance}
+                  placeholder="Ej. 85,000"
+                  value={formatMoney(formData.infonautSubcuentaBalance)}
                   onChange={handleSubcuentaChange}
                   className="pl-7 h-10 rounded-lg"
                 />

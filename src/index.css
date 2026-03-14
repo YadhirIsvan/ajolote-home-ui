@@ -71,22 +71,56 @@
   }
 }
 
-/* Custom scrollbar for luxury feel */
-::-webkit-scrollbar {
-  width: 6px;
+/* Mobile: scrollbar oculto */
+@media (max-width: 767px) {
+  ::-webkit-scrollbar {
+    width: 0px;
+    height: 0px;
+  }
+
+  * {
+    scrollbar-width: none;
+  }
 }
 
-::-webkit-scrollbar-track {
-  background: hsl(var(--grey-light));
-}
+/* Desktop: scrollbar champagne elegante en todo */
+@media (min-width: 768px) {
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
 
-::-webkit-scrollbar-thumb {
-  background: hsl(var(--champagne));
-  border-radius: 3px;
-}
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--grey-light));
+    border-radius: 9999px;
+  }
 
-::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--champagne-dark));
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--champagne) / 0.5);
+    border-radius: 9999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--champagne) / 0.8);
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--champagne) / 0.5) hsl(var(--grey-light));
+  }
+
+  /* Thin variant for sidebars */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin {
+    scrollbar-color: hsl(var(--champagne) / 0.35) transparent;
+  }
 }
 
 /* Hide scrollbar while maintaining scroll functionality */

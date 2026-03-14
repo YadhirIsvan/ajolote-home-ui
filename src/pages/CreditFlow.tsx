@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import Navigation from "@/shared/components/custom/Navigation";
 import ScoreWidget from "@/components/ScoreWidget";
 import { Calculator, Upload, CheckCircle2, Clock } from "lucide-react";
 
@@ -12,8 +11,6 @@ const CreditFlow = () => {
 
   return (
     <div className="min-h-screen bg-dawn">
-      <Navigation />
-
       <div className="pt-24 pb-16">
         <div className="container mx-auto px-6 max-w-4xl">
           {currentView === "simulacion" && (
