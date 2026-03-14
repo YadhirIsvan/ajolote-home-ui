@@ -170,6 +170,10 @@ const KanbanSection = () => {
   const [pendingStatus, setPendingStatus] = useState<PurchaseProcessStatus | "">("");
   const [cerradoForm, setCerradoForm] = useState({ sale_price: "", payment_method: "" });
 
+  // Drag to cerrado dialog
+  const [pendingDragToCerrado, setPendingDragToCerrado] = useState<{ item: KanbanItem } | null>(null);
+  const [dragCerradoForm, setDragCerradoForm] = useState({ sale_price: "", payment_method: "" });
+
   // ─── query ────────────────────────────────────────────────────────────────
 
   const processesQuery = useQuery({
@@ -291,6 +295,43 @@ const KanbanSection = () => {
     setCerradoForm({ sale_price: "", payment_method: "" });
   };
 
+  const handleConfirmDragToCerrado = () => {
+    if (!pendingDragToCerrado || !dragCerradoForm.sale_price || !dragCerradoForm.payment_method) {
+      toast.error("Por favor completa el precio y método de pago");
+      return;
+    }
+
+    const item = pendingDragToCerrado.item;
+    const targetColumnId = "cerrado";
+
+    const newColumns = columns.map(col => {
+      // Encontrar la columna actual del item
+      const itemInCol = col.items.some(i => i.id === item.id);
+      if (itemInCol) {
+        return { ...col, items: col.items.filter(i => i.id !== item.id) };
+      }
+      if (col.id === targetColumnId) {
+        return { ...col, items: [...col.items, { ...item, daysInStage: 0 }] };
+      }
+      return col;
+    });
+
+    setColumns(newColumns);
+    toast.success(`${item.client} → Cerrado`);
+
+    moveMutation.mutate({
+      rawId: item.rawId,
+      status: "cerrado",
+      extra: {
+        sale_price: parseFloat(dragCerradoForm.sale_price),
+        payment_method: dragCerradoForm.payment_method,
+      },
+    });
+
+    setPendingDragToCerrado(null);
+    setDragCerradoForm({ sale_price: "", payment_method: "" });
+  };
+
   // ─── drag & drop ─────────────────────────────────────────────────────────
 
   const handleItemClick = (item: KanbanItem, columnId: string) => {
@@ -326,6 +367,17 @@ const KanbanSection = () => {
       return;
     }
 
+    const newStatus = COLUMN_TO_STATUS[targetColumnId];
+
+    // Si es arrastrar a "Cerrado", mostrar dialog para completar campos
+    if (newStatus === "cerrado") {
+      setPendingDragToCerrado({ item });
+      setDragCerradoForm({ sale_price: "", payment_method: "" });
+      setDraggedItem(null);
+      setDragOverColumnId(null);
+      return;
+    }
+
     const newColumns = columns.map(col => {
       if (col.id === sourceColumnId) return { ...col, items: col.items.filter(i => i.id !== item.id) };
       if (col.id === targetColumnId) return { ...col, items: [...col.items, { ...item, daysInStage: 0 }] };
@@ -335,7 +387,6 @@ const KanbanSection = () => {
     setColumns(newColumns);
     toast.success(`${item.client} → ${columns.find(c => c.id === targetColumnId)?.title}`);
 
-    const newStatus = COLUMN_TO_STATUS[targetColumnId];
     if (newStatus) moveMutation.mutate({ rawId: item.rawId, status: newStatus });
 
     setDraggedItem(null);
@@ -784,6 +835,70 @@ const KanbanSection = () => {
             <DialogTitle>Detalle del Proceso</DialogTitle>
           </DialogHeader>
           {ItemDetailContent()}
+        </DialogContent>
+      </Dialog>
+
+      {/* Drag to Cerrado Modal */}
+      <Dialog open={!!pendingDragToCerrado} onOpenChange={(open) => {
+        if (!open) setPendingDragToCerrado(null);
+      }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <span className="text-lg">Cerrar Proceso de Compra</span>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 p-2">
+            <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+              <p className="text-sm font-medium text-green-700 mb-2">
+                {pendingDragToCerrado?.item.client}
+              </p>
+              <p className="text-xs text-green-600">
+                {pendingDragToCerrado?.item.property}
+              </p>
+            </div>
+
+            <div>
+              <Label className="text-sm font-medium">Precio de venta (MXN) *</Label>
+              <Input
+                type="number"
+                placeholder="1500000"
+                value={dragCerradoForm.sale_price}
+                onChange={(e) => setDragCerradoForm(f => ({ ...f, sale_price: e.target.value }))}
+                className="mt-2"
+              />
+            </div>
+
+            <div>
+              <Label className="text-sm font-medium">Método de pago *</Label>
+              <Input
+                placeholder="Efectivo, crédito hipotecario, etc…"
+                value={dragCerradoForm.payment_method}
+                onChange={(e) => setDragCerradoForm(f => ({ ...f, payment_method: e.target.value }))}
+                className="mt-2"
+              />
+            </div>
+
+            <div className="flex gap-2 pt-4 border-t border-border/30">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setPendingDragToCerrado(null)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="gold"
+                className="flex-1"
+                disabled={
+                  !dragCerradoForm.sale_price || !dragCerradoForm.payment_method || moveMutation.isPending
+                }
+                onClick={handleConfirmDragToCerrado}
+              >
+                Confirmar Cierre
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
