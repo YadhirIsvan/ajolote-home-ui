@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { getPropertiesAction } from "@/buy/actions/get-properties.actions";
 import { getCitiesAction, type CityItem } from "@/buy/actions/get-cities.actions";
@@ -26,8 +27,17 @@ export const formatPrice = (value: number): string =>
   }).format(value);
 
 export const useBuyProperties = () => {
+  const [searchParams] = useSearchParams();
   const [filters, setFilters] = useState<BuyFilters>(DEFAULT_BUY_FILTERS);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+  // Leer parámetro zone de la URL al cargar el componente
+  useEffect(() => {
+    const zoneFromUrl = searchParams.get("zone");
+    if (zoneFromUrl) {
+      setFilters(prev => ({ ...prev, zone: zoneFromUrl }));
+    }
+  }, [searchParams]);
 
   const { data: citiesData } = useQuery({
     queryKey: ["buy-cities"],

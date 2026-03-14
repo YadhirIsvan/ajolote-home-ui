@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -21,8 +21,9 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { useFeaturedProperties } from "@/home/hooks/use-featured-properties.hook";
-import { HOME_ZONES } from "@/home/types/property.types";
+import { getCitiesAction } from "@/buy/actions/get-cities.actions";
 import videoBackground from "@/assets/videos/video-background.mp4";
+import type { CityItem } from "@/buy/actions/get-cities.actions";
 
 /* ── Trust bar partners (text placeholders until real logos exist) ── */
 const PARTNERS = [
@@ -71,13 +72,39 @@ const STEPS = [
 ];
 
 const HomePage = () => {
-  const [selectedZone, setSelectedZone] = useState<string>("");
+  const navigate = useNavigate();
+  const [selectedCity, setSelectedCity] = useState<string>("");
+  const [cities, setCities] = useState<CityItem[]>([]);
+  const [isLoadingCities, setIsLoadingCities] = useState(true);
 
   const { properties, isLoading } = useFeaturedProperties({
-    zone: selectedZone || undefined,
+    zone: selectedCity || undefined,
     limit: 20,
     offset: 0,
   });
+
+  // Cargar ciudades de la API
+  useEffect(() => {
+    const loadCities = async () => {
+      try {
+        const data = await getCitiesAction();
+        setCities(data);
+      } catch (error) {
+        console.error("Error loading cities:", error);
+      } finally {
+        setIsLoadingCities(false);
+      }
+    };
+    loadCities();
+  }, []);
+
+  const handleSearch = () => {
+    if (selectedCity) {
+      navigate(`/comprar?zone=${encodeURIComponent(selectedCity)}`);
+    } else {
+      navigate("/comprar");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -113,18 +140,18 @@ const HomePage = () => {
           <div className="max-w-lg mx-auto mb-6">
             <div className="relative flex items-center bg-white/10 backdrop-blur-xl border border-white/20 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.2)] transition-all duration-300 hover:bg-white/15 hover:border-white/30 focus-within:bg-white/15 focus-within:border-white/35">
               <Search className="w-5 h-5 text-white/50 ml-5 flex-shrink-0" />
-              <Select value={selectedZone} onValueChange={setSelectedZone}>
+              <Select value={selectedCity} onValueChange={setSelectedCity}>
                 <SelectTrigger className="flex-1 h-14 text-base bg-transparent border-0 text-white placeholder:text-white/40 focus:ring-0 focus:ring-offset-0 shadow-none pl-3">
-                  <SelectValue placeholder="Buscar por zona..." />
+                  <SelectValue placeholder={isLoadingCities ? "Cargando..." : "Buscar por ciudad..."} />
                 </SelectTrigger>
                 <SelectContent className="bg-card/95 backdrop-blur-xl border-border/50 rounded-xl">
-                  {HOME_ZONES.map((zone) => (
+                  {cities.map((city) => (
                     <SelectItem
-                      key={zone}
-                      value={zone}
+                      key={city.id}
+                      value={city.name}
                       className="text-base py-3 cursor-pointer rounded-lg"
                     >
-                      {zone}
+                      {city.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -132,10 +159,10 @@ const HomePage = () => {
               <Button
                 variant="gold"
                 size="sm"
-                asChild
-                className="rounded-full mr-2 px-5 h-10 shadow-lg"
+                className="rounded-full mr-2 px-5 h-10 shadow-lg cursor-pointer"
+                onClick={handleSearch}
               >
-                <Link to="/comprar">Buscar</Link>
+                Buscar
               </Button>
             </div>
           </div>
