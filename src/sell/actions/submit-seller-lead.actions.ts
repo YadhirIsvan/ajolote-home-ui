@@ -47,16 +47,17 @@ export const submitSellerLeadAction = async (
   };
 
   try {
-    const { data: response } = await sellApi.post(
+    const { data: response } = await sellApi.post<BackendSellerLeadResponse>(
       ENDPOINTS.SUBMIT_LEAD,
       payload
     );
     return {
       success: true,
-      leadId: String((response as any).id),
-      message: (response as any).message,
+      leadId: String(response.id),
+      message: response.message,
     };
-  } catch (err: any) {
+  } catch (error) {
+    console.error("[submitSellerLeadAction] Error al enviar solicitud de venta:", error);
     return {
       success: false,
       message: "No se pudo enviar tu solicitud. Intenta de nuevo.",

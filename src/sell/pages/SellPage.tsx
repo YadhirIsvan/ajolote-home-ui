@@ -8,7 +8,7 @@ import {
   ArrowRight, Play, X, Check, Star,
 } from "lucide-react";
 import SellerLeadForm from "@/sell/components/SellerLeadForm";
-import { useSellPage } from "@/sell/hooks/use-sell-page.hook";
+import { useSellPage } from "@/sell/hooks/use-sell-page.sell.hook";
 
 /* ── Steps Data ─────────────────────────────────────────────────── */
 const STEPS = [
