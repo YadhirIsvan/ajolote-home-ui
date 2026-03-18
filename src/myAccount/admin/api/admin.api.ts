@@ -1,62 +1,95 @@
 import { axiosInstance } from "@/shared/api/axios.instance";
+import type {
+  AdminProperty,
+  AdminPropertyDetail,
+  AdminPropertyImage,
+  AdminAgent,
+  AgentSchedule,
+  AdminAppointment,
+  AdminAssignmentsResponse,
+  SaleProcessAssignmentsResponse,
+  AdminClient,
+  AdminClientDetail,
+  AdminPurchaseProcess,
+  AdminSaleProcess,
+  AdminSellerLead,
+  AdminSaleHistoryItem,
+  AdminInsights,
+  CatalogState,
+  CatalogCity,
+  CatalogAmenity,
+  Paginated,
+} from "@/myAccount/admin/types/admin.types";
 
 export const adminApi = {
   // ─── Propiedades ────────────────────────────────────────────────────────────
-  getProperties: (params?: Record<string, unknown>) =>
-    axiosInstance.get("/admin/properties", { params }),
+  getProperties: (params?: object) =>
+    axiosInstance.get<Paginated<AdminProperty>>("/admin/properties", { params }),
 
-  createProperty: (data: FormData | Record<string, unknown>) =>
-    axiosInstance.post("/admin/properties", data),
+  createProperty: (data: FormData | object) =>
+    axiosInstance.post<AdminPropertyDetail>("/admin/properties", data),
 
-  updateProperty: (id: number, data: Record<string, unknown>) =>
-    axiosInstance.patch(`/admin/properties/${id}`, data),
+  updateProperty: (id: number, data: object) =>
+    axiosInstance.patch<AdminPropertyDetail>(`/admin/properties/${id}`, data),
 
   deleteProperty: (id: number) =>
-    axiosInstance.delete(`/admin/properties/${id}`),
+    axiosInstance.delete<void>(`/admin/properties/${id}`),
 
   uploadPropertyImages: (id: number, formData: FormData) =>
-    axiosInstance.post(`/admin/properties/${id}/images`, formData, {
-      transformRequest: [
-        (data: unknown, headers: Record<string, string>) => {
-          if (headers) {
-            delete headers["Content-Type"];
-            delete headers["content-type"];
-          }
-          return data;
-        },
-      ],
-    }),
+    axiosInstance.post<AdminPropertyImage[]>(
+      `/admin/properties/${id}/images`,
+      formData,
+      {
+        transformRequest: [
+          (data: unknown, headers: Record<string, string>) => {
+            if (headers) {
+              delete headers["Content-Type"];
+              delete headers["content-type"];
+            }
+            return data;
+          },
+        ],
+      }
+    ),
 
   toggleFeatured: (id: number) =>
-    axiosInstance.patch(`/admin/properties/${id}/toggle-featured`),
+    axiosInstance.patch<{ is_featured: boolean }>(
+      `/admin/properties/${id}/toggle-featured`
+    ),
 
   getPropertyDetail: (id: number) =>
-    axiosInstance.get(`/admin/properties/${id}`),
+    axiosInstance.get<AdminPropertyDetail>(`/admin/properties/${id}`),
 
   deletePropertyImage: (propertyId: number, imageId: number) =>
-    axiosInstance.delete(`/admin/properties/${propertyId}/images/${imageId}`),
+    axiosInstance.delete<void>(
+      `/admin/properties/${propertyId}/images/${imageId}`
+    ),
 
   getStates: () =>
-    axiosInstance.get("/catalogs/states", { params: { country_id: 1 } }),
+    axiosInstance.get<Paginated<CatalogState>>("/catalogs/states", {
+      params: { country_id: 1 },
+    }),
 
   getCities: (stateId: number) =>
-    axiosInstance.get("/catalogs/cities", { params: { state_id: stateId } }),
+    axiosInstance.get<Paginated<CatalogCity>>("/catalogs/cities", {
+      params: { state_id: stateId },
+    }),
 
   getAmenities: () =>
-    axiosInstance.get("/catalogs/amenities"),
+    axiosInstance.get<Paginated<CatalogAmenity>>("/catalogs/amenities"),
 
   // ─── Agentes ────────────────────────────────────────────────────────────────
-  getAgents: (params?: Record<string, unknown>) =>
-    axiosInstance.get("/admin/agents", { params }),
+  getAgents: (params?: object) =>
+    axiosInstance.get<Paginated<AdminAgent>>("/admin/agents", { params }),
 
-  createAgent: (data: Record<string, unknown>) =>
-    axiosInstance.post("/admin/agents", data),
+  createAgent: (data: object) =>
+    axiosInstance.post<AdminAgent>("/admin/agents", data),
 
-  updateAgent: (id: number, data: Record<string, unknown>) =>
-    axiosInstance.patch(`/admin/agents/${id}`, data),
+  updateAgent: (id: number, data: object) =>
+    axiosInstance.patch<AdminAgent>(`/admin/agents/${id}`, data),
 
   updateAgentAvatar: (id: number, formData: FormData) =>
-    axiosInstance.patch(`/admin/agents/${id}`, formData, {
+    axiosInstance.patch<AdminAgent>(`/admin/agents/${id}`, formData, {
       transformRequest: [
         (data: unknown, headers: Record<string, string>) => {
           if (headers) {
@@ -69,106 +102,160 @@ export const adminApi = {
     }),
 
   deleteAgent: (id: number) =>
-    axiosInstance.delete(`/admin/agents/${id}`),
+    axiosInstance.delete<void>(`/admin/agents/${id}`),
 
   // ─── Horarios de agente ─────────────────────────────────────────────────────
   getAgentSchedules: (agentId: number) =>
-    axiosInstance.get(`/admin/agents/${agentId}/schedules`),
+    axiosInstance.get<AgentSchedule[]>(
+      `/admin/agents/${agentId}/schedules`
+    ),
 
-  createAgentSchedule: (agentId: number, data: Record<string, unknown>) =>
-    axiosInstance.post(`/admin/agents/${agentId}/schedules`, data),
+  createAgentSchedule: (agentId: number, data: object) =>
+    axiosInstance.post<AgentSchedule>(
+      `/admin/agents/${agentId}/schedules`,
+      data
+    ),
 
-  updateAgentSchedule: (agentId: number, scheduleId: number, data: Record<string, unknown>) =>
-    axiosInstance.patch(`/admin/agents/${agentId}/schedules/${scheduleId}`, data),
+  updateAgentSchedule: (
+    agentId: number,
+    scheduleId: number,
+    data: object
+  ) =>
+    axiosInstance.patch<AgentSchedule>(
+      `/admin/agents/${agentId}/schedules/${scheduleId}`,
+      data
+    ),
 
   deleteAgentSchedule: (agentId: number, scheduleId: number) =>
-    axiosInstance.delete(`/admin/agents/${agentId}/schedules/${scheduleId}`),
+    axiosInstance.delete<void>(
+      `/admin/agents/${agentId}/schedules/${scheduleId}`
+    ),
 
   // ─── Citas ──────────────────────────────────────────────────────────────────
-  getAppointments: (params?: Record<string, unknown>) =>
-    axiosInstance.get("/admin/appointments", { params }),
-
-  createAppointment: (data: Record<string, unknown>) =>
-    axiosInstance.post("/admin/appointments", data),
-
-  updateAppointment: (id: number, data: Record<string, unknown>) =>
-    axiosInstance.patch(`/admin/appointments/${id}`, data),
-
-  getAppointmentAvailability: (agentId: number, date: string) =>
-    axiosInstance.get("/admin/appointments/availability", {
-      params: { agent_id: agentId, date },
+  getAppointments: (params?: object) =>
+    axiosInstance.get<Paginated<AdminAppointment>>("/admin/appointments", {
+      params,
     }),
 
-  // ─── Asignaciones (reemplaza el antiguo assignAgent que usaba endpoint inexistente) ─
-  getAssignments: () => axiosInstance.get("/admin/assignments"),
+  createAppointment: (data: object) =>
+    axiosInstance.post<AdminAppointment>("/admin/appointments", data),
 
-  createAssignment: (propertyId: number, agentMembershipId: number, isVisible = true) =>
-    axiosInstance.post("/admin/assignments", {
+  updateAppointment: (id: number, data: object) =>
+    axiosInstance.patch<AdminAppointment>(
+      `/admin/appointments/${id}`,
+      data
+    ),
+
+  getAppointmentAvailability: (agentId: number, date: string) =>
+    axiosInstance.get<{ available_slots: string[] }>(
+      "/admin/appointments/availability",
+      { params: { agent_id: agentId, date } }
+    ),
+
+  // ─── Asignaciones ───────────────────────────────────────────────────────────
+  getAssignments: () =>
+    axiosInstance.get<AdminAssignmentsResponse>("/admin/assignments"),
+
+  createAssignment: (
+    propertyId: number,
+    agentMembershipId: number,
+    isVisible = true
+  ) =>
+    axiosInstance.post<void>("/admin/assignments", {
       property_id: propertyId,
       agent_membership_id: agentMembershipId,
       is_visible: isVisible,
     }),
 
-  updateAssignment: (id: number, data: Record<string, unknown>) =>
-    axiosInstance.patch(`/admin/assignments/${id}`, data),
+  updateAssignment: (id: number, data: object) =>
+    axiosInstance.patch<void>(`/admin/assignments/${id}`, data),
 
   deleteAssignment: (id: number) =>
-    axiosInstance.delete(`/admin/assignments/${id}`),
+    axiosInstance.delete<void>(`/admin/assignments/${id}`),
 
   // ─── Asignaciones SaleProcess ────────────────────────────────────────────────
   getSaleProcessAssignments: () =>
-    axiosInstance.get("/admin/sale-processes/assignments"),
+    axiosInstance.get<SaleProcessAssignmentsResponse>(
+      "/admin/sale-processes/assignments"
+    ),
 
-  assignSaleProcessAgent: (saleProcessId: number, agentMembershipId: number) =>
-    axiosInstance.post(`/admin/sale-processes/${saleProcessId}/assign`, {
-      agent_membership_id: agentMembershipId,
-    }),
+  assignSaleProcessAgent: (
+    saleProcessId: number,
+    agentMembershipId: number
+  ) =>
+    axiosInstance.post<void>(
+      `/admin/sale-processes/${saleProcessId}/assign`,
+      { agent_membership_id: agentMembershipId }
+    ),
 
   unassignSaleProcessAgent: (saleProcessId: number) =>
-    axiosInstance.post(`/admin/sale-processes/${saleProcessId}/unassign`),
+    axiosInstance.post<void>(
+      `/admin/sale-processes/${saleProcessId}/unassign`
+    ),
 
   // ─── Clientes ───────────────────────────────────────────────────────────────
-  getClients: (params?: Record<string, unknown>) =>
-    axiosInstance.get("/admin/clients", { params }),
+  getClients: (params?: object) =>
+    axiosInstance.get<Paginated<AdminClient>>("/admin/clients", { params }),
 
   getClientDetail: (id: number) =>
-    axiosInstance.get(`/admin/clients/${id}`),
+    axiosInstance.get<AdminClientDetail>(`/admin/clients/${id}`),
 
   // ─── Pipeline de compra (Kanban) ─────────────────────────────────────────────
-  getPurchaseProcesses: (params?: Record<string, unknown>) =>
-    axiosInstance.get("/admin/purchase-processes", { params }),
+  getPurchaseProcesses: (params?: object) =>
+    axiosInstance.get<Paginated<AdminPurchaseProcess>>(
+      "/admin/purchase-processes",
+      { params }
+    ),
 
-  createPurchaseProcess: (data: Record<string, unknown>) =>
-    axiosInstance.post("/admin/purchase-processes", data),
+  createPurchaseProcess: (data: object) =>
+    axiosInstance.post<void>("/admin/purchase-processes", data),
 
-  updatePurchaseProcessStatus: (id: number, data: Record<string, unknown>) =>
-    axiosInstance.patch(`/admin/purchase-processes/${id}/status`, data),
+  updatePurchaseProcessStatus: (id: number, data: object) =>
+    axiosInstance.patch<void>(
+      `/admin/purchase-processes/${id}/status`,
+      data
+    ),
 
   // ─── Pipeline de venta ──────────────────────────────────────────────────────
-  getSaleProcesses: (params?: Record<string, unknown>) =>
-    axiosInstance.get("/admin/sale-processes", { params }),
+  getSaleProcesses: (params?: object) =>
+    axiosInstance.get<Paginated<AdminSaleProcess>>("/admin/sale-processes", {
+      params,
+    }),
 
-  createSaleProcess: (data: Record<string, unknown>) =>
-    axiosInstance.post("/admin/sale-processes", data),
+  createSaleProcess: (data: object) =>
+    axiosInstance.post<void>("/admin/sale-processes", data),
 
-  updateSaleProcessStatus: (id: number, data: Record<string, unknown>) =>
-    axiosInstance.patch(`/admin/sale-processes/${id}/status`, data),
+  updateSaleProcessStatus: (id: number, data: object) =>
+    axiosInstance.patch<void>(
+      `/admin/sale-processes/${id}/status`,
+      data
+    ),
 
   // ─── Seller Leads ───────────────────────────────────────────────────────────
-  getSellerLeads: (params?: Record<string, unknown>) =>
-    axiosInstance.get("/admin/seller-leads", { params }),
+  getSellerLeads: (params?: object) =>
+    axiosInstance.get<Paginated<AdminSellerLead>>("/admin/seller-leads", {
+      params,
+    }),
 
-  updateSellerLead: (id: number, data: Record<string, unknown>) =>
-    axiosInstance.patch(`/admin/seller-leads/${id}`, data),
+  updateSellerLead: (id: number, data: object) =>
+    axiosInstance.patch<void>(`/admin/seller-leads/${id}`, data),
 
-  convertSellerLead: (id: number, data: Record<string, unknown>) =>
-    axiosInstance.post(`/admin/seller-leads/${id}/convert`, data),
+  convertSellerLead: (id: number, data: object) =>
+    axiosInstance.post<{
+      property_id: number;
+      sale_process_id: number;
+      message: string;
+    }>(`/admin/seller-leads/${id}/convert`, data),
 
   // ─── Historial ──────────────────────────────────────────────────────────────
-  getSalesHistory: (params?: Record<string, unknown>) =>
-    axiosInstance.get("/admin/history", { params }),
+  getSalesHistory: (params?: object) =>
+    axiosInstance.get<Paginated<AdminSaleHistoryItem>>("/admin/history", {
+      params,
+    }),
 
   // ─── Insights ───────────────────────────────────────────────────────────────
   getInsights: (period: string) =>
-    axiosInstance.get("/admin/insights", { params: { period } }),
+    axiosInstance.get<AdminInsights>("/admin/insights", {
+      params: { period },
+    }),
 };

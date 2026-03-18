@@ -15,6 +15,11 @@ export interface GetAdminHistoryParams {
 export const getAdminHistoryAction = async (
   params?: GetAdminHistoryParams
 ): Promise<Paginated<AdminSaleHistoryItem>> => {
-  const { data } = await adminApi.getSalesHistory(params as Record<string, unknown>);
-  return data as Paginated<AdminSaleHistoryItem>;
+  try {
+    const { data } = await adminApi.getSalesHistory(params);
+    return data;
+  } catch (error) {
+    console.error("[getAdminHistoryAction] Error al obtener historial:", error);
+    throw error;
+  }
 };

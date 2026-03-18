@@ -3,8 +3,13 @@ import type { AdminAssignmentsResponse } from "@/myAccount/admin/types/admin.typ
 
 export const getAdminAssignmentsAction =
   async (): Promise<AdminAssignmentsResponse> => {
-    const { data } = await adminApi.getAssignments();
-    return data as AdminAssignmentsResponse;
+    try {
+      const { data } = await adminApi.getAssignments();
+      return data;
+    } catch (error) {
+      console.error("[getAdminAssignmentsAction] Error al obtener asignaciones:", error);
+      throw error;
+    }
   };
 
 export const createAdminAssignmentAction = async (
@@ -12,9 +17,19 @@ export const createAdminAssignmentAction = async (
   agentMembershipId: number,
   isVisible = true
 ): Promise<void> => {
-  await adminApi.createAssignment(propertyId, agentMembershipId, isVisible);
+  try {
+    await adminApi.createAssignment(propertyId, agentMembershipId, isVisible);
+  } catch (error) {
+    console.error("[createAdminAssignmentAction] Error al crear asignación:", error);
+    throw error;
+  }
 };
 
 export const deleteAdminAssignmentAction = async (id: number): Promise<void> => {
-  await adminApi.deleteAssignment(id);
+  try {
+    await adminApi.deleteAssignment(id);
+  } catch (error) {
+    console.error("[deleteAdminAssignmentAction] Error al eliminar asignación:", error);
+    throw error;
+  }
 };

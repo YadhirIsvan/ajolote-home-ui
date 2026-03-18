@@ -22,7 +22,7 @@ import KanbanSection from "@/myAccount/admin/components/sections/KanbanSection";
 import KanbanVentasSection from "@/myAccount/admin/components/sections/KanbanVentasSection";
 import HistorialSection from "@/myAccount/admin/components/sections/HistorialSection";
 import InsightsSection from "@/myAccount/admin/components/sections/InsightsSection";
-import { useAdminDashboard } from "@/myAccount/admin/hooks/use-admin-dashboard.hook";
+import { useAdminDashboard } from "@/myAccount/admin/hooks/use-admin-dashboard.admin.hook";
 
 interface MasterAdminDashboardProps {
   onLogout: () => void;

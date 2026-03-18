@@ -45,23 +45,38 @@ export interface ScheduleFormPayload {
 }
 
 export const getAdminAgentsAction = async (): Promise<Paginated<AdminAgent>> => {
-  const { data } = await adminApi.getAgents();
-  return data as Paginated<AdminAgent>;
+  try {
+    const { data } = await adminApi.getAgents();
+    return data;
+  } catch (error) {
+    console.error("[getAdminAgentsAction] Error al obtener agentes:", error);
+    throw error;
+  }
 };
 
 export const getAdminAgentSchedulesAction = async (
   agentId: number
 ): Promise<AgentSchedule[]> => {
-  const { data } = await adminApi.getAgentSchedules(agentId);
-  return data as AgentSchedule[];
+  try {
+    const { data } = await adminApi.getAgentSchedules(agentId);
+    return data;
+  } catch (error) {
+    console.error("[getAdminAgentSchedulesAction] Error al obtener horarios:", error);
+    throw error;
+  }
 };
 
 export const createAdminAgentScheduleAction = async (
   agentId: number,
   payload: ScheduleFormPayload
 ): Promise<AgentSchedule> => {
-  const { data } = await adminApi.createAgentSchedule(agentId, payload as Record<string, unknown>);
-  return data as AgentSchedule;
+  try {
+    const { data } = await adminApi.createAgentSchedule(agentId, payload);
+    return data;
+  } catch (error) {
+    console.error("[createAdminAgentScheduleAction] Error al crear horario:", error);
+    throw error;
+  }
 };
 
 export const updateAdminAgentScheduleAction = async (
@@ -69,42 +84,72 @@ export const updateAdminAgentScheduleAction = async (
   scheduleId: number,
   payload: Partial<ScheduleFormPayload>
 ): Promise<AgentSchedule> => {
-  const { data } = await adminApi.updateAgentSchedule(agentId, scheduleId, payload as Record<string, unknown>);
-  return data as AgentSchedule;
+  try {
+    const { data } = await adminApi.updateAgentSchedule(agentId, scheduleId, payload);
+    return data;
+  } catch (error) {
+    console.error("[updateAdminAgentScheduleAction] Error al actualizar horario:", error);
+    throw error;
+  }
 };
 
 export const deleteAdminAgentScheduleAction = async (
   agentId: number,
   scheduleId: number
 ): Promise<void> => {
-  await adminApi.deleteAgentSchedule(agentId, scheduleId);
+  try {
+    await adminApi.deleteAgentSchedule(agentId, scheduleId);
+  } catch (error) {
+    console.error("[deleteAdminAgentScheduleAction] Error al eliminar horario:", error);
+    throw error;
+  }
 };
 
 export const createAdminAgentAction = async (
   payload: CreateAgentPayload
 ): Promise<AdminAgent> => {
-  const { data } = await adminApi.createAgent(payload as Record<string, unknown>);
-  return data as AdminAgent;
+  try {
+    const { data } = await adminApi.createAgent(payload);
+    return data;
+  } catch (error) {
+    console.error("[createAdminAgentAction] Error al crear agente:", error);
+    throw error;
+  }
 };
 
 export const updateAdminAgentAction = async (
   id: number,
   payload: Partial<AgentFormPayload>
 ): Promise<AdminAgent> => {
-  const { data } = await adminApi.updateAgent(id, payload as Record<string, unknown>);
-  return data as AdminAgent;
+  try {
+    const { data } = await adminApi.updateAgent(id, payload);
+    return data;
+  } catch (error) {
+    console.error("[updateAdminAgentAction] Error al actualizar agente:", error);
+    throw error;
+  }
 };
 
 export const uploadAdminAgentAvatarAction = async (
   agentId: number,
   file: File
 ): Promise<AdminAgent> => {
-  const formData = new FormData();
-  formData.append("avatar", file);
-  const { data } = await adminApi.updateAgentAvatar(agentId, formData);
-  return data as AdminAgent;
+  try {
+    const formData = new FormData();
+    formData.append("avatar", file);
+    const { data } = await adminApi.updateAgentAvatar(agentId, formData);
+    return data;
+  } catch (error) {
+    console.error("[uploadAdminAgentAvatarAction] Error al subir avatar:", error);
+    throw error;
+  }
 };
 
 export const deleteAdminAgentAction = async (id: number): Promise<void> => {
-  await adminApi.deleteAgent(id);
+  try {
+    await adminApi.deleteAgent(id);
+  } catch (error) {
+    console.error("[deleteAdminAgentAction] Error al eliminar agente:", error);
+    throw error;
+  }
 };

@@ -11,15 +11,25 @@ export const getAdminSellerLeadsAction = async (params?: {
   limit?: number;
   offset?: number;
 }): Promise<Paginated<AdminSellerLead>> => {
-  const { data } = await adminApi.getSellerLeads(params as Record<string, unknown>);
-  return data as Paginated<AdminSellerLead>;
+  try {
+    const { data } = await adminApi.getSellerLeads(params);
+    return data;
+  } catch (error) {
+    console.error("[getAdminSellerLeadsAction] Error al obtener seller leads:", error);
+    throw error;
+  }
 };
 
 export const updateAdminSellerLeadAction = async (
   id: number,
-  data: { status?: SellerLeadStatus; assigned_agent_membership_id?: number; notes?: string }
+  payload: { status?: SellerLeadStatus; assigned_agent_membership_id?: number; notes?: string }
 ): Promise<void> => {
-  await adminApi.updateSellerLead(id, data as Record<string, unknown>);
+  try {
+    await adminApi.updateSellerLead(id, payload);
+  } catch (error) {
+    console.error("[updateAdminSellerLeadAction] Error al actualizar seller lead:", error);
+    throw error;
+  }
 };
 
 export const convertAdminSellerLeadAction = async (
@@ -27,9 +37,14 @@ export const convertAdminSellerLeadAction = async (
   agentMembershipId: number,
   notes?: string
 ): Promise<{ property_id: number; sale_process_id: number; message: string }> => {
-  const { data } = await adminApi.convertSellerLead(id, {
-    agent_membership_id: agentMembershipId,
-    notes,
-  });
-  return data as { property_id: number; sale_process_id: number; message: string };
+  try {
+    const { data } = await adminApi.convertSellerLead(id, {
+      agent_membership_id: agentMembershipId,
+      notes,
+    });
+    return data;
+  } catch (error) {
+    console.error("[convertAdminSellerLeadAction] Error al convertir seller lead:", error);
+    throw error;
+  }
 };

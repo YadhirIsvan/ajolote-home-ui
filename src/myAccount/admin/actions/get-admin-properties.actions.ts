@@ -48,41 +48,71 @@ export interface PropertyFormPayload {
 export const getAdminPropertiesAction = async (
   params?: GetAdminPropertiesParams
 ): Promise<Paginated<AdminProperty>> => {
-  const { data } = await adminApi.getProperties(params as Record<string, unknown>);
-  return data as Paginated<AdminProperty>;
+  try {
+    const { data } = await adminApi.getProperties(params);
+    return data;
+  } catch (error) {
+    console.error("[getAdminPropertiesAction] Error al obtener propiedades:", error);
+    throw error;
+  }
 };
 
 export const deleteAdminPropertyAction = async (id: number): Promise<void> => {
-  await adminApi.deleteProperty(id);
+  try {
+    await adminApi.deleteProperty(id);
+  } catch (error) {
+    console.error("[deleteAdminPropertyAction] Error al eliminar propiedad:", error);
+    throw error;
+  }
 };
 
 export const toggleAdminPropertyFeaturedAction = async (
   id: number
 ): Promise<{ is_featured: boolean }> => {
-  const { data } = await adminApi.toggleFeatured(id);
-  return data as { is_featured: boolean };
+  try {
+    const { data } = await adminApi.toggleFeatured(id);
+    return data;
+  } catch (error) {
+    console.error("[toggleAdminPropertyFeaturedAction] Error al alternar destacado:", error);
+    throw error;
+  }
 };
 
 export const getAdminPropertyDetailAction = async (
   id: number
 ): Promise<AdminPropertyDetail> => {
-  const { data } = await adminApi.getPropertyDetail(id);
-  return data as AdminPropertyDetail;
+  try {
+    const { data } = await adminApi.getPropertyDetail(id);
+    return data;
+  } catch (error) {
+    console.error("[getAdminPropertyDetailAction] Error al obtener detalle de propiedad:", error);
+    throw error;
+  }
 };
 
 export const createAdminPropertyAction = async (
   payload: PropertyFormPayload
 ): Promise<AdminPropertyDetail> => {
-  const { data } = await adminApi.createProperty(payload as Record<string, unknown>);
-  return data as AdminPropertyDetail;
+  try {
+    const { data } = await adminApi.createProperty(payload);
+    return data;
+  } catch (error) {
+    console.error("[createAdminPropertyAction] Error al crear propiedad:", error);
+    throw error;
+  }
 };
 
 export const updateAdminPropertyAction = async (
   id: number,
   payload: Partial<PropertyFormPayload>
 ): Promise<AdminPropertyDetail> => {
-  const { data } = await adminApi.updateProperty(id, payload as Record<string, unknown>);
-  return data as AdminPropertyDetail;
+  try {
+    const { data } = await adminApi.updateProperty(id, payload);
+    return data;
+  } catch (error) {
+    console.error("[updateAdminPropertyAction] Error al actualizar propiedad:", error);
+    throw error;
+  }
 };
 
 export const uploadAdminPropertyImagesAction = async (
@@ -90,31 +120,56 @@ export const uploadAdminPropertyImagesAction = async (
   files: File[],
   setCover = false
 ): Promise<AdminPropertyImage[]> => {
-  const formData = new FormData();
-  files.forEach((file) => formData.append("images", file));
-  if (setCover) formData.append("is_cover", "true");
-  const { data } = await adminApi.uploadPropertyImages(propertyId, formData);
-  return data as AdminPropertyImage[];
+  try {
+    const formData = new FormData();
+    files.forEach((file) => formData.append("images", file));
+    if (setCover) formData.append("is_cover", "true");
+    const { data } = await adminApi.uploadPropertyImages(propertyId, formData);
+    return data;
+  } catch (error) {
+    console.error("[uploadAdminPropertyImagesAction] Error al subir imágenes:", error);
+    throw error;
+  }
 };
 
 export const deleteAdminPropertyImageAction = async (
   propertyId: number,
   imageId: number
 ): Promise<void> => {
-  await adminApi.deletePropertyImage(propertyId, imageId);
+  try {
+    await adminApi.deletePropertyImage(propertyId, imageId);
+  } catch (error) {
+    console.error("[deleteAdminPropertyImageAction] Error al eliminar imagen:", error);
+    throw error;
+  }
 };
 
 export const getAdminStatesAction = async (): Promise<CatalogState[]> => {
-  const { data } = await adminApi.getStates();
-  return (data as { results?: CatalogState[] }).results ?? (data as CatalogState[]);
+  try {
+    const { data } = await adminApi.getStates();
+    return data.results;
+  } catch (error) {
+    console.error("[getAdminStatesAction] Error al obtener estados:", error);
+    throw error;
+  }
 };
 
 export const getAdminCitiesAction = async (stateId: number): Promise<CatalogCity[]> => {
-  const { data } = await adminApi.getCities(stateId);
-  return (data as { results?: CatalogCity[] }).results ?? (data as CatalogCity[]);
+  try {
+    const { data } = await adminApi.getCities(stateId);
+    return data.results;
+  } catch (error) {
+    console.error("[getAdminCitiesAction] Error al obtener ciudades:", error);
+    throw error;
+  }
 };
 
 export const getAdminAmenitiesAction = async (): Promise<CatalogAmenity[]> => {
-  const { data } = await adminApi.getAmenities();
-  return (data as { results?: CatalogAmenity[] }).results ?? (data as CatalogAmenity[]);
+  try {
+    const { data } = await adminApi.getAmenities();
+    return data.results;
+  } catch (error) {
+    console.error("[getAdminAmenitiesAction] Error al obtener amenidades:", error);
+    throw error;
+  }
 };

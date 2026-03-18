@@ -3,19 +3,34 @@ import type { SaleProcessAssignmentsResponse } from "@/myAccount/admin/types/adm
 
 export const getSaleProcessAssignmentsAction =
   async (): Promise<SaleProcessAssignmentsResponse> => {
-    const { data } = await adminApi.getSaleProcessAssignments();
-    return data as SaleProcessAssignmentsResponse;
+    try {
+      const { data } = await adminApi.getSaleProcessAssignments();
+      return data;
+    } catch (error) {
+      console.error("[getSaleProcessAssignmentsAction] Error al obtener asignaciones de venta:", error);
+      throw error;
+    }
   };
 
 export const assignSaleProcessAgentAction = async (
   saleProcessId: number,
   agentMembershipId: number
 ): Promise<void> => {
-  await adminApi.assignSaleProcessAgent(saleProcessId, agentMembershipId);
+  try {
+    await adminApi.assignSaleProcessAgent(saleProcessId, agentMembershipId);
+  } catch (error) {
+    console.error("[assignSaleProcessAgentAction] Error al asignar agente:", error);
+    throw error;
+  }
 };
 
 export const unassignSaleProcessAgentAction = async (
   saleProcessId: number
 ): Promise<void> => {
-  await adminApi.unassignSaleProcessAgent(saleProcessId);
+  try {
+    await adminApi.unassignSaleProcessAgent(saleProcessId);
+  } catch (error) {
+    console.error("[unassignSaleProcessAgentAction] Error al desasignar agente:", error);
+    throw error;
+  }
 };
