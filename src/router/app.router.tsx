@@ -1,8 +1,9 @@
 import { Routes, Route } from "react-router-dom";
-import FinancialProfileModal from "@/components/FinancialProfileModal";
+import FinancialProfileModal from "@/shared/components/custom/FinancialProfileModal";
 import ScrollToTop from "@/shared/components/ScrollToTop";
 import PageTransition from "@/shared/components/PageTransition";
 import Navigation from "@/shared/components/custom/Navigation";
+import NotFound from "@/shared/components/custom/NotFound";
 import HomePage from "@/home/pages/HomePage";
 import BuyPage from "@/buy/pages/BuyPage";
 import PropertyDetailPage from "@/buy/pages/PropertyDetailPage";
@@ -10,7 +11,6 @@ import SellPage from "@/sell/pages/SellPage";
 import CreditFlow from "@/pages/CreditFlow";
 import Servicios from "@/pages/Servicios";
 import MiCuenta from "@/pages/MiCuenta";
-import NotFound from "@/pages/NotFound";
 import RegisterPage from "@/auth/pages/RegisterPage";
 import VerifyOtpPage from "@/auth/pages/VerifyOtpPage";
 

@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/shared/hooks/use-mobile.hook";
 import vakantaLogo from "@/assets/vakanta-logo.png";
 import AdminTabsNavigation from "@/myAccount/admin/components/AdminTabsNavigation";
 import PropiedadesSection from "@/myAccount/admin/components/sections/PropiedadesSection";

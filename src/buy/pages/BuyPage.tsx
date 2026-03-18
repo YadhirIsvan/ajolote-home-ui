@@ -5,7 +5,7 @@ import PropertyCard from "@/shared/components/custom/PropertyCard";
 import PropertyFilters from "@/buy/components/PropertyFilters";
 import MortgageCallToAction from "@/buy/components/MortgageCallToAction";
 import { useBuyProperties } from "@/buy/hooks/use-buy-properties.buy.hook";
-import { useFinancialModal } from "@/contexts/FinancialModalContext";
+import { useFinancialModal } from "@/shared/hooks/financial-modal.context";
 
 const BuyPage = () => {
   const { openFinancialModal } = useFinancialModal();

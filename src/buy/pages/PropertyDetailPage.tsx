@@ -17,7 +17,7 @@ import { TIME_SLOTS } from "@/buy/types/property.types";
 import AuthModal from "@/auth/components/AuthModal";
 import MortgageCallToAction from "@/buy/components/MortgageCallToAction";
 import MortgageCalculatorWidget from "@/buy/components/MortgageCalculatorWidget";
-import { useFinancialModal } from "@/contexts/FinancialModalContext";
+import { useFinancialModal } from "@/shared/hooks/financial-modal.context";
 
 const getPOIIcon = (iconType: string) => {
   switch (iconType) {

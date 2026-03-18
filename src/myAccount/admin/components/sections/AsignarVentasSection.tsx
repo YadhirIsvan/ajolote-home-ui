@@ -40,7 +40,7 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/shared/components/ui/drawer";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/shared/hooks/use-mobile.hook";
 import { toast } from "sonner";
 
 // ─── Media URL helper ─────────────────────────────────────────────────────────

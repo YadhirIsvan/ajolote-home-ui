@@ -29,7 +29,7 @@ import {
   Cell,
   Legend
 } from "recharts";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/shared/hooks/use-mobile.hook";
 import { cn } from "@/lib/utils";
 import { getAdminInsightsAction } from "@/myAccount/admin/actions/get-admin-insights.actions";
 import type { InsightsPeriod } from "@/myAccount/admin/actions/get-admin-insights.actions";

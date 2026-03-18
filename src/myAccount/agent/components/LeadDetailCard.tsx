@@ -3,7 +3,7 @@ import { User, Phone, Mail, Upload, Star, ArrowLeft } from "lucide-react";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import { Badge } from "@/shared/components/ui/badge";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/shared/hooks/use-mobile.hook";
 import SalesPipeline, { pipelineStages } from "@/myAccount/agent/components/SalesPipeline";
 import VerticalPipeline from "@/myAccount/agent/components/VerticalPipeline";
 import PipelineActionSheet from "@/myAccount/agent/components/PipelineActionSheet";

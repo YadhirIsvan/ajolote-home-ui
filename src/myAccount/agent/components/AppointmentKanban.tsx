@@ -3,7 +3,7 @@ import { Clock, CheckCircle, XCircle, RefreshCw, Play, MapPin, ChevronLeft, Chev
 import { Badge } from "@/shared/components/ui/badge";
 import { Card } from "@/shared/components/ui/card";
 import { cn } from "@/lib/utils";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/shared/hooks/use-mobile.hook";
 import AppointmentStatusSheet from "@/myAccount/agent/components/AppointmentStatusSheet";
 import EmptyState from "@/myAccount/agent/components/EmptyState";
 import type { AgentAppointment, AppointmentStatus } from "@/myAccount/agent/types/agent.types";

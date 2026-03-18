@@ -14,7 +14,7 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/shared/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/shared/hooks/use-mobile.hook";
 import ajoloteLogo from "@/assets/ajolote-logo.png";
 import type { AdminSection } from "@/myAccount/admin/types/admin.types";
 

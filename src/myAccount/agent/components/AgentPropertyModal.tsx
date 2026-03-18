@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui
 import { Badge } from "@/shared/components/ui/badge";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { ScrollArea } from "@/shared/components/ui/scroll-area";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/shared/hooks/use-mobile.hook";
 import LeadDetailCard from "@/myAccount/agent/components/LeadDetailCard";
 import LeadCard from "@/myAccount/agent/components/LeadCard";
 import { getAgentPropertyLeadsAction } from "@/myAccount/agent/actions/get-agent-property-leads.actions";

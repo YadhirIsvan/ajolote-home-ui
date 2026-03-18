@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/shared/hooks/use-mobile.hook";
 import type { AdminTab } from "@/myAccount/admin/types/admin.types";
 
 interface AdminTabsNavigationProps {
