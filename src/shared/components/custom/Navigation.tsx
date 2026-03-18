@@ -6,7 +6,7 @@ import { Home, Search, Menu, User, CreditCard, LogOut, ChevronDown, Headset } fr
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/components/ui/popover";
 import { useFinancialModal } from "@/contexts/FinancialModalContext";
 import { useScrollDirection } from "@/shared/hooks/use-scroll-direction.hook";
-import { useAuth } from "@/auth/hooks/use-auth.hook";
+import { useAuth } from "@/auth/hooks/use-auth.auth.hook";
 import vakantaLogo from "@/assets/vakanta-logo.png";
 
 interface UserInfo {

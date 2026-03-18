@@ -1,5 +1,34 @@
 export type UserRole = "client" | "agent" | "admin";
 
+// ── Google OAuth2 SDK — tipado mínimo para eliminar `any` ───────────────────
+
+export interface GoogleTokenResponse {
+  error?: string;
+  access_token: string;
+}
+
+export interface GoogleTokenClientConfig {
+  client_id: string;
+  scope: string;
+  callback: (response: GoogleTokenResponse) => void;
+}
+
+export interface GoogleTokenClient {
+  requestAccessToken: () => void;
+}
+
+declare global {
+  interface Window {
+    google?: {
+      accounts: {
+        oauth2: {
+          initTokenClient: (config: GoogleTokenClientConfig) => GoogleTokenClient;
+        };
+      };
+    };
+  }
+}
+
 export type AuthStep = "options" | "email" | "verify" | "success";
 
 // ── OTP ────────────────────────────────────────────────────────────────────────

@@ -6,7 +6,7 @@ import { getClientFinancialProfileAction } from "@/myAccount/client/actions/get-
 import { getClientProfileDetailAction } from "@/myAccount/client/actions/get-client-profile-detail.actions";
 import { getClientAppointmentsAction } from "@/myAccount/client/actions/get-client-appointments.actions";
 import { clientApi } from "@/myAccount/client/api/client.api";
-import { useAuth } from "@/auth/hooks/use-auth.hook";
+import { useAuth } from "@/auth/hooks/use-auth.auth.hook";
 import type { PropertySaleItem, ClientAppointment } from "@/myAccount/client/types/client.types";
 
 export const useClientDashboard = () => {

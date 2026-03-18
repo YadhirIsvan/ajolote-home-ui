@@ -4,7 +4,7 @@ import { UserPlus, AlertCircle, ArrowRight } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
-import { registerAction } from "@/auth/actions/register.actions";
+import { useRegister } from "@/auth/hooks/use-register.auth.hook";
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -16,7 +16,7 @@ const RegisterPage = () => {
   });
   const [error, setError] = useState("");
   const [userExists, setUserExists] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const { register, isLoading } = useRegister();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -30,16 +30,14 @@ const RegisterPage = () => {
       setError("Nombre, apellido y correo son obligatorios.");
       return;
     }
-    setIsLoading(true);
     setError("");
     setUserExists(false);
-    const result = await registerAction({
+    const result = await register({
       email: form.email,
       first_name: form.first_name,
       last_name: form.last_name,
       ...(form.phone ? { phone: form.phone } : {}),
     });
-    setIsLoading(false);
     if (result.success) {
       navigate(`/auth/verify?email=${encodeURIComponent(form.email)}&mode=register`);
     } else if (result.userExists) {

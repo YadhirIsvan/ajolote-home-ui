@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { UserRole } from "@/auth/types/auth.types";
 import LoginPage from "@/auth/pages/LoginPage";
 
@@ -8,7 +9,7 @@ interface AuthGuardProps {
   onOpenAuthModal: () => void;
   onCloseAuthModal: () => void;
   onLoginSuccess: () => void;
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 const AuthGuard = ({

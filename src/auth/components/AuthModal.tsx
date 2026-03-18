@@ -4,7 +4,7 @@ import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { Separator } from "@/shared/components/ui/separator";
 import { Mail, ArrowRight, Check, AlertCircle, Loader2 } from "lucide-react";
-import { useAuthModal } from "@/auth/hooks/use-auth-modal.hook";
+import { useAuthModal } from "@/auth/hooks/use-auth-modal.auth.hook";
 
 interface AuthModalProps {
   isOpen: boolean;

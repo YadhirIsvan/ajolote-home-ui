@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import type { AuthUser, UserRole } from "@/auth/types/auth.types";
-import { authApi } from "@/auth/api/auth.api";
+import { logoutAction } from "@/auth/actions/logout.actions";
 
 /** Lee el claim `exp` de un JWT sin verificar firma. Retorna null si falla. */
 function getRefreshTokenExpiresInMs(token: string): number | null {
@@ -43,11 +43,7 @@ export const useAuth = () => {
   };
 
   const handleLogout = async () => {
-    try {
-      await authApi.logout();
-    } catch {
-      // ignore logout errors
-    }
+    await logoutAction();
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
     localStorage.removeItem("user");

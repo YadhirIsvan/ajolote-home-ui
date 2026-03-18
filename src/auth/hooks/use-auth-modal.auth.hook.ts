@@ -2,8 +2,8 @@ import { useState } from "react";
 import type { AuthStep } from "@/auth/types/auth.types";
 import { sendEmailOtpAction } from "@/auth/actions/send-email-otp.actions";
 import { verifyOtpAction } from "@/auth/actions/verify-otp.actions";
-import { authApi } from "@/auth/api/auth.api";
-import type { AuthTokens } from "@/auth/types/auth.types";
+import { loginWithGoogleAction } from "@/auth/actions/login-with-google.actions";
+import { loginWithAppleAction } from "@/auth/actions/login-with-apple.actions";
 
 interface UseAuthModalOptions {
   onLoginSuccess: () => void;
@@ -27,7 +27,7 @@ export const useAuthModal = ({ onLoginSuccess, onClose }: UseAuthModalOptions) =
     setError("");
     setIsLoading(true);
 
-    const google = (window as any).google;
+    const google = window.google;
     if (!google?.accounts?.oauth2) {
       setError("Google Sign-In no se ha cargado. Recarga la página.");
       setIsLoading(false);
@@ -35,27 +35,22 @@ export const useAuthModal = ({ onLoginSuccess, onClose }: UseAuthModalOptions) =
     }
 
     const client = google.accounts.oauth2.initTokenClient({
-      client_id: "475959109147-3dmiaob3u2dsn11r0tqh914l1rfh52hd.apps.googleusercontent.com",
+      client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID as string,
       scope: "email profile",
-      callback: async (tokenResponse: any) => {
+      callback: async (tokenResponse) => {
         if (tokenResponse.error) {
           setError("Error al autenticar con Google");
           setIsLoading(false);
           return;
         }
 
-        try {
-          const { data } = await authApi.loginWithGoogle(tokenResponse.access_token);
-          const authData = data as AuthTokens;
-          localStorage.setItem("access_token", authData.access);
-          localStorage.setItem("refresh_token", authData.refresh);
-          localStorage.setItem("user", JSON.stringify(authData.user));
+        const result = await loginWithGoogleAction(tokenResponse.access_token);
+        if (result.success) {
           onLoginSuccess();
-        } catch {
-          setError("Error al iniciar sesión con Google");
-        } finally {
-          setIsLoading(false);
+        } else {
+          setError(result.message ?? "Error al iniciar sesión con Google");
         }
+        setIsLoading(false);
       },
     });
 
@@ -65,18 +60,13 @@ export const useAuthModal = ({ onLoginSuccess, onClose }: UseAuthModalOptions) =
   const handleAppleLogin = async () => {
     setIsLoading(true);
     setError("");
-    try {
-      const { data } = await authApi.loginWithApple("");
-      const authData = data as AuthTokens;
-      localStorage.setItem("access_token", authData.access);
-      localStorage.setItem("refresh_token", authData.refresh);
-      localStorage.setItem("user", JSON.stringify(authData.user));
+    const result = await loginWithAppleAction("");
+    if (result.success) {
       onLoginSuccess();
-    } catch {
-      setError("Apple Login no está disponible actualmente");
-    } finally {
-      setIsLoading(false);
+    } else {
+      setError(result.message ?? "Apple Login no está disponible actualmente");
     }
+    setIsLoading(false);
   };
 
   const handleEmailSubmit = async () => {

@@ -4,7 +4,7 @@ import { Mail, AlertCircle, ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
-import { verifyOtpAction } from "@/auth/actions/verify-otp.actions";
+import { useVerifyOtp } from "@/auth/hooks/use-verify-otp.auth.hook";
 
 const VerifyOtpPage = () => {
   const navigate = useNavigate();
@@ -13,8 +13,8 @@ const VerifyOtpPage = () => {
 
   const [token, setToken] = useState("");
   const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const { verify, isLoading } = useVerifyOtp();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,10 +22,8 @@ const VerifyOtpPage = () => {
       setError("El código debe tener al menos 4 dígitos.");
       return;
     }
-    setIsLoading(true);
     setError("");
-    const result = await verifyOtpAction(email, token);
-    setIsLoading(false);
+    const result = await verify({ email, token });
     if (result.success) {
       setSuccess(true);
       setTimeout(() => navigate("/mi-cuenta"), 1000);
