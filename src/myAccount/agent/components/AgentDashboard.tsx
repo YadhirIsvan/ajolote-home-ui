@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import { Badge } from "@/shared/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
-import { useAgentDashboard } from "@/myAccount/agent/hooks/use-agent-dashboard.hook";
+import { useAgentDashboard } from "@/myAccount/agent/hooks/use-agent-dashboard.agent.hook";
 import AgentPropertyModal from "@/myAccount/agent/components/AgentPropertyModal";
 import AppointmentKanban from "@/myAccount/agent/components/AppointmentKanban";
 import EmptyState from "@/myAccount/agent/components/EmptyState";
@@ -56,9 +56,9 @@ const AgentDashboard = ({ onLogout }: AgentDashboardProps) => {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         {[
           { label: "Propiedades", value: String(properties.length), icon: Home },
-          { label: "Leads Activos", value: String(dashboard?.stats.active_leads ?? 0), icon: Users },
-          { label: "Citas Hoy", value: String(dashboard?.stats.today_appointments ?? 0), icon: Calendar },
-          { label: "Ventas Mes", value: String(dashboard?.stats.month_sales ?? 0), icon: CheckCircle },
+          { label: "Leads Activos", value: String(dashboard?.stats.activeLeads ?? 0), icon: Users },
+          { label: "Citas Hoy", value: String(dashboard?.stats.todayAppointments ?? 0), icon: Calendar },
+          { label: "Ventas Mes", value: String(dashboard?.stats.monthSales ?? 0), icon: CheckCircle },
         ].map((stat, index) => (
           <Card key={index} className="border-border/50 bg-white">
             <CardContent className="p-3 md:p-4 flex items-center gap-3 md:gap-4">

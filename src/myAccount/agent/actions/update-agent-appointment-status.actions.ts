@@ -14,7 +14,8 @@ export const updateAgentAppointmentStatusAction = async (
   try {
     await agentApi.updateAppointmentStatus(id, status, notes);
     return { success: true };
-  } catch {
+  } catch (error) {
+    console.error("[updateAgentAppointmentStatusAction] Error al actualizar estado de cita:", error);
     return {
       success: false,
       message: "No se pudo actualizar el estado de la cita.",

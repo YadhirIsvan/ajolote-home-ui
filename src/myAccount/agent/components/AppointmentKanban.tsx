@@ -10,7 +10,7 @@ import type { AgentAppointment, AppointmentStatus } from "@/myAccount/agent/type
 
 interface AppointmentKanbanProps {
   appointments: AgentAppointment[];
-  onStatusChange: (id: string, newStatus: AppointmentStatus) => void;
+  onStatusChange: (id: number, newStatus: AppointmentStatus) => void;
 }
 
 const statusOrder: AppointmentStatus[] = [
@@ -38,6 +38,7 @@ const statusConfig: Record<
   completada: { label: "Completadas", color: "text-gray-600", bgColor: "bg-gray-100", borderColor: "border-gray-200", icon: CheckCircle },
   cancelada: { label: "Canceladas", color: "text-red-600", bgColor: "bg-red-50", borderColor: "border-red-200", icon: XCircle },
   reagendada: { label: "Reagendadas", color: "text-orange-600", bgColor: "bg-orange-50", borderColor: "border-orange-200", icon: RefreshCw },
+  no_show: { label: "No Show", color: "text-gray-500", bgColor: "bg-gray-50", borderColor: "border-gray-200", icon: XCircle },
 };
 
 interface KanbanCardProps {

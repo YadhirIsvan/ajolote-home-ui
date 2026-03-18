@@ -10,9 +10,9 @@ export interface AgentProperty {
 }
 
 export interface AgentDashboardStats {
-  active_leads: number;
-  today_appointments: number;
-  month_sales: number;
+  activeLeads: number;
+  todayAppointments: number;
+  monthSales: number;
 }
 
 export interface AgentDashboard {
@@ -43,8 +43,8 @@ export interface AgentAppointment {
   time: string;
   status: AppointmentStatus;
   matricula?: string;
-  duration_minutes?: number;
-  client_phone?: string;
+  durationMinutes?: number;
+  clientPhone?: string;
 }
 
 export interface AgentLead {

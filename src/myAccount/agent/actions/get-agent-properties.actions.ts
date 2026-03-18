@@ -1,23 +1,6 @@
 import { agentApi } from "@/myAccount/agent/api/agent.api";
+import type { BackendAgentProperty } from "@/myAccount/agent/api/agent.api";
 import type { AgentProperty } from "@/myAccount/agent/types/agent.types";
-
-interface BackendAgentProperty {
-  id: number;
-  title: string;
-  address: string;
-  price: string;
-  property_type: string;
-  status: string;
-  display_status: string;
-  image: string | null;
-  leads_count: number;
-  assigned_at: string;
-}
-
-interface BackendPaginatedResponse {
-  count: number;
-  results: BackendAgentProperty[];
-}
 
 const formatPrice = (raw: string): string => {
   const num = parseFloat(raw);
@@ -42,9 +25,9 @@ const mapItem = (item: BackendAgentProperty): AgentProperty => ({
 export const getAgentPropertiesAction = async (): Promise<AgentProperty[]> => {
   try {
     const { data } = await agentApi.getProperties();
-    const raw = data as BackendPaginatedResponse;
-    return raw.results.map(mapItem);
-  } catch {
+    return data.results.map(mapItem);
+  } catch (error) {
+    console.error("[getAgentPropertiesAction] Error al obtener propiedades del agente:", error);
     return [];
   }
 };

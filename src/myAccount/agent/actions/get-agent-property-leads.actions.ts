@@ -1,19 +1,6 @@
 import { agentApi } from "@/myAccount/agent/api/agent.api";
+import type { BackendLead } from "@/myAccount/agent/api/agent.api";
 import type { AgentLead } from "@/myAccount/agent/types/agent.types";
-
-interface BackendLead {
-  id: number;
-  status: string;
-  overall_progress: number;
-  client: { name: string; email: string; phone: string };
-  created_at: string;
-  updated_at: string;
-}
-
-interface BackendPaginatedResponse {
-  count: number;
-  results: BackendLead[];
-}
 
 const mapLead = (item: BackendLead): AgentLead => ({
   id: item.id,
@@ -29,9 +16,9 @@ export const getAgentPropertyLeadsAction = async (
 ): Promise<AgentLead[]> => {
   try {
     const { data } = await agentApi.getPropertyLeads(propertyId);
-    const raw = data as BackendPaginatedResponse;
-    return raw.results.map(mapLead);
-  } catch {
+    return data.results.map(mapLead);
+  } catch (error) {
+    console.error("[getAgentPropertyLeadsAction] Error al obtener leads del agente:", error);
     return [];
   }
 };
