@@ -33,7 +33,8 @@ export const getClientRecentActivityAction = async (): Promise<
       description: item.description,
       time: hoursAgo(item.created_at),
     }));
-  } catch {
+  } catch (error) {
+    console.error("[getClientRecentActivityAction] Error al obtener actividad reciente:", error);
     return [];
   }
 };

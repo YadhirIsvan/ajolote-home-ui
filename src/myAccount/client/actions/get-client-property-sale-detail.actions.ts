@@ -65,7 +65,8 @@ export const getClientPropertySaleDetailAction = async (
   try {
     const { data } = await clientApi.getPropertySaleDetail(id);
     return mapDetail(data as BackendSaleDetail, fallback);
-  } catch {
+  } catch (error) {
+    console.error("[getClientPropertySaleDetailAction] Error al obtener detalle de venta:", error);
     if (fallback) return fallback;
     throw new Error(`No se pudo cargar el detalle del proceso de venta ${id}`);
   }

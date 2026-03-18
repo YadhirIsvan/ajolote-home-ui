@@ -77,6 +77,7 @@ export const getClientPropertiesSaleAction =
     try {
       const { data } = await clientApi.getPropertiesSale();
       const raw = data as BackendSalesResponse;
+      // TODO: add generic type to clientApi.getPropertiesSale() when BackendSalesResponse is stable
 
       const list = raw.results.map(mapSaleItem);
       const summary: Omit<PropertiesSaleResponse, "properties"> = {
@@ -87,7 +88,8 @@ export const getClientPropertiesSaleAction =
       };
 
       return { list, summary };
-    } catch {
+    } catch (error) {
+      console.error("[getClientPropertiesSaleAction] Error al obtener propiedades en venta:", error);
       return { list: [], summary: null };
     }
   };

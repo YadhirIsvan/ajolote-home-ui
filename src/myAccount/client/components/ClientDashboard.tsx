@@ -5,7 +5,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Separator } from "@/shared/components/ui/separator";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useClientDashboard } from "@/myAccount/client/hooks/use-client-dashboard.hook";
+import { useClientDashboard } from "@/myAccount/client/hooks/use-client-dashboard.client.hook";
 import { useFinancialModal } from "@/contexts/FinancialModalContext";
 import { getLoanTypeLabel } from "@/myAccount/client/actions/get-client-financial-profile.actions";
 import { updateClientProfileFieldAction } from "@/myAccount/client/actions/get-client-profile-detail.actions";

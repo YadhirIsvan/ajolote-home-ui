@@ -5,8 +5,9 @@ import { getClientSavedPropertiesAction } from "@/myAccount/client/actions/get-c
 import { getClientFinancialProfileAction } from "@/myAccount/client/actions/get-client-financial-profile.actions";
 import { getClientProfileDetailAction } from "@/myAccount/client/actions/get-client-profile-detail.actions";
 import { getClientAppointmentsAction } from "@/myAccount/client/actions/get-client-appointments.actions";
-import { clientApi } from "@/myAccount/client/api/client.api";
+import { getClientProfileAction } from "@/myAccount/client/actions/get-client-profile.actions";
 import { useAuth } from "@/auth/hooks/use-auth.auth.hook";
+// TODO (deuda técnica): mover useAuth a src/shared/hooks/ para eliminar import cross-domain
 import type { PropertySaleItem, ClientAppointment } from "@/myAccount/client/types/client.types";
 
 export const useClientDashboard = () => {
@@ -46,10 +47,7 @@ export const useClientDashboard = () => {
 
   const userProfileQuery = useQuery({
     queryKey: ["client-user-profile"],
-    queryFn: async () => {
-      const { data } = await clientApi.getUserProfile();
-      return data as { avatar: string | null };
-    },
+    queryFn: getClientProfileAction,
     enabled,
   });
 

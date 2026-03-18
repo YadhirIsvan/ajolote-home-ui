@@ -15,12 +15,33 @@ export interface SavedPropertyItem {
   savedAt: string;
 }
 
+interface BackendSavedPropertyEntry {
+  id: number;
+  saved_at: string;
+  property: {
+    id: number;
+    title: string;
+    address: string;
+    price: string;
+    property_type: string;
+    bedrooms: number;
+    bathrooms: number;
+    construction_sqm: string | null;
+    image: string | null;
+    is_verified: boolean;
+  };
+}
+
+interface BackendSavedPropertiesResponse {
+  results?: BackendSavedPropertyEntry[];
+}
+
 export async function getClientSavedPropertiesAction(): Promise<SavedPropertyItem[]> {
   try {
     const response = await clientApi.getSavedProperties();
-    const results = response.data?.results ?? response.data ?? [];
-
-    return results.map((item: any) => ({
+    const raw = response.data as BackendSavedPropertiesResponse;
+    const results: BackendSavedPropertyEntry[] = raw?.results ?? (response.data as BackendSavedPropertyEntry[]) ?? [];
+    return results.map((item) => ({
       id: item.id,
       propertyId: item.property.id,
       title: item.property.title,
@@ -35,7 +56,7 @@ export async function getClientSavedPropertiesAction(): Promise<SavedPropertyIte
       savedAt: item.saved_at,
     }));
   } catch (error) {
-    console.error("Error fetching saved properties:", error);
+    console.error("[getClientSavedPropertiesAction] Error al obtener propiedades guardadas:", error);
     return [];
   }
 }

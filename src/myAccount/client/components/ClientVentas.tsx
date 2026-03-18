@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import { Badge } from "@/shared/components/ui/badge";
 import SellerLeadForm from "@/sell/components/SellerLeadForm";
-import { useClientVentas } from "@/myAccount/client/hooks/use-client-ventas.hook";
+import { useClientVentas } from "@/myAccount/client/hooks/use-client-ventas.client.hook";
 import type { PropertySaleItem } from "@/myAccount/client/types/client.types";
 
 interface ClientVentasProps {

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ArrowLeft, Calendar, Clock, MapPin, User, X, AlertTriangle, Home } from "lucide-react";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
-import { useClientAppointments } from "@/myAccount/client/hooks/use-client-appointments.hook";
+import { useClientAppointments } from "@/myAccount/client/hooks/use-client-appointments.client.hook";
 import type { AppointmentStatus } from "@/myAccount/client/types/client.types";
 
 interface ClientCitasProps {

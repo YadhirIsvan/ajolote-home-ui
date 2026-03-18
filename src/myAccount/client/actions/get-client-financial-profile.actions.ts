@@ -1,4 +1,4 @@
-import { axiosInstance } from "@/shared/api/axios.instance";
+import { clientApi } from "@/myAccount/client/api/client.api";
 
 export interface FinancialProfile {
   loanType: string;
@@ -22,21 +22,19 @@ export function getLoanTypeLabel(loanType: string): string {
 
 export async function getClientFinancialProfileAction(): Promise<FinancialProfile | null> {
   try {
-    const response = await axiosInstance.get("/client/financial-profile");
-    const data = response.data;
-
-    if (!data || !data.calculated_budget) return null;
-
+    const { data } = await clientApi.getFinancialProfile();
+    if (!data?.calculated_budget) return null;
     return {
-      loanType: data.loan_type || "",
-      monthlyIncome: data.monthly_income || 0,
+      loanType: data.loan_type ?? "",
+      monthlyIncome: data.monthly_income ?? 0,
       partnerMonthlyIncome: data.partner_monthly_income ?? null,
-      savingsForEnganche: data.savings_for_enganche || 0,
-      hasInfonavit: data.has_infonavit || false,
+      savingsForEnganche: data.savings_for_enganche ?? 0,
+      hasInfonavit: data.has_infonavit ?? false,
       infonavitSubcuentaBalance: data.infonavit_subcuenta_balance ?? null,
       calculatedBudget: data.calculated_budget,
     };
-  } catch {
+  } catch (error) {
+    console.error("[getClientFinancialProfileAction] Error al obtener perfil financiero:", error);
     return null;
   }
 }

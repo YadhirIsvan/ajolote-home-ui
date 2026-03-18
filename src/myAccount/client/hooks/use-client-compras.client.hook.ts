@@ -3,37 +3,22 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getClientPropertiesBuyAction } from "@/myAccount/client/actions/get-client-properties-buy.actions";
 import { getClientPropertyFilesAction } from "@/myAccount/client/actions/get-client-property-files.actions";
 import { uploadClientPropertyFilesAction } from "@/myAccount/client/actions/upload-client-property-files.actions";
-import { clientApi } from "@/myAccount/client/api/client.api";
+import { getClientPurchaseStepsAction } from "@/myAccount/client/actions/get-client-purchase-steps.actions";
 import type { Step } from "@/myAccount/client/types/client.types";
 
-interface BackendStep {
-  key: string;
-  label: string;
-  progress: number;
-  status: "completed" | "current" | "pending";
-  allow_upload: boolean;
-}
-
-interface PurchaseDetailResponse {
-  steps?: BackendStep[];
-}
-
-const mapBackendSteps = (steps: BackendStep[]): Step[] =>
-  steps.map((s) => ({
-    label: s.label,
-    done: s.status === "completed",
-    current: s.status === "current",
-    allowUpload: s.allow_upload,
-  }));
-
 const buildStepsFromProgress = (progress: number | undefined): Step[] => {
-  const steps: Step[] = [
-    { label: "Oferta", done: progress! >= 15, current: progress! >= 15 && progress! < 30, allowUpload: false },
-    { label: "Avalúo", done: progress! >= 30, current: progress! >= 30 && progress! < 45, allowUpload: false },
-    { label: "Crédito", done: progress! >= 45, current: progress! >= 45 && progress! < 60, allowUpload: false },
-    { label: "Documentos verificados", done: progress! >= 100, current: progress! >= 60 && progress! < 100, allowUpload: progress! >= 60 && progress! < 100 },
+  const p = progress ?? 0;
+  return [
+    { label: "Oferta", done: p >= 15, current: p >= 15 && p < 30, allowUpload: false },
+    { label: "Avalúo", done: p >= 30, current: p >= 30 && p < 45, allowUpload: false },
+    { label: "Crédito", done: p >= 45, current: p >= 45 && p < 60, allowUpload: false },
+    {
+      label: "Documentos verificados",
+      done: p >= 100,
+      current: p >= 60 && p < 100,
+      allowUpload: p >= 60 && p < 100,
+    },
   ];
-  return steps;
 };
 
 export const useClientCompras = () => {
@@ -58,11 +43,7 @@ export const useClientCompras = () => {
 
   const { data: purchaseSteps = [] } = useQuery({
     queryKey: ["client-purchase-steps", viewingDetailId],
-    queryFn: async () => {
-      const { data } = await clientApi.getPropertyDetail(viewingDetailId!);
-      const detail = data as PurchaseDetailResponse;
-      return detail.steps ? mapBackendSteps(detail.steps) : [];
-    },
+    queryFn: () => getClientPurchaseStepsAction(viewingDetailId!),
     enabled: !!viewingDetailId,
   });
 

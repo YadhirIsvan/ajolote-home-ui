@@ -12,8 +12,9 @@ export const getClientNotificationPreferencesAction =
   async (): Promise<NotificationPreferences> => {
     try {
       const { data } = await clientApi.getNotificationPreferences();
-      return data as NotificationPreferences;
-    } catch {
+      return data;
+    } catch (error) {
+      console.error("[getClientNotificationPreferencesAction] Error al obtener preferencias:", error);
       return DEFAULT_PREFERENCES;
     }
   };
@@ -21,5 +22,12 @@ export const getClientNotificationPreferencesAction =
 export const updateClientNotificationPreferencesAction = async (
   prefs: NotificationPreferences
 ): Promise<void> => {
-  await clientApi.updateNotificationPreferences(prefs);
+  try {
+    await clientApi.updateNotificationPreferences(prefs);
+  } catch (error) {
+    console.error("[updateClientNotificationPreferencesAction] Error al actualizar preferencias:", error);
+    throw new Error(
+      error instanceof Error ? error.message : "Error al actualizar preferencias de notificación"
+    );
+  }
 };

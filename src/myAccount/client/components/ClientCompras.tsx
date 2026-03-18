@@ -2,7 +2,7 @@ import { ArrowLeft, MapPin, CheckCircle2, Clock, AlertCircle, Upload, FileText }
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import { Badge } from "@/shared/components/ui/badge";
-import { useClientCompras } from "@/myAccount/client/hooks/use-client-compras.hook";
+import { useClientCompras } from "@/myAccount/client/hooks/use-client-compras.client.hook";
 import type {
   PropertyBuySummary,
   PropertyFileItem,

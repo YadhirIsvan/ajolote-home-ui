@@ -5,7 +5,8 @@ export const getClientProfileAction = async (): Promise<UserProfile | null> => {
   try {
     const { data } = await clientApi.getUserProfile();
     return data as UserProfile;
-  } catch {
+  } catch (error) {
+    console.error("[getClientProfileAction] Error al obtener perfil de usuario:", error);
     return null;
   }
 };

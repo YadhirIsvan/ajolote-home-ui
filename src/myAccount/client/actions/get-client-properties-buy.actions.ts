@@ -35,7 +35,8 @@ export const getClientPropertiesBuyAction =
       const { data } = await clientApi.getPropertiesBuys();
       const raw = data as BackendPurchasesResponse;
       return raw.results.map(mapBuyItem);
-    } catch {
+    } catch (error) {
+      console.error("[getClientPropertiesBuyAction] Error al obtener propiedades en compra:", error);
       return [];
     }
   };
