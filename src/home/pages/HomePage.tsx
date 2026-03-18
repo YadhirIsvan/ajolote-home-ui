@@ -1,13 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/shared/components/ui/select";
 import PropertyCard from "@/shared/components/custom/PropertyCard";
 import {
   Search,
@@ -20,10 +20,9 @@ import {
   PartyPopper,
   ArrowRight,
 } from "lucide-react";
-import { useFeaturedProperties } from "@/home/hooks/use-featured-properties.hook";
-import { getCitiesAction } from "@/buy/actions/get-cities.actions";
+import { useFeaturedProperties } from "@/home/hooks/use-featured-properties.home.hook";
+import { useHomeCities } from "@/home/hooks/use-home-cities.home.hook";
 import videoBackground from "@/assets/videos/video-background.mp4";
-import type { CityItem } from "@/buy/actions/get-cities.actions";
 
 /* ── Trust bar partners (text placeholders until real logos exist) ── */
 const PARTNERS = [
@@ -74,29 +73,14 @@ const STEPS = [
 const HomePage = () => {
   const navigate = useNavigate();
   const [selectedCity, setSelectedCity] = useState<string>("");
-  const [cities, setCities] = useState<CityItem[]>([]);
-  const [isLoadingCities, setIsLoadingCities] = useState(true);
+
+  const { cities, isLoading: isLoadingCities } = useHomeCities();
 
   const { properties, isLoading } = useFeaturedProperties({
     zone: selectedCity || undefined,
     limit: 20,
     offset: 0,
   });
-
-  // Cargar ciudades de la API
-  useEffect(() => {
-    const loadCities = async () => {
-      try {
-        const data = await getCitiesAction();
-        setCities(data);
-      } catch (error) {
-        console.error("Error loading cities:", error);
-      } finally {
-        setIsLoadingCities(false);
-      }
-    };
-    loadCities();
-  }, []);
 
   const handleSearch = () => {
     if (selectedCity) {

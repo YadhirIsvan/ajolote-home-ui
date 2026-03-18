@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Clock, CheckCircle, XCircle, RefreshCw, Play, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
+import { Badge } from "@/shared/components/ui/badge";
+import { Card } from "@/shared/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import AppointmentStatusSheet from "./AppointmentStatusSheet";

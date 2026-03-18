@@ -1,6 +1,6 @@
 import { Clock, CheckCircle, XCircle, RefreshCw, Play, MapPin } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/shared/components/ui/badge";
+import { Switch } from "@/shared/components/ui/switch";
 import { cn } from "@/lib/utils";
 import type { AgentAppointment } from "@/myAccount/agent/types/agent.types";
 

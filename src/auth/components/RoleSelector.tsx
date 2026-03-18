@@ -1,5 +1,5 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Card } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/shared/components/ui/dialog";
+import { Card } from "@/shared/components/ui/card";
 import { User, Briefcase, Shield } from "lucide-react";
 import type { UserRole } from "@/auth/types/auth.types";
 

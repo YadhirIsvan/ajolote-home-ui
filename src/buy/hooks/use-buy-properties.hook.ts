@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { getPropertiesAction } from "@/buy/actions/get-properties.actions";
-import { getCitiesAction, type CityItem } from "@/buy/actions/get-cities.actions";
+import { getCitiesAction, type CityItem } from "@/shared/actions/get-cities.actions";
 import {
   DEFAULT_BUY_FILTERS,
   PRICE_RANGE_LIMITS,

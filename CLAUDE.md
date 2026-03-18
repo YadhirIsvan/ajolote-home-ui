@@ -74,6 +74,12 @@ src/
 │   ├── hooks/
 │   └── pages/
 │
+├── notifications/
+│   ├── actions/
+│   ├── api/
+│   ├── hooks/
+│   └── types/
+│
 ├── router/
 │   └── app.router.tsx               ← Entry point principal de rutas
 │
@@ -172,6 +178,7 @@ home/              →                        src/shared/  →  node_modules
 buy/               →                        src/shared/  →  node_modules
 sell/              →                        src/shared/  →  node_modules
 auth/              →                        src/shared/  →  node_modules
+notifications/     →                        src/shared/  →  node_modules
 ```
 
 ---
@@ -236,31 +243,39 @@ auth/              →                        src/shared/  →  node_modules
 2. auth/
 3. buy/
 4. sell/
-5. myAccount/client/
-6. myAccount/agent/
-7. myAccount/admin/
-8. myAccount/shared/ + my-account.router.tsx
-9. Limpieza global + src/shared/ + app.router.tsx final
+5. notifications/
+6. myAccount/client/
+7. myAccount/agent/
+8. myAccount/admin/
+9. myAccount/shared/ + my-account.router.tsx
+10. Limpieza global + src/shared/ + app.router.tsx final
 ```
 
 ### Checklist por dominio (ejecutar en este orden exacto)
 ```
-□ 1. Leer el CLAUDE.md local del dominio antes de tocar cualquier archivo.
-□ 2. Hacer un análisis del estado actual: listar archivos existentes a migrar.
-□ 3. Presentar el plan completo al usuario (archivos a crear, mover, modificar).
-□ 4. Esperar confirmación explícita antes de ejecutar.
-□ 5. Crear la estructura de carpetas del dominio.
-□ 6. Mover o crear archivos en su carpeta correcta.
-□ 7. Actualizar TODOS los imports internos del dominio.
-□ 8. Actualizar el router correspondiente (app.router.tsx o my-account.router.tsx).
-□ 9. Verificar que no haya imports rotos (buscar referencias a paths antiguos).
+□ 1.  Leer el CLAUDE.md local del dominio antes de tocar cualquier archivo.
+□ 2.  Hacer un análisis del estado actual: listar archivos existentes a migrar.
+□ 3.  Presentar el plan completo al usuario (archivos a crear, mover, modificar).
+□ 4.  Esperar confirmación explícita antes de ejecutar.
+□ 5.  Crear la estructura de carpetas del dominio.
+□ 6.  Mover o crear archivos en su carpeta correcta.
+□ 7.  Actualizar TODOS los imports internos del dominio.
+□ 8.  Actualizar el router correspondiente (app.router.tsx o my-account.router.tsx).
+□ 9.  Verificar que no haya imports rotos (buscar referencias a paths antiguos con grep).
 □ 10. Crear o actualizar los index.ts de barrel exports.
-□ 11. Reportar resumen de cambios.
-□ 12. Solicitar confirmación antes de continuar con el siguiente dominio.
+□ 11. Verificar el servidor de desarrollo: leer el output de Vite y confirmar que no
+      hay errores de resolución de imports ni errores de sintaxis TypeScript.
+      Si hay errores → resolverlos antes de continuar. No romper lógica de negocio.
+□ 12. Reportar resumen de cambios al usuario.
+□ 13. Solicitar confirmación explícita antes de continuar con el siguiente dominio.
 ```
 
-### Regla de seguridad
-Nunca borres un archivo original hasta que el nuevo esté verificado y funcionando.
+### Reglas de seguridad
+- Nunca borres un archivo original hasta que el nuevo esté verificado y funcionando.
+- Después de cada dominio, revisar el output de Vite (`npm run dev`) para confirmar
+  cero errores antes de presentar el resumen final y antes de avanzar al siguiente dominio.
+- Si se detecta un error en Vite, resolverlo en la misma sesión sin modificar lógica
+  de negocio. Solo corregir paths, imports, tipos o sintaxis.
 
 ---
 

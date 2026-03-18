@@ -1,4 +1,4 @@
-import { Card } from "@/components/ui/card";
+import { Card } from "@/shared/components/ui/card";
 import { AlertCircle, CheckCircle, Clock, FileText, MessageCircle, Shield } from "lucide-react";
 
 const Servicios = () => {

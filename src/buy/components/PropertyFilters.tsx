@@ -1,7 +1,7 @@
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/shared/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select";
+import { Slider } from "@/shared/components/ui/slider";
+import { Checkbox } from "@/shared/components/ui/checkbox";
 import { X } from "lucide-react";
 import {
   PROPERTY_TYPES,
@@ -10,7 +10,7 @@ import {
   PRICE_RANGE_LIMITS,
   type BuyFilters,
 } from "@/buy/types/property.types";
-import type { CityItem } from "@/buy/actions/get-cities.actions";
+import type { CityItem } from "@/shared/actions/get-cities.actions";
 import { formatPrice } from "@/buy/hooks/use-buy-properties.hook";
 
 interface PropertyFiltersProps {

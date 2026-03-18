@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Button } from "@/shared/components/ui/button";
+import { Card } from "@/shared/components/ui/card";
 import { MapPin, BedDouble, Bath, Maximize } from "lucide-react";
 
 export type PropertyStatus = "disponible" | "preventa" | "oportunidad" | "vendida";

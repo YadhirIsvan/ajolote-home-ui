@@ -66,11 +66,11 @@ const mapItem = (item: BackendPropertyItem): PropertyListItem => ({
   sqm: item.construction_sqm ? parseFloat(item.construction_sqm) : 0,
   type: item.property_type,
   state: item.property_condition,
-  days_listed: item.days_listed,
+  daysListed: item.days_listed,
   interested: item.interested,
   views: item.views,
-  is_featured: item.is_featured,
-  is_verified: item.is_verified,
+  isFeatured: item.is_featured,
+  isVerified: item.is_verified,
 });
 
 export const getFeaturedPropertiesAction = async (
@@ -97,7 +97,10 @@ export const getFeaturedPropertiesAction = async (
     const url = `${ENDPOINTS.FEATURED_PROPERTIES}?${searchParams.toString()}`;
     const { data } = await homeApi.get<BackendPaginatedResponse>(url);
     return { data: data.results.map(mapItem), fromFallback: false };
-  } catch {
+  } catch (error) {
+    // Decisión de diseño: fallback a [] en lugar de lanzar — las propiedades
+    // destacadas son contenido editorial, su ausencia no bloquea ningún flujo crítico.
+    console.error("[getFeaturedPropertiesAction] Error al obtener propiedades destacadas:", error);
     return { data: [], fromFallback: true };
   }
 };

@@ -1,5 +1,5 @@
 import { User } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/components/ui/button";
 import Navigation from "@/shared/components/custom/Navigation";
 import AuthModal from "@/auth/components/AuthModal";
 

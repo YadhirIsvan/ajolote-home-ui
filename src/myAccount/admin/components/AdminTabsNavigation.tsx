@@ -13,7 +13,7 @@ import {
   History,
   BarChart3,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { AdminTab } from "@/myAccount/admin/types/admin.types";

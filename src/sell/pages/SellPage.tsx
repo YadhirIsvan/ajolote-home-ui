@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Button } from "@/shared/components/ui/button";
+import { Dialog, DialogContent } from "@/shared/components/ui/dialog";
+import { AspectRatio } from "@/shared/components/ui/aspect-ratio";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/shared/components/ui/accordion";
 import {
   ClipboardEdit, ShieldCheck, Megaphone, FileSignature,
   ArrowRight, Play, X, Check, Star,

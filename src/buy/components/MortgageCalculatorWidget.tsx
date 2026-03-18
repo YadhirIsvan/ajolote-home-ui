@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Slider } from "@/components/ui/slider";
-import { Label } from "@/components/ui/label";
+import { Badge } from "@/shared/components/ui/badge";
+import { Slider } from "@/shared/components/ui/slider";
+import { Label } from "@/shared/components/ui/label";
 
 interface MortgageCalculatorWidgetProps {
   propertyPrice: number;

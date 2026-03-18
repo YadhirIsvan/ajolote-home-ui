@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Button } from "@/shared/components/ui/button";
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/shared/components/ui/sheet";
 import { Home, Search, Menu, User, CreditCard, LogOut, ChevronDown, Headset } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/shared/components/ui/popover";
 import { useFinancialModal } from "@/contexts/FinancialModalContext";
 import { useScrollDirection } from "@/shared/hooks/use-scroll-direction.hook";
 import { useAuth } from "@/auth/hooks/use-auth.hook";

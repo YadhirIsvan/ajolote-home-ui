@@ -13,8 +13,8 @@ import {
   LogOut,
   Clock
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Button } from "@/shared/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/shared/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import ajoloteLogo from "@/assets/ajolote-logo.png";
 

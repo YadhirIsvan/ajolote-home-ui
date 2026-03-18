@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { User, Phone, Mail, Upload, Star, ArrowLeft } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/shared/components/ui/card";
+import { Button } from "@/shared/components/ui/button";
+import { Badge } from "@/shared/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
 import SalesPipeline, { pipelineStages } from "./SalesPipeline";
 import VerticalPipeline from "./VerticalPipeline";

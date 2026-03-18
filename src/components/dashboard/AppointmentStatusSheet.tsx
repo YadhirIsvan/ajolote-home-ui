@@ -1,18 +1,18 @@
 import { ChevronRight, ChevronLeft, Clock, User, MapPin } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@/shared/components/ui/dialog";
 import {
   Drawer,
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
-} from "@/components/ui/drawer";
-import { Badge } from "@/components/ui/badge";
+} from "@/shared/components/ui/drawer";
+import { Badge } from "@/shared/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 interface Appointment {
