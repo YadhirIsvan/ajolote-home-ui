@@ -32,7 +32,7 @@ export const useNotifications = () => {
 
   return {
     notifications: data?.results ?? [],
-    unreadCount: data?.unread_count ?? 0,
+    unreadCount: data?.unreadCount ?? 0,
     total: data?.count ?? 0,
     isLoading,
     markRead: (id: number) => markReadMutation.mutate(id),
