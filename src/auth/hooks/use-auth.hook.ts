@@ -1,6 +1,19 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { AuthUser, UserRole } from "@/auth/types/auth.types";
 import { authApi } from "@/auth/api/auth.api";
+
+/** Lee el claim `exp` de un JWT sin verificar firma. Retorna null si falla. */
+function getRefreshTokenExpiresInMs(token: string): number | null {
+  try {
+    const payload = JSON.parse(
+      atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/"))
+    );
+    if (!payload?.exp) return null;
+    return payload.exp * 1000 - Date.now();
+  } catch {
+    return null;
+  }
+}
 
 export const useAuth = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(
@@ -41,6 +54,34 @@ export const useAuth = () => {
     setIsAuthenticated(false);
     setUser(null);
   };
+
+  // Ref para acceder a handleLogout dentro del timer sin re-crearlo como dep
+  const handleLogoutRef = useRef(handleLogout);
+  handleLogoutRef.current = handleLogout;
+
+  // Auto-logout cuando expira el refresh token
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const refresh = localStorage.getItem("refresh_token");
+    if (!refresh) return;
+
+    const msLeft = getRefreshTokenExpiresInMs(refresh);
+    if (msLeft === null) return;
+
+    // Ya expiró: cerrar sesión inmediatamente
+    if (msLeft <= 0) {
+      handleLogoutRef.current();
+      return;
+    }
+
+    // Programar cierre exactamente cuando expire (máx ~24 días por límite de setTimeout)
+    const timer = setTimeout(
+      () => handleLogoutRef.current(),
+      Math.min(msLeft, 2_147_483_647)
+    );
+    return () => clearTimeout(timer);
+  }, [isAuthenticated]);
 
   const openAuthModal = () => setShowAuthModal(true);
   const closeAuthModal = () => setShowAuthModal(false);

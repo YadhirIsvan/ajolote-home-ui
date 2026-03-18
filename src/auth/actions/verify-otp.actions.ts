@@ -30,6 +30,12 @@ export const verifyOtpAction = async (
     localStorage.setItem("access_token", authData.access);
     localStorage.setItem("refresh_token", authData.refresh);
     localStorage.setItem("user", JSON.stringify(authData.user));
+    if (authData.user.memberships?.length) {
+      localStorage.setItem(
+        "selected_tenant_id",
+        String(authData.user.memberships[0].tenant_id)
+      );
+    }
 
     return {
       success: true,

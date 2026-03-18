@@ -6,32 +6,42 @@ import { getClientFinancialProfileAction } from "@/myAccount/client/actions/get-
 import { getClientProfileDetailAction } from "@/myAccount/client/actions/get-client-profile-detail.actions";
 import { getClientAppointmentsAction } from "@/myAccount/client/actions/get-client-appointments.actions";
 import { clientApi } from "@/myAccount/client/api/client.api";
+import { useAuth } from "@/auth/hooks/use-auth.hook";
 import type { PropertySaleItem, ClientAppointment } from "@/myAccount/client/types/client.types";
 
 export const useClientDashboard = () => {
+  const { isAuthenticated, role } = useAuth();
+  // Solo disparar queries cuando el usuario está autenticado y tiene rol client
+  const enabled = isAuthenticated && role === "client";
+
   const ventasQuery = useQuery({
     queryKey: ["client-properties-sale"],
     queryFn: getClientPropertiesSaleAction,
+    enabled,
   });
 
   const comprasQuery = useQuery({
     queryKey: ["client-properties-buy"],
     queryFn: getClientPropertiesBuyAction,
+    enabled,
   });
 
   const savedQuery = useQuery({
     queryKey: ["client-saved-properties"],
     queryFn: getClientSavedPropertiesAction,
+    enabled,
   });
 
   const financialQuery = useQuery({
     queryKey: ["client-financial-profile"],
     queryFn: getClientFinancialProfileAction,
+    enabled,
   });
 
   const clientProfileQuery = useQuery({
     queryKey: ["client-profile-detail"],
     queryFn: getClientProfileDetailAction,
+    enabled,
   });
 
   const userProfileQuery = useQuery({
@@ -40,12 +50,14 @@ export const useClientDashboard = () => {
       const { data } = await clientApi.getUserProfile();
       return data as { avatar: string | null };
     },
+    enabled,
   });
 
   const appointmentsQuery = useQuery({
     queryKey: ["client-appointments"],
     queryFn: getClientAppointmentsAction,
     staleTime: 1000 * 60 * 3,
+    enabled,
   });
 
   return {
