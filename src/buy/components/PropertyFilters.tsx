@@ -11,7 +11,7 @@ import {
   type BuyFilters,
 } from "@/buy/types/property.types";
 import type { CityItem } from "@/shared/actions/get-cities.actions";
-import { formatPrice } from "@/buy/hooks/use-buy-properties.hook";
+import { formatPrice } from "@/buy/hooks/use-buy-properties.buy.hook";
 
 interface PropertyFiltersProps {
   filters: BuyFilters;

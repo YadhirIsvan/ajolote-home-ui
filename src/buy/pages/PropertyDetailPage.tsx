@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
@@ -12,14 +12,12 @@ import {
   MessageCircle, Waves, Dumbbell, Shield, ArrowUpDown,
   Car, Leaf, Sun, Bookmark,
 } from "lucide-react";
-import { usePropertyDetail } from "@/buy/hooks/use-property-detail.hook";
+import { usePropertyDetail } from "@/buy/hooks/use-property-detail.buy.hook";
 import { TIME_SLOTS } from "@/buy/types/property.types";
 import AuthModal from "@/auth/components/AuthModal";
 import MortgageCallToAction from "@/buy/components/MortgageCallToAction";
 import MortgageCalculatorWidget from "@/buy/components/MortgageCalculatorWidget";
 import { useFinancialModal } from "@/contexts/FinancialModalContext";
-import { checkSavedPropertyAction } from "@/buy/actions/check-saved-property.actions";
-import { toggleSavedPropertyAction } from "@/buy/actions/toggle-saved-property.actions";
 
 const getPOIIcon = (iconType: string) => {
   switch (iconType) {
@@ -83,62 +81,9 @@ const extractYouTubeId = (input: string | undefined): string | null => {
 
 const PropertyDetailPage = () => {
   const { openFinancialModal } = useFinancialModal();
-  const [financialProfile, setFinancialProfile] = useState<any>(null);
-  const [loadingProfile, setLoadingProfile] = useState(true);
-
-  // Cargar perfil financiero desde la API
-  useEffect(() => {
-    const fetchFinancialProfile = async () => {
-      try {
-        const token = localStorage.getItem("access_token");
-        if (!token) {
-          setLoadingProfile(false);
-          return;
-        }
-
-        const response = await fetch("http://localhost:8000/api/v1/client/financial-profile", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data && data.calculated_budget) {
-            setFinancialProfile({
-              loanType: data.loan_type,
-              monthlyIncome: data.monthly_income.toString(),
-              partnerMonthlyIncome: data.partner_monthly_income?.toString() || "",
-              savingsForEnganche: data.savings_for_enganche.toString(),
-              hasInfonavit: data.has_infonavit,
-              infonautSubcuentaBalance: data.infonavit_subcuenta_balance?.toString() || "",
-              calculatedBudget: data.calculated_budget,
-            });
-          }
-        }
-      } catch {
-        // No fallback a localStorage — solo usar datos de la API
-      } finally {
-        setLoadingProfile(false);
-      }
-    };
-
-    // Cargar perfil al montar componente
-    fetchFinancialProfile();
-  }, []);
-
-  const isAuthenticated = !!localStorage.getItem("access_token");
-  
-  // Show mortgage calculator if user is authenticated and has financial profile
-  const showMortgageCalculator = isAuthenticated && !loadingProfile && financialProfile;
 
   // State for mortgage calculator expansion on mobile
   const [expandMortgage, setExpandMortgage] = useState(false);
-
-  // State for saved properties
-  const [isSaved, setIsSaved] = useState(false);
-  const [savingInProgress, setSavingInProgress] = useState(false);
-  const [showSaveAuthModal, setShowSaveAuthModal] = useState(false);
 
   const {
     property,
@@ -158,7 +103,6 @@ const PropertyDetailPage = () => {
     setShowCallConfirmModal,
     successData,
     selectedDate,
-    setSelectedDate,
     handleDateSelect,
     selectedTime,
     setSelectedTime,
@@ -175,33 +119,15 @@ const PropertyDetailPage = () => {
     handleConfirmCall,
     isScheduling,
     scheduleError,
+    isSaved,
+    showSaveAuthModal,
+    setShowSaveAuthModal,
+    handleToggleSave,
+    financialProfile,
+    showMortgageCalculator,
   } = usePropertyDetail();
 
-  // Handle toggle save property
-  const handleToggleSave = async () => {
-    if (!property?.id) return;
-
-    if (!isAuthenticated) {
-      setShowSaveAuthModal(true);
-      return;
-    }
-
-    if (savingInProgress) return;
-    setSavingInProgress(true);
-
-    const result = await toggleSavedPropertyAction(property.id, isSaved);
-    setIsSaved(result.isSaved);
-    setSavingInProgress(false);
-  };
-
-  // Check if property is saved via API
-  useEffect(() => {
-    if (property?.id && isAuthenticated) {
-      checkSavedPropertyAction(property.id).then(({ isSaved: saved }) => {
-        setIsSaved(saved);
-      });
-    }
-  }, [property?.id, isAuthenticated]);
+  const isAuthenticated = !!localStorage.getItem("access_token");
 
   if (isLoading) {
     return (
@@ -539,13 +465,13 @@ const PropertyDetailPage = () => {
                       <p className="text-xs text-muted-foreground">Área Construcción</p>
                     </div>
                   </div>
-                  {property.land_sqm && (
+                  {property.landSqm && (
                     <>
                       <div className="w-px h-10 bg-border" />
                       <div className="flex items-center gap-3">
                         <Maximize className="w-6 h-6 text-primary" />
                         <div>
-                          <p className="font-semibold text-primary">{property.land_sqm}m²</p>
+                          <p className="font-semibold text-primary">{property.landSqm}m²</p>
                           <p className="text-xs text-muted-foreground">Área Terreno</p>
                         </div>
                       </div>
@@ -579,7 +505,7 @@ const PropertyDetailPage = () => {
                   <div>
                     <h3 className="text-xl font-semibold text-primary mb-4">Recorrido Virtual</h3>
                     <div className="aspect-video bg-primary/5 rounded-2xl relative overflow-hidden shadow-medium">
-                      <img src={property.video_img || displayImages[0]} alt="Video thumbnail" className="w-full h-full object-cover" />
+                      <img src={property.videoImg || displayImages[0]} alt="Video thumbnail" className="w-full h-full object-cover" />
                       <div className="absolute inset-0 flex items-center justify-center bg-primary/20">
                         <button
                           onClick={() => setShowVideoModal(true)}
@@ -705,11 +631,7 @@ const PropertyDetailPage = () => {
         onClose={() => setShowSaveAuthModal(false)}
         onLoginSuccess={() => {
           setShowSaveAuthModal(false);
-          if (property?.id) {
-            toggleSavedPropertyAction(property.id, false).then((result) => {
-              setIsSaved(result.isSaved);
-            });
-          }
+          handleToggleSave();
         }}
       />
 
@@ -842,7 +764,7 @@ const PropertyDetailPage = () => {
             <iframe
               width="100%"
               height="100%"
-              src={`https://www.youtube.com/embed/${extractYouTubeId(property.video_id)}?autoplay=1`}
+              src={`https://www.youtube.com/embed/${extractYouTubeId(property.videoId)}?autoplay=1`}
               title="Recorrido virtual de la propiedad"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen

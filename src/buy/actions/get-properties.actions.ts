@@ -68,11 +68,11 @@ const mapItem = (item: BackendPropertyItem): BuyPropertyListItem => ({
   sqm: item.construction_sqm ? parseFloat(item.construction_sqm) : 0,
   type: item.property_type,
   state: item.property_condition,
-  days_listed: item.days_listed,
+  daysListed: item.days_listed,
   interested: item.interested,
   views: item.views,
-  is_featured: item.is_featured,
-  is_verified: item.is_verified,
+  isFeatured: item.is_featured,
+  isVerified: item.is_verified,
 });
 
 export const getPropertiesAction = async (

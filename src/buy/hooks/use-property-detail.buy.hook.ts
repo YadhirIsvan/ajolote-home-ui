@@ -1,10 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getPropertyDetailAction } from "@/buy/actions/get-property-detail.actions";
 import { scheduleAppointmentAction } from "@/buy/actions/schedule-appointment.actions";
 import { getAppointmentSlotsAction } from "@/buy/actions/get-appointment-slots.actions";
-import type { AppointmentResponse, AppointmentSlot } from "@/buy/types/property.types";
+import { getFinancialProfileAction } from "@/buy/actions/get-financial-profile.actions";
+import { checkSavedPropertyAction } from "@/shared/actions/check-saved-property.actions";
+import { toggleSavedPropertyAction } from "@/shared/actions/toggle-saved-property.actions";
+import type {
+  AppointmentResponse,
+  AppointmentSlot,
+  FinancialProfile,
+} from "@/buy/types/property.types";
 
 export const PROPERTY_DETAIL_QUERY_KEY = "buy-property-detail";
 export const APPOINTMENT_SLOTS_QUERY_KEY = "buy-appointment-slots";
@@ -13,12 +20,18 @@ export const usePropertyDetail = () => {
   const { id } = useParams<{ id: string }>();
   const numId = id ? parseInt(id, 10) : NaN;
 
+  // Verifica auth leyendo localStorage (buy/ no puede importar auth/)
+  const isAuthenticated = !!localStorage.getItem("access_token");
+
+  // ── Modal / UI state ──────────────────────────────────────────────
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [showCallConfirmModal, setShowCallConfirmModal] = useState(false);
+
+  // ── Appointment state ─────────────────────────────────────────────
   const [successData, setSuccessData] = useState<AppointmentResponse | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
@@ -28,6 +41,16 @@ export const usePropertyDetail = () => {
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [agentPhoneToCall, setAgentPhoneToCall] = useState<string>("");
 
+  // ── Saved property state ──────────────────────────────────────────
+  const [isSaved, setIsSaved] = useState(false);
+  const [savingInProgress, setSavingInProgress] = useState(false);
+  const [showSaveAuthModal, setShowSaveAuthModal] = useState(false);
+
+  // ── Financial profile state ───────────────────────────────────────
+  const [financialProfile, setFinancialProfile] = useState<FinancialProfile | null>(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
+
+  // ── Property detail query ─────────────────────────────────────────
   const { data, isLoading, isError } = useQuery({
     queryKey: [PROPERTY_DETAIL_QUERY_KEY, numId],
     queryFn: () => getPropertyDetailAction(numId),
@@ -35,12 +58,21 @@ export const usePropertyDetail = () => {
     staleTime: 1000 * 60 * 10,
   });
 
-  // Fetch appointment slots when date changes
+  const property = data?.data ?? null;
+
+  // ── Derived display values ────────────────────────────────────────
+  const truncatedDescription = property?.description
+    ? property.description.slice(0, 80) + "..."
+    : "";
+  const displayImages = property?.images?.length ? property.images : ["/placeholder.svg"];
+  const nearbyPOIs = property?.nearbyPlaces ?? [];
+  const hasVideoTour = !!(property?.videoId || property?.videoImg);
+
+  // ── Fetch appointment slots when date changes ─────────────────────
   const handleDateSelect = async (date: Date) => {
     setSelectedDate(date);
     setSelectedTime(null);
     setSlotsLoading(true);
-
     try {
       const dateStr = date.toISOString().split("T")[0];
       const result = await getAppointmentSlotsAction(numId, dateStr);
@@ -56,21 +88,7 @@ export const usePropertyDetail = () => {
     }
   };
 
-  const property = data?.data ?? null;
-
-  const truncatedDescription = property?.description
-    ? property.description.slice(0, 80) + "..."
-    : "";
-  const displayImages = property?.images?.length
-    ? property.images
-    : ["/placeholder.svg"];
-  const nearbyPOIs = property?.["nearby-places"] ?? [];
-  const hasVideoTour = !!(property?.video_id || property?.video_img);
-
-  // Verifica auth leyendo localStorage (igual que useAuth)
-  const isAuthenticated = !!localStorage.getItem("access_token");
-
-  // Bug 1: Si no está autenticado, abre modal de login en vez del modal de cita
+  // ── Schedule / call handlers ──────────────────────────────────────
   const handleScheduleClick = () => {
     if (!isAuthenticated) {
       setShowAuthModal(true);
@@ -79,19 +97,16 @@ export const usePropertyDetail = () => {
     }
   };
 
-  // Después de login exitoso, abre directo el modal de cita
   const handleAuthSuccess = () => {
     setShowAuthModal(false);
     setShowScheduleModal(true);
   };
 
-  // Maneja clic en botón de llamada - muestra confirmación
   const handleCallClick = (phoneNumber: string) => {
     setAgentPhoneToCall(phoneNumber);
     setShowCallConfirmModal(true);
   };
 
-  // Confirma la llamada y redirecciona a tel:
   const handleConfirmCall = () => {
     if (agentPhoneToCall) {
       window.location.href = `tel:${agentPhoneToCall}`;
@@ -99,11 +114,15 @@ export const usePropertyDetail = () => {
     }
   };
 
-  // Bug 2: Ahora sí llama a la API para guardar la cita
   const handleConfirmAppointment = async () => {
     if (!selectedDate || !selectedTime || isNaN(numId)) return;
 
-    let user: { first_name?: string; last_name?: string; phone?: string | null; email?: string } | null = null;
+    let user: {
+      first_name?: string;
+      last_name?: string;
+      phone?: string | null;
+      email?: string;
+    } | null = null;
     try {
       user = JSON.parse(localStorage.getItem("user") ?? "null");
     } catch {
@@ -131,18 +150,58 @@ export const usePropertyDetail = () => {
       setSelectedDate(undefined);
       setSelectedTime(null);
       setSuccessData(result.data);
-      setShowSuccessModal(true); // Bug 3: muestra diálogo de éxito
+      setShowSuccessModal(true);
     } else {
       setScheduleError(result.message);
     }
   };
 
+  // ── Saved property handlers ───────────────────────────────────────
+  const handleToggleSave = async () => {
+    if (!property?.id) return;
+    if (!isAuthenticated) {
+      setShowSaveAuthModal(true);
+      return;
+    }
+    if (savingInProgress) return;
+    setSavingInProgress(true);
+    const result = await toggleSavedPropertyAction(property.id, isSaved);
+    setIsSaved(result.isSaved);
+    setSavingInProgress(false);
+  };
+
+  useEffect(() => {
+    if (property?.id && isAuthenticated) {
+      checkSavedPropertyAction(property.id).then(({ isSaved: saved }) => {
+        setIsSaved(saved);
+      });
+    }
+  }, [property?.id, isAuthenticated]);
+
+  // ── Financial profile fetch ───────────────────────────────────────
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setLoadingProfile(false);
+      return;
+    }
+    getFinancialProfileAction().then(({ profile }) => {
+      setFinancialProfile(profile);
+      setLoadingProfile(false);
+    });
+  }, [isAuthenticated]);
+
   return {
     property,
     isLoading,
     isError: isError || isNaN(numId),
+    // Description / images
     showFullDescription,
     setShowFullDescription,
+    truncatedDescription,
+    displayImages,
+    nearbyPOIs,
+    hasVideoTour,
+    // Modals
     showScheduleModal,
     setShowScheduleModal,
     showAuthModal,
@@ -153,6 +212,7 @@ export const usePropertyDetail = () => {
     setShowVideoModal,
     showCallConfirmModal,
     setShowCallConfirmModal,
+    // Appointment
     successData,
     selectedDate,
     setSelectedDate,
@@ -161,10 +221,6 @@ export const usePropertyDetail = () => {
     setSelectedTime,
     availableSlots,
     slotsLoading,
-    truncatedDescription,
-    displayImages,
-    nearbyPOIs,
-    hasVideoTour,
     handleScheduleClick,
     handleAuthSuccess,
     handleConfirmAppointment,
@@ -172,5 +228,15 @@ export const usePropertyDetail = () => {
     handleConfirmCall,
     isScheduling,
     scheduleError,
+    // Saved property
+    isSaved,
+    savingInProgress,
+    showSaveAuthModal,
+    setShowSaveAuthModal,
+    handleToggleSave,
+    // Financial profile
+    financialProfile,
+    loadingProfile,
+    showMortgageCalculator: isAuthenticated && !loadingProfile && financialProfile !== null,
   };
 };

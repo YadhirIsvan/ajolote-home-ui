@@ -1,4 +1,4 @@
-import { axiosInstance } from "@/shared/api/axios.instance";
+import { buyApi } from "@/buy/api/buy.api";
 
 export interface AmenityItem {
   id: number;
@@ -8,9 +8,10 @@ export interface AmenityItem {
 
 export const getAmenitiesAction = async (): Promise<AmenityItem[]> => {
   try {
-    const { data } = await axiosInstance.get<AmenityItem[]>("/catalogs/amenities");
+    const { data } = await buyApi.get<AmenityItem[]>("/catalogs/amenities");
     return Array.isArray(data) ? data : [];
-  } catch {
+  } catch (error) {
+    console.error("[getAmenitiesAction] Error al obtener catálogo de amenidades:", error);
     return [];
   }
 };

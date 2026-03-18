@@ -68,19 +68,19 @@ const mapDetail = (item: BackendPropertyDetail): PropertyDetailData => ({
   beds: item.bedrooms,
   baths: item.bathrooms,
   sqm: parseFloat(item.construction_sqm),
-  land_sqm: item.land_sqm ? parseFloat(item.land_sqm) : undefined,
+  landSqm: item.land_sqm ? parseFloat(item.land_sqm) : undefined,
   verified: item.is_verified,
   status: item.status,
   images: item.images
     .sort((a, b) => a.sort_order - b.sort_order)
     .map((img) => img.image_url),
-  video_id: item.video_id,
-  video_img: item.video_thumbnail,
+  videoId: item.video_id,
+  videoImg: item.video_thumbnail,
   coordinates: item.coordinates || {
     lat: parseFloat(item.latitude) || 0,
     lng: parseFloat(item.longitude) || 0,
   },
-  "nearby-places": item.nearby_places.map((place) => ({
+  nearbyPlaces: item.nearby_places.map((place) => ({
     icon: place.place_type,
     label: `${place.name} - ${parseFloat(place.distance_km).toFixed(1)} km`,
   })),
@@ -103,7 +103,8 @@ export const getPropertyDetailAction = async (
       ENDPOINTS.PROPERTY_DETAIL(id)
     );
     return { data: mapDetail(data), fromFallback: false };
-  } catch {
+  } catch (error) {
+    console.error("[getPropertyDetailAction] Error al obtener detalle de propiedad:", error);
     return {
       data: {
         id,
@@ -114,7 +115,7 @@ export const getPropertyDetailAction = async (
         beds: 0,
         baths: 0,
         sqm: 0,
-        land_sqm: undefined,
+        landSqm: undefined,
         verified: false,
         status: "",
         description: "",

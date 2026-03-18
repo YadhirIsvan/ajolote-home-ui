@@ -10,11 +10,11 @@ export interface BuyPropertyListItem {
   sqm: number;
   type: string;
   state: string;
-  days_listed: number;
+  daysListed: number;
   interested: number;
   views: number;
-  is_featured: boolean;
-  is_verified: boolean;
+  isFeatured: boolean;
+  isVerified: boolean;
 }
 
 export interface PropertyDetailData {
@@ -26,16 +26,26 @@ export interface PropertyDetailData {
   beds: number;
   baths: number;
   sqm: number;
-  land_sqm?: number;
+  landSqm?: number;
   verified: boolean;
   status: string;
   description: string;
-  video_id?: string;
-  video_img?: string;
+  videoId?: string;
+  videoImg?: string;
   coordinates: { lat: number; lng: number };
-  "nearby-places"?: { icon: string; label: string }[];
+  nearbyPlaces?: { icon: string; label: string }[];
   amenities?: { id: number; name: string; icon: string }[];
   agent: { name: string; photo: string; phone: string; email: string } | null;
+}
+
+export interface FinancialProfile {
+  loanType: string;
+  monthlyIncome: string;
+  partnerMonthlyIncome: string;
+  savingsForEnganche: string;
+  hasInfonavit: boolean;
+  infonautSubcuentaBalance: string;
+  calculatedBudget: number;
 }
 
 export interface AppointmentData {

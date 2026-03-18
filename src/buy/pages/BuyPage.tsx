@@ -4,7 +4,7 @@ import { SlidersHorizontal, Loader2 } from "lucide-react";
 import PropertyCard from "@/shared/components/custom/PropertyCard";
 import PropertyFilters from "@/buy/components/PropertyFilters";
 import MortgageCallToAction from "@/buy/components/MortgageCallToAction";
-import { useBuyProperties } from "@/buy/hooks/use-buy-properties.hook";
+import { useBuyProperties } from "@/buy/hooks/use-buy-properties.buy.hook";
 import { useFinancialModal } from "@/contexts/FinancialModalContext";
 
 const BuyPage = () => {

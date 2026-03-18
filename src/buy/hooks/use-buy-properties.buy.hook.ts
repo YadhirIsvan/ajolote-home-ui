@@ -35,7 +35,7 @@ export const useBuyProperties = () => {
   useEffect(() => {
     const zoneFromUrl = searchParams.get("zone");
     if (zoneFromUrl) {
-      setFilters(prev => ({ ...prev, zone: zoneFromUrl }));
+      setFilters((prev) => ({ ...prev, zone: zoneFromUrl }));
     }
   }, [searchParams]);
 
@@ -127,22 +127,33 @@ export const useBuyProperties = () => {
     filters.amenities.length > 0,
   ].filter(Boolean).length;
 
-  const toggleAmenity = (amenityId: string) => {
+  const toggleAmenity = useCallback((amenityId: string) => {
     setFilters((prev) => ({
       ...prev,
       amenities: prev.amenities.includes(amenityId)
         ? prev.amenities.filter((a) => a !== amenityId)
         : [...prev.amenities, amenityId],
     }));
-  };
+  }, []);
 
-  const clearFilters = () => setFilters(DEFAULT_BUY_FILTERS);
+  const clearFilters = useCallback(() => setFilters(DEFAULT_BUY_FILTERS), []);
 
-  const setZone = (zone: string) => setFilters((prev) => ({ ...prev, zone }));
-  const setPriceRange = (priceRange: [number, number]) =>
-    setFilters((prev) => ({ ...prev, priceRange }));
-  const setType = (type: string) => setFilters((prev) => ({ ...prev, type }));
-  const setState = (state: string) => setFilters((prev) => ({ ...prev, state }));
+  const setZone = useCallback(
+    (zone: string) => setFilters((prev) => ({ ...prev, zone })),
+    []
+  );
+  const setPriceRange = useCallback(
+    (priceRange: [number, number]) => setFilters((prev) => ({ ...prev, priceRange })),
+    []
+  );
+  const setType = useCallback(
+    (type: string) => setFilters((prev) => ({ ...prev, type })),
+    []
+  );
+  const setState = useCallback(
+    (state: string) => setFilters((prev) => ({ ...prev, state })),
+    []
+  );
 
   return {
     filteredProperties,
@@ -161,7 +172,6 @@ export const useBuyProperties = () => {
     setType,
     mapStateToStatus,
     cities,
-    // Infinite scroll
     sentinelRef,
     isFetchingNextPage,
     hasNextPage,
