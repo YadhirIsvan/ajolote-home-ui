@@ -4,10 +4,12 @@ import { useAuth } from "@/shared/hooks/use-auth.hook";
 export const useSellPage = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isVideoOpen, setIsVideoOpen] = useState(false);
+  const [showAuthHint, setShowAuthHint] = useState(false);
   const { isAuthenticated, openAuthModal } = useAuth();
 
   const openForm = () => {
     if (!isAuthenticated) {
+      setShowAuthHint(true);
       openAuthModal();
       return;
     }
@@ -23,5 +25,6 @@ export const useSellPage = () => {
     setIsVideoOpen,
     openForm,
     openVideo,
+    showAuthHint,
   };
 };

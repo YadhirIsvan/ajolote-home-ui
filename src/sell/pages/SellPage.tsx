@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/shared/components/ui/button";
 import { Dialog, DialogContent } from "@/shared/components/ui/dialog";
 import { AspectRatio } from "@/shared/components/ui/aspect-ratio";
@@ -107,7 +108,7 @@ const TimelineStep = ({
 
 /* ── Main Page ──────────────────────────────────────────────────── */
 const SellPage = () => {
-  const { isFormOpen, setIsFormOpen, isVideoOpen, setIsVideoOpen, openForm, openVideo } = useSellPage();
+  const { isFormOpen, setIsFormOpen, isVideoOpen, setIsVideoOpen, openForm, openVideo, showAuthHint } = useSellPage();
   const [visibleSteps, setVisibleSteps] = useState<Set<number>>(new Set());
   const stepsRef = useRef<HTMLDivElement>(null);
 
@@ -167,14 +168,25 @@ const SellPage = () => {
           </p>
 
           {/* CTA Button — hidden on mobile (sticky bar covers it) */}
-          <Button
-            size="lg"
-            className="group relative hidden md:inline-flex bg-gradient-to-r from-[hsl(var(--champagne-gold))] to-[hsl(var(--champagne-gold-dark))] text-white rounded-full px-10 py-7 text-lg font-semibold shadow-[0_8px_30px_rgba(184,155,110,0.35)] hover:shadow-[0_12px_40px_rgba(184,155,110,0.5)] hover:scale-[1.03] active:scale-[0.98] transition-all duration-300"
-            onClick={openForm}
-          >
-            Comenzar ahora
-            <ArrowRight className="w-5 h-5 ml-2 transition-transform duration-300 group-hover:translate-x-1" />
-          </Button>
+          <div className="hidden md:flex flex-col items-center gap-2">
+            <Button
+              size="lg"
+              className="group relative bg-gradient-to-r from-[hsl(var(--champagne-gold))] to-[hsl(var(--champagne-gold-dark))] text-white rounded-full px-10 py-7 text-lg font-semibold shadow-[0_8px_30px_rgba(184,155,110,0.35)] hover:shadow-[0_12px_40px_rgba(184,155,110,0.5)] hover:scale-[1.03] active:scale-[0.98] transition-all duration-300"
+              onClick={openForm}
+            >
+              Comenzar ahora
+              <ArrowRight className="w-5 h-5 ml-2 transition-transform duration-300 group-hover:translate-x-1" />
+            </Button>
+            {showAuthHint && (
+              <p className="text-sm text-foreground/50">
+                Debes{" "}
+                <Link to="/mi-cuenta" className="text-[hsl(var(--champagne-gold))] font-medium hover:underline">
+                  iniciar sesión
+                </Link>{" "}
+                para continuar
+              </p>
+            )}
+          </div>
 
           {/* Stats row */}
           <div className="flex flex-wrap items-center justify-center gap-8 md:gap-14 mt-14">
@@ -361,14 +373,25 @@ const SellPage = () => {
             Comienza hoy y descubre lo fácil que es vender tu propiedad con nosotros.
           </p>
           {/* Hidden on mobile — sticky bar covers it */}
-          <Button
-            size="lg"
-            className="group relative hidden md:inline-flex bg-gradient-to-r from-[hsl(var(--champagne-gold))] to-[hsl(var(--champagne-gold-dark))] text-white rounded-full px-10 py-7 text-lg font-semibold shadow-[0_8px_30px_rgba(184,155,110,0.35)] hover:shadow-[0_12px_40px_rgba(184,155,110,0.5)] hover:scale-[1.03] active:scale-[0.98] transition-all duration-300"
-            onClick={openForm}
-          >
-            Empezar ahora
-            <ArrowRight className="w-5 h-5 ml-2 transition-transform duration-300 group-hover:translate-x-1" />
-          </Button>
+          <div className="hidden md:flex flex-col items-center gap-2">
+            <Button
+              size="lg"
+              className="group relative bg-gradient-to-r from-[hsl(var(--champagne-gold))] to-[hsl(var(--champagne-gold-dark))] text-white rounded-full px-10 py-7 text-lg font-semibold shadow-[0_8px_30px_rgba(184,155,110,0.35)] hover:shadow-[0_12px_40px_rgba(184,155,110,0.5)] hover:scale-[1.03] active:scale-[0.98] transition-all duration-300"
+              onClick={openForm}
+            >
+              Empezar ahora
+              <ArrowRight className="w-5 h-5 ml-2 transition-transform duration-300 group-hover:translate-x-1" />
+            </Button>
+            {showAuthHint && (
+              <p className="text-sm text-foreground/50">
+                Debes{" "}
+                <Link to="/mi-cuenta" className="text-[hsl(var(--champagne-gold))] font-medium hover:underline">
+                  iniciar sesión
+                </Link>{" "}
+                para continuar
+              </p>
+            )}
+          </div>
         </div>
       </section>
 
@@ -382,6 +405,15 @@ const SellPage = () => {
           Comenzar ahora
           <ArrowRight className="w-5 h-5 ml-2" />
         </Button>
+        {showAuthHint && (
+          <p className="text-center text-xs text-foreground/50 mt-2">
+            Debes{" "}
+            <span className="text-[hsl(var(--champagne-gold))] font-medium">
+              iniciar sesión
+            </span>{" "}
+            para continuar
+          </p>
+        )}
       </div>
       <div className="h-24 md:hidden" />
 
