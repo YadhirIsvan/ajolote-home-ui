@@ -7,6 +7,9 @@ export { useIsMobile } from "@/shared/hooks/use-mobile.hook";
 export { useScrollDirection } from "@/shared/hooks/use-scroll-direction.hook";
 export { useFinancialModal, FinancialModalProvider } from "@/shared/hooks/financial-modal.context";
 
+// ── Utils ─────────────────────────────────────────────────────────────────────
+export { formatMoney, formatSqm, formatPhone, parseRawNumber, parseRawDecimal } from "@/shared/utils/format-input";
+
 // ── Actions ────────────────────────────────────────────────────────────────────
 export { logoutAction } from "@/shared/actions/logout.actions";
 export { getCitiesAction } from "@/shared/actions/get-cities.actions";
