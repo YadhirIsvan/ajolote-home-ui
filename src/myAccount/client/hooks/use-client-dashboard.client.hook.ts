@@ -6,8 +6,7 @@ import { getClientFinancialProfileAction } from "@/myAccount/client/actions/get-
 import { getClientProfileDetailAction } from "@/myAccount/client/actions/get-client-profile-detail.actions";
 import { getClientAppointmentsAction } from "@/myAccount/client/actions/get-client-appointments.actions";
 import { getClientProfileAction } from "@/myAccount/client/actions/get-client-profile.actions";
-import { useAuth } from "@/auth/hooks/use-auth.auth.hook";
-// TODO (deuda técnica): mover useAuth a src/shared/hooks/ para eliminar import cross-domain
+import { useAuth } from "@/shared/hooks/use-auth.hook";
 import type { PropertySaleItem, ClientAppointment } from "@/myAccount/client/types/client.types";
 
 export const useClientDashboard = () => {

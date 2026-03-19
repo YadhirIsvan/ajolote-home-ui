@@ -1,4 +1,6 @@
-export type UserRole = "client" | "agent" | "admin";
+// Re-exportados desde shared/ — UserRole, AuthMembership, AuthUser son globales
+import type { AuthUser as _AuthUser } from "@/shared/types/user.types";
+export type { UserRole, AuthMembership, AuthUser } from "@/shared/types/user.types";
 
 // ── Google OAuth2 SDK — tipado mínimo para eliminar `any` ───────────────────
 
@@ -69,25 +71,8 @@ export interface RegisterResponse {
 
 // ── Auth User / Tokens ─────────────────────────────────────────────────────────
 
-export interface AuthMembership {
-  id: number;
-  tenant_id: number;
-  tenant_name: string;
-  tenant_slug: string;
-  role: UserRole;
-}
-
-export interface AuthUser {
-  id: number;
-  email: string;
-  first_name: string;
-  last_name: string;
-  phone: string | null;
-  memberships: AuthMembership[];
-}
-
 export interface AuthTokens {
   access: string;
   refresh: string;
-  user: AuthUser;
+  user: _AuthUser;
 }

@@ -7,7 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, ArrowLeft, CheckCircle2, Home, Building2, Castle, Warehouse, Loader2 } from "lucide-react";
 import { useSellerLeadForm } from "@/sell/hooks/use-seller-lead-form.sell.hook";
 import { getCitiesAction, type CityItem } from "@/shared/actions/get-cities.actions";
-import { useAuth } from "@/auth/hooks/use-auth.auth.hook";
+import { useAuth } from "@/shared/hooks/use-auth.hook";
 import { formatMoney, formatSqm, formatPhone, parseRawNumber, parseRawDecimal } from "@/shared/utils/format-input";
 
 const PROPERTY_TYPES = [

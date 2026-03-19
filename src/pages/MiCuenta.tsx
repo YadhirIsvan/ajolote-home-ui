@@ -1,6 +1,6 @@
 import { User, Briefcase, Shield } from "lucide-react";
 import AuthGuard from "@/auth/guardian/AuthGuard";
-import { useAuth } from "@/auth/hooks/use-auth.auth.hook";
+import { useAuth } from "@/shared/hooks/use-auth.hook";
 import MyAccountRouter from "@/myAccount/router/my-account.router";
 import { useState } from "react";
 

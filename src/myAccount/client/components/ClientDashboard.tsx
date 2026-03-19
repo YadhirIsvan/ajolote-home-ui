@@ -11,7 +11,7 @@ import { getLoanTypeLabel } from "@/myAccount/client/actions/get-client-financia
 import { updateClientProfileFieldAction } from "@/myAccount/client/actions/get-client-profile-detail.actions";
 import { clientApi } from "@/myAccount/client/api/client.api";
 import ProfileFieldModal from "./ProfileFieldModal";
-import type { AuthUser } from "@/auth/types/auth.types";
+import type { AuthUser } from "@/shared/types/user.types";
 import type { PropertySaleItem, PropertyBuySummary, ClientProfileDetail, ClientAppointment } from "@/myAccount/client/types/client.types";
 
 const formatPrice = (price: string | number | undefined): string => {

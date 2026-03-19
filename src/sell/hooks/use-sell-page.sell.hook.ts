@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAuth } from "@/auth/hooks/use-auth.auth.hook";
+import { useAuth } from "@/shared/hooks/use-auth.hook";
 
 export const useSellPage = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
