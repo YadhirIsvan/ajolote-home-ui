@@ -1,15 +1,15 @@
+import { useState } from "react";
 import { User, Briefcase, Shield } from "lucide-react";
 import AuthGuard from "@/auth/guardian/AuthGuard";
 import { useAuth } from "@/shared/hooks/use-auth.hook";
 import MyAccountRouter from "@/myAccount/router/my-account.router";
-import { useState } from "react";
 
 type ClientSubView = "dashboard" | "config" | "ventas" | "compras";
 
 const roleIcons = { client: User, agent: Briefcase, admin: Shield };
 const roleLabels = { client: "Cliente", agent: "Agente", admin: "Administrador" };
 
-const MiCuenta = () => {
+const MiCuentaPage = () => {
   const {
     isAuthenticated,
     role,
@@ -79,4 +79,4 @@ const MiCuenta = () => {
   );
 };
 
-export default MiCuenta;
+export default MiCuentaPage;

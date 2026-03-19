@@ -1,11 +1,10 @@
 import { Card } from "@/shared/components/ui/card";
 import { AlertCircle, CheckCircle, Clock, FileText, MessageCircle, Shield } from "lucide-react";
 
-const Servicios = () => {
+const ServiciosPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-tuatara via-tuatara-dark to-tuatara">
       <main className="container mx-auto px-4 pt-32 pb-20">
-        {/* Hero Section */}
         <div className="text-center mb-16">
           <h1 className="text-5xl md:text-6xl font-bold text-white mb-4">
             Centro de Ayuda
@@ -15,9 +14,7 @@ const Servicios = () => {
           </p>
         </div>
 
-        {/* Main Content Card */}
         <Card className="max-w-4xl mx-auto p-8 md:p-12 bg-white/95 backdrop-blur-sm shadow-elegant">
-          {/* Alert Header */}
           <div className="flex items-start gap-4 mb-8 p-6 bg-ribbon/10 rounded-lg border-l-4 border-ribbon">
             <Clock className="w-8 h-8 text-ribbon flex-shrink-0 mt-1" />
             <div>
@@ -27,7 +24,6 @@ const Servicios = () => {
             </div>
           </div>
 
-          {/* Reasons List */}
           <div className="space-y-6 mb-12">
             <div className="flex items-start gap-4">
               <AlertCircle className="w-6 h-6 text-flamingo flex-shrink-0 mt-1" />
@@ -73,7 +69,6 @@ const Servicios = () => {
             </div>
           </div>
 
-          {/* What to Do Section */}
           <div className="bg-gradient-dawn/10 rounded-lg p-6 md:p-8 border-2 border-ribbon/20">
             <h2 className="text-2xl font-bold text-ribbon mb-6 flex items-center gap-3">
               <MessageCircle className="w-7 h-7" />
@@ -130,4 +125,4 @@ const Servicios = () => {
   );
 };
 
-export default Servicios;
+export default ServiciosPage;

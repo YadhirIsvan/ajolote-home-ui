@@ -3,10 +3,10 @@ import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
-import ScoreWidget from "@/components/ScoreWidget";
+import ScoreWidget from "@/shared/components/custom/ScoreWidget";
 import { Calculator, Upload, CheckCircle2, Clock } from "lucide-react";
 
-const CreditFlow = () => {
+const CreditFlowPage = () => {
   const [currentView, setCurrentView] = useState("simulacion"); // simulacion, resultado, documentos, seguimiento
 
   return (
@@ -150,7 +150,6 @@ const CreditFlow = () => {
                 </p>
               </div>
 
-              {/* Timeline */}
               <div className="space-y-6">
                 {[
                   { label: "Solicitud Recibida", status: "completed", date: "Hoy, 10:30 AM" },
@@ -191,4 +190,4 @@ const CreditFlow = () => {
   );
 };
 
-export default CreditFlow;
+export default CreditFlowPage;
