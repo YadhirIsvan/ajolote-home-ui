@@ -35,40 +35,40 @@ export interface AdminProperty {
   address: string;
   price: string;
   currency: string;
-  property_type: string;
-  listing_type: string;
+  propertyType: string;
+  listingType: string;
   status: string;
-  is_featured: boolean;
-  is_verified: boolean;
-  is_active: boolean;
+  isFeatured: boolean;
+  isVerified: boolean;
+  isActive: boolean;
   image: string | null;
   agent: { id: number; name: string } | null;
-  documents_count: number;
-  created_at: string;
+  documentsCount: number;
+  createdAt: string;
 }
 
 export interface AdminPropertyImage {
   id: number;
-  image_url: string;
-  is_cover: boolean;
-  sort_order: number;
+  imageUrl: string;
+  isCover: boolean;
+  sortOrder: number;
 }
 
 export interface AdminPropertyDetail extends AdminProperty {
   description: string;
-  property_condition: string;
+  propertyCondition: string;
   bedrooms: number;
   bathrooms: number;
-  parking_spaces: number;
-  construction_sqm: string;
-  land_sqm: string;
-  address_street: string;
-  address_number: string;
-  address_neighborhood: string;
-  address_zip: string;
-  city: { id: number; name: string; state_id: number } | null;
+  parkingSpaces: number;
+  constructionSqm: string;
+  landSqm: string;
+  addressStreet: string;
+  addressNumber: string;
+  addressNeighborhood: string;
+  addressZip: string;
+  city: { id: number; name: string; stateId: number } | null;
   zone: string;
-  video_id: string;
+  videoId: string;
   latitude: string;
   longitude: string;
   images: AdminPropertyImage[];
@@ -79,13 +79,13 @@ export interface CatalogState {
   id: number;
   name: string;
   code: string;
-  country_id: number;
+  countryId: number;
 }
 
 export interface CatalogCity {
   id: number;
   name: string;
-  state_id: number;
+  stateId: number;
 }
 
 export interface CatalogAmenity {
@@ -97,7 +97,7 @@ export interface CatalogAmenity {
 // ─── Agentes ─────────────────────────────────────────────────────────────────
 export interface AdminAgent {
   id: number;
-  membership_id: number;
+  membershipId: number;
   name: string;
   email: string;
   phone: string;
@@ -105,19 +105,19 @@ export interface AdminAgent {
   zone: string;
   bio: string;
   score: string;
-  properties_count: number;
-  sales_count: number;
-  leads_count: number;
-  active_leads: number;
+  propertiesCount: number;
+  salesCount: number;
+  leadsCount: number;
+  activeLeads: number;
 }
 
 // ─── Horarios ────────────────────────────────────────────────────────────────
 export interface AgentScheduleBreak {
   id: number;
-  break_type: string;
+  breakType: string;
   name: string;
-  start_time: string;
-  end_time: string;
+  startTime: string;
+  endTime: string;
 }
 
 export interface AgentSchedule {
@@ -130,14 +130,14 @@ export interface AgentSchedule {
   friday: boolean;
   saturday: boolean;
   sunday: boolean;
-  start_time: string;
-  end_time: string;
-  has_lunch_break: boolean;
-  lunch_start: string | null;
-  lunch_end: string | null;
-  valid_from: string;
-  valid_until: string | null;
-  is_active: boolean;
+  startTime: string;
+  endTime: string;
+  hasLunchBreak: boolean;
+  lunchStart: string | null;
+  lunchEnd: string | null;
+  validFrom: string;
+  validUntil: string | null;
+  isActive: boolean;
   priority: number;
   breaks: AgentScheduleBreak[];
 }
@@ -153,14 +153,14 @@ export type AppointmentType =
 export interface AdminAppointment {
   id: number;
   matricula: string;
-  scheduled_date: string;
-  scheduled_time: string;
-  duration_minutes: number;
+  scheduledDate: string;
+  scheduledTime: string;
+  durationMinutes: number;
   status: string;
-  appointment_type: AppointmentType;
-  client_name: string;
-  client_email: string;
-  client_phone: string;
+  appointmentType: AppointmentType;
+  clientName: string;
+  clientEmail: string;
+  clientPhone: string;
   property: { id: number; title: string };
   agent: { id: number; name: string };
 }
@@ -169,14 +169,14 @@ export interface AdminAppointment {
 export interface AdminAssignmentProperty {
   id: number;
   title: string;
-  property_type: string;
+  propertyType: string;
 }
 
 export interface AdminAssignmentAgent {
   id: number;
-  membership_id: number;
+  membershipId: number;
   name: string;
-  is_visible: boolean;
+  isVisible: boolean;
 }
 
 export interface AdminAssignment {
@@ -185,23 +185,23 @@ export interface AdminAssignment {
 }
 
 export interface AdminAssignmentsResponse {
-  unassigned_properties: AdminAssignmentProperty[];
+  unassignedProperties: AdminAssignmentProperty[];
   assignments: AdminAssignment[];
 }
 
 // ─── Asignaciones SaleProcess ────────────────────────────────────────────────
 export interface SaleProcessAssignmentEntry {
-  sale_process_id: number;
+  saleProcessId: number;
   property: {
     id: number;
     title: string;
-    property_type: string;
+    propertyType: string;
     image: string | null;
     price: string | null;
     address: string;
   };
   status: string;
-  agent: { membership_id: number; name: string } | null;
+  agent: { membershipId: number; name: string } | null;
 }
 
 export interface SaleProcessAssignmentsResponse {
@@ -212,26 +212,26 @@ export interface SaleProcessAssignmentsResponse {
 // ─── Clientes ────────────────────────────────────────────────────────────────
 export interface AdminClient {
   id: number;
-  membership_id: number;
+  membershipId: number;
   name: string;
   email: string;
   phone: string;
   avatar: string | null;
   city: string;
-  purchase_processes_count: number;
-  sale_processes_count: number;
-  date_joined: string;
+  purchaseProcessesCount: number;
+  saleProcessesCount: number;
+  dateJoined: string;
 }
 
 // ─── Detalle de cliente ──────────────────────────────────────────────────────
 export interface AdminClientPurchaseProcess {
   id: number;
   status: PurchaseProcessStatus;
-  overall_progress: number;
+  overallProgress: number;
   property: { id: number; title: string; image: string | null };
   agent: { name: string };
   documents: { id: number; name: string; uploaded_at: string }[];
-  created_at: string;
+  createdAt: string;
 }
 
 export interface AdminClientSaleProcess {
@@ -239,19 +239,19 @@ export interface AdminClientSaleProcess {
   status: SaleProcessStatus;
   property: { id: number; title: string; image: string | null };
   agent: { name: string };
-  created_at: string;
+  createdAt: string;
 }
 
 export interface AdminClientDetail {
   id: number;
-  membership_id: number;
+  membershipId: number;
   name: string;
   email: string;
   phone: string;
   avatar: string | null;
   city: string;
-  purchase_processes: AdminClientPurchaseProcess[];
-  sale_processes: AdminClientSaleProcess[];
+  purchaseProcesses: AdminClientPurchaseProcess[];
+  saleProcesses: AdminClientSaleProcess[];
 }
 
 // ─── Pipeline de compra ──────────────────────────────────────────────────────
@@ -270,12 +270,12 @@ export type PurchaseProcessStatus =
 export interface AdminPurchaseProcess {
   id: number;
   status: PurchaseProcessStatus;
-  overall_progress: number;
+  overallProgress: number;
   client: { id: number; name: string; avatar: string | null };
   property: { id: number; title: string; image: string | null; price: string };
   agent: { id: number; name: string };
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ─── Pipeline de venta ───────────────────────────────────────────────────────
@@ -298,8 +298,8 @@ export interface AdminSaleProcess {
   property: { id: number; title: string; image: string | null };
   client: { id: number; name: string } | null;
   agent: { id: number; name: string } | null;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ─── Seller Leads ─────────────────────────────────────────────────────────────
@@ -312,39 +312,39 @@ export type SellerLeadStatus =
 
 export interface AdminSellerLead {
   id: number;
-  full_name: string;
+  fullName: string;
   email: string;
   phone: string;
-  property_type: string;
+  propertyType: string;
   location: string;
-  expected_price: string;
+  expectedPrice: string;
   status: SellerLeadStatus;
-  assigned_agent: { id: number; name: string } | null;
-  created_at: string;
+  assignedAgent: { id: number; name: string } | null;
+  createdAt: string;
 }
 
 // ─── Historial ────────────────────────────────────────────────────────────────
 export interface AdminSaleHistoryItem {
   id: number;
-  property: { title: string; property_type: string; zone: string };
+  property: { title: string; propertyType: string; zone: string };
   client: { name: string };
   agent: { name: string };
-  sale_price: string;
-  payment_method: string;
-  closed_at: string;
+  salePrice: string;
+  paymentMethod: string;
+  closedAt: string;
 }
 
 // ─── Insights ─────────────────────────────────────────────────────────────────
 export interface AdminInsights {
   period: string;
-  sales_by_month: { month: string; count: number; total_amount: string }[];
-  distribution_by_type: { property_type: string; count: number; percentage: number }[];
-  activity_by_zone: { zone: string; views: number; leads: number; sales: number }[];
-  top_agents: { id: number; name: string; sales_count: number; leads_count: number; score: string }[];
+  salesByMonth: { month: string; count: number; totalAmount: string }[];
+  distributionByType: { propertyType: string; count: number; percentage: number }[];
+  activityByZone: { zone: string; views: number; leads: number; sales: number }[];
+  topAgents: { id: number; name: string; salesCount: number; leadsCount: number; score: string }[];
   summary: {
-    total_properties: number;
-    total_sales: number;
-    total_revenue: string;
-    active_leads: number;
+    totalProperties: number;
+    totalSales: number;
+    totalRevenue: string;
+    activeLeads: number;
   };
 }

@@ -134,7 +134,7 @@ const mapPropertyType = (type: string): PropertyType => {
 
 const mapPropertyStatus = (p: AdminProperty): PropertyStatus => {
   if (p.status === "vendida") return "vendida";
-  if (p.is_active) return "activa";
+  if (p.isActive) return "activa";
   return "pendiente";
 };
 
@@ -145,12 +145,12 @@ const mapAdminProperty = (p: AdminProperty): Property => ({
   address: p.address,
   price: p.price,
   image: getMediaUrl(p.image),
-  type: mapPropertyType(p.property_type),
-  listingType: (p.listing_type === "pending_listing" ? "pending_listing" : "sale") as ListingType,
+  type: mapPropertyType(p.propertyType),
+  listingType: (p.listingType === "pending_listing" ? "pending_listing" : "sale") as ListingType,
   status: mapPropertyStatus(p),
   agent: p.agent?.name ?? null,
-  submittedAt: p.created_at.split("T")[0],
-  isFeatured: p.is_featured,
+  submittedAt: p.createdAt.split("T")[0],
+  isFeatured: p.isFeatured,
 });
 
 // ─── Config ───────────────────────────────────────────────────────────────────
@@ -325,33 +325,33 @@ const PropiedadesSection = () => {
 
       setExistingImages(detail.images ?? []);
 
-      const stateId = detail.city?.state_id ?? "";
+      const stateId = detail.city?.stateId ?? "";
       const cityId = detail.city?.id ?? "";
 
       setFormData({
         title: detail.title ?? "",
         description: detail.description ?? "",
-        listing_type: (detail.listing_type as "sale" | "pending_listing") ?? "sale",
+        listing_type: (detail.listingType as "sale" | "pending_listing") ?? "sale",
         status: (detail.status as "disponible" | "vendida") ?? "disponible",
-        property_type: (detail.property_type as "house" | "apartment" | "land" | "commercial") ?? "house",
-        property_condition: (detail.property_condition as "new" | "semi_new" | "used") ?? "new",
+        property_type: (detail.propertyType as "house" | "apartment" | "land" | "commercial") ?? "house",
+        property_condition: (detail.propertyCondition as "new" | "semi_new" | "used") ?? "new",
         price: detail.price ?? "",
         bedrooms: detail.bedrooms ?? 1,
         bathrooms: detail.bathrooms ?? 1,
-        parking_spaces: detail.parking_spaces ?? 1,
-        construction_sqm: detail.construction_sqm ?? "",
-        land_sqm: detail.land_sqm ?? "",
-        address_street: detail.address_street ?? "",
-        address_number: detail.address_number ?? "",
-        address_neighborhood: detail.address_neighborhood ?? "",
-        address_zip: detail.address_zip ?? "",
+        parking_spaces: detail.parkingSpaces ?? 1,
+        construction_sqm: detail.constructionSqm ?? "",
+        land_sqm: detail.landSqm ?? "",
+        address_street: detail.addressStreet ?? "",
+        address_number: detail.addressNumber ?? "",
+        address_neighborhood: detail.addressNeighborhood ?? "",
+        address_zip: detail.addressZip ?? "",
         state_id: stateId,
         city_id: cityId,
         zone: detail.zone ?? "",
-        video_id: detail.video_id ?? "",
+        video_id: detail.videoId ?? "",
         latitude: detail.latitude ?? "",
         longitude: detail.longitude ?? "",
-        is_featured: detail.is_featured ?? false,
+        is_featured: detail.isFeatured ?? false,
         amenity_ids: (detail.amenities ?? []).map((a) => a.id),
       });
     } catch {
@@ -464,7 +464,7 @@ const PropiedadesSection = () => {
 
       if (newImageFiles.length > 0) {
         try {
-          const hasCover = existingImages.some((img) => img.is_cover);
+          const hasCover = existingImages.some((img) => img.isCover);
           await uploadAdminPropertyImagesAction(propertyId, newImageFiles, !hasCover);
         } catch {
           toast.error("Propiedad guardada, pero hubo un error al subir las imágenes");
@@ -945,11 +945,11 @@ const PropiedadesSection = () => {
                 {existingImages.map((img) => (
                   <div key={img.id} className="relative group rounded-lg overflow-hidden border border-border/50">
                     <img
-                      src={getMediaUrl(img.image_url)}
+                      src={getMediaUrl(img.imageUrl)}
                       alt=""
                       className="w-full h-24 object-cover"
                     />
-                    {img.is_cover && (
+                    {img.isCover && (
                       <Badge className="absolute bottom-1 left-1 text-[10px] bg-champagne-gold text-white px-1 py-0">
                         Portada
                       </Badge>

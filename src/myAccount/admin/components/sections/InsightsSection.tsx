@@ -47,29 +47,29 @@ const InsightsSection = () => {
 
   const insights = insightsQuery.data;
 
-  const monthlySalesData = (insights?.sales_by_month ?? []).map((m) => ({
+  const monthlySalesData = (insights?.salesByMonth ?? []).map((m) => ({
     month: m.month,
     ventas: m.count,
-    valor: Number(m.total_amount) / 1_000_000,
+    valor: Number(m.totalAmount) / 1_000_000,
   }));
 
-  const propertyTypeData = (insights?.distribution_by_type ?? []).map((t, i) => ({
-    name: t.property_type,
+  const propertyTypeData = (insights?.distributionByType ?? []).map((t, i) => ({
+    name: t.propertyType,
     value: t.count,
     color: PIE_COLORS[i % PIE_COLORS.length],
   }));
 
-  const maxZoneSales = Math.max(1, ...(insights?.activity_by_zone ?? []).map((z) => z.sales));
-  const zoneHeatMapData = (insights?.activity_by_zone ?? []).map((z) => ({
+  const maxZoneSales = Math.max(1, ...(insights?.activityByZone ?? []).map((z) => z.sales));
+  const zoneHeatMapData = (insights?.activityByZone ?? []).map((z) => ({
     zone: z.zone,
     sales: z.sales,
     value: z.leads,
     intensity: Math.round((z.sales / maxZoneSales) * 100),
   }));
 
-  const topAgents = (insights?.top_agents ?? []).map((a) => ({
+  const topAgents = (insights?.topAgents ?? []).map((a) => ({
     name: a.name,
-    sales: a.sales_count,
+    sales: a.salesCount,
     volume: a.score,
     commission: "",
     avatar: a.name.charAt(0).toUpperCase(),
@@ -77,16 +77,16 @@ const InsightsSection = () => {
 
   const summary = insights?.summary;
   const stats = {
-    totalVolume: summary?.total_revenue
-      ? `$${Number(summary.total_revenue).toLocaleString("es-MX")}`
+    totalVolume: summary?.totalRevenue
+      ? `$${Number(summary.totalRevenue).toLocaleString("es-MX")}`
       : "$0",
-    avgTicket: summary?.total_sales && summary.total_sales > 0 && summary.total_revenue
-      ? `$${Math.round(Number(summary.total_revenue) / summary.total_sales).toLocaleString("es-MX")}`
+    avgTicket: summary?.totalSales && summary.totalSales > 0 && summary.totalRevenue
+      ? `$${Math.round(Number(summary.totalRevenue) / summary.totalSales).toLocaleString("es-MX")}`
       : "$0",
     avgDaysToSell: 0,
     totalCommissions: "$0",
-    totalProperties: summary?.total_properties ?? 0,
-    activeLeads: summary?.active_leads ?? 0,
+    totalProperties: summary?.totalProperties ?? 0,
+    activeLeads: summary?.activeLeads ?? 0,
   };
 
   return (
@@ -169,7 +169,7 @@ const InsightsSection = () => {
               </div>
               <div>
                 <p className="text-xs text-foreground/60">Ventas Totales</p>
-                <p className="text-lg md:text-xl font-bold text-midnight">{summary?.total_sales ?? 0}</p>
+                <p className="text-lg md:text-xl font-bold text-midnight">{summary?.totalSales ?? 0}</p>
               </div>
             </div>
           </CardContent>
@@ -392,10 +392,10 @@ const InsightsSection = () => {
           <CardContent>
             <div className="space-y-3">
               {[
-                { label: "Total Propiedades", value: String(summary?.total_properties ?? 0) },
-                { label: "Total Ventas", value: String(summary?.total_sales ?? 0) },
-                { label: "Leads Activos", value: String(summary?.active_leads ?? 0) },
-                { label: "Ingresos Totales", value: summary?.total_revenue ? `$${Number(summary.total_revenue).toLocaleString("es-MX")}` : "$0" },
+                { label: "Total Propiedades", value: String(summary?.totalProperties ?? 0) },
+                { label: "Total Ventas", value: String(summary?.totalSales ?? 0) },
+                { label: "Leads Activos", value: String(summary?.activeLeads ?? 0) },
+                { label: "Ingresos Totales", value: summary?.totalRevenue ? `$${Number(summary.totalRevenue).toLocaleString("es-MX")}` : "$0" },
               ].map((item) => (
                 <div key={item.label} className="flex items-center justify-between p-3 bg-muted/20 rounded-xl">
                   <span className="text-sm text-foreground/60">{item.label}</span>

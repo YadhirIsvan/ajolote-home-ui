@@ -164,7 +164,7 @@ const AsignarSection = () => {
   );
 
   const agents: AgentRow[] = (agentsQuery.data?.results ?? []).map((a) => ({
-    membershipId: a.membership_id,
+    membershipId: a.membershipId,
     name: a.name,
     avatar: a.avatar ?? a.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2),
   }));
@@ -172,7 +172,7 @@ const AsignarSection = () => {
   const rows: PropertyRow[] = (() => {
     if (!assignmentsQuery.data) return [];
 
-    const unassigned: PropertyRow[] = (assignmentsQuery.data.unassigned_properties ?? []).map((p) => {
+    const unassigned: PropertyRow[] = (assignmentsQuery.data.unassignedProperties ?? []).map((p) => {
       const detail = propertyDetailsMap.get(p.id);
       return {
         rawId: p.id,
@@ -192,7 +192,7 @@ const AsignarSection = () => {
       // Pick the most recently assigned agent (last in array since backend orders by assigned_at asc internally,
       // or just use index 0 — we fix duplicates by always deleting-all on transfer/remove)
       const primaryAgent = a.agents[0] ?? null;
-      const agentRow = agents.find((ag) => ag.membershipId === primaryAgent?.membership_id);
+      const agentRow = agents.find((ag) => ag.membershipId === primaryAgent?.membershipId);
       return {
         rawId: a.property.id,
         title: a.property.title,
@@ -201,7 +201,7 @@ const AsignarSection = () => {
         address: detail?.address ?? "",
         agentName: primaryAgent?.name ?? null,
         agentAvatar: agentRow?.avatar ?? null,
-        agentMembershipId: primaryAgent?.membership_id ?? null,
+        agentMembershipId: primaryAgent?.membershipId ?? null,
         // Store ALL assignment IDs so we can delete all at once
         allAssignmentIds: (a.agents ?? []).map((ag) => ag.id),
       };

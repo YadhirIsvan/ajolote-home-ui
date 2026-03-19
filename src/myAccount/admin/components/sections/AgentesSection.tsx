@@ -134,8 +134,8 @@ const mapAdminAgent = (item: AdminAgent): MappedAgent => {
     phone: item.phone ?? "",
     avatarUrl: getMediaUrl(item.avatar),
     initials: parts.map(n => n[0]).join("").toUpperCase().slice(0, 2),
-    properties: item.properties_count,
-    sales: item.sales_count,
+    properties: item.propertiesCount,
+    sales: item.salesCount,
   };
 };
 
@@ -355,18 +355,18 @@ const AgentesSection = () => {
       name: s.name,
       monday: s.monday, tuesday: s.tuesday, wednesday: s.wednesday, thursday: s.thursday,
       friday: s.friday, saturday: s.saturday, sunday: s.sunday,
-      start_time: s.start_time, end_time: s.end_time,
-      has_lunch_break: s.has_lunch_break,
-      lunch_start: s.lunch_start ?? "14:00",
-      lunch_end: s.lunch_end ?? "15:00",
-      is_active: s.is_active,
+      start_time: s.startTime, end_time: s.endTime,
+      has_lunch_break: s.hasLunchBreak,
+      lunch_start: s.lunchStart ?? "14:00",
+      lunch_end: s.lunchEnd ?? "15:00",
+      is_active: s.isActive,
       priority: s.priority,
       breaks: s.breaks.map(b => ({
         id: b.id,
-        break_type: b.break_type as BreakItem["break_type"],
+        break_type: b.breakType as BreakItem["break_type"],
         name: b.name,
-        start_time: b.start_time,
-        end_time: b.end_time,
+        start_time: b.startTime,
+        end_time: b.endTime,
       })),
     });
     setIsAddingBreak(false);
@@ -452,8 +452,8 @@ const AgentesSection = () => {
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2 flex-1 min-w-0">
                         <span className="font-semibold text-midnight truncate">{s.name}</span>
-                        <Badge className={s.is_active ? "bg-green-100 text-green-700 shrink-0" : "bg-gray-100 text-gray-600 shrink-0"}>
-                          {s.is_active ? "Activo" : "Inactivo"}
+                        <Badge className={s.isActive ? "bg-green-100 text-green-700 shrink-0" : "bg-gray-100 text-gray-600 shrink-0"}>
+                          {s.isActive ? "Activo" : "Inactivo"}
                         </Badge>
                       </div>
                       <div className="flex gap-1 shrink-0">
@@ -487,12 +487,12 @@ const AgentesSection = () => {
                     <div className="flex items-center gap-3 text-sm text-foreground/70">
                       <div className="flex items-center gap-1">
                         <Clock className="w-4 h-4 text-champagne-gold" />
-                        <span>{s.start_time} — {s.end_time}</span>
+                        <span>{s.startTime} — {s.endTime}</span>
                       </div>
-                      {s.has_lunch_break && s.lunch_start && s.lunch_end && (
+                      {s.hasLunchBreak && s.lunchStart && s.lunchEnd && (
                         <div className="flex items-center gap-1 text-orange-600">
                           <Coffee className="w-4 h-4" />
-                          <span>Almuerzo {s.lunch_start}–{s.lunch_end}</span>
+                          <span>Almuerzo {s.lunchStart}–{s.lunchEnd}</span>
                         </div>
                       )}
                     </div>
@@ -501,8 +501,8 @@ const AgentesSection = () => {
                     {s.breaks.length > 0 && (
                       <div className="flex gap-1 flex-wrap">
                         {s.breaks.map(b => (
-                          <span key={b.id} className={cn("text-xs px-2 py-0.5 rounded-full border", BREAK_TYPE_COLORS[b.break_type] ?? BREAK_TYPE_COLORS.other)}>
-                            {b.name || BREAK_TYPE_LABELS[b.break_type]} {b.start_time}–{b.end_time}
+                          <span key={b.id} className={cn("text-xs px-2 py-0.5 rounded-full border", BREAK_TYPE_COLORS[b.breakType] ?? BREAK_TYPE_COLORS.other)}>
+                            {b.name || BREAK_TYPE_LABELS[b.breakType]} {b.startTime}–{b.endTime}
                           </span>
                         ))}
                       </div>

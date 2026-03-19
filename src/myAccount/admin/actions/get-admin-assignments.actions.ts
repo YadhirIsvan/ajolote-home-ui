@@ -1,11 +1,49 @@
 import { adminApi } from "@/myAccount/admin/api/admin.api";
-import type { AdminAssignmentsResponse } from "@/myAccount/admin/types/admin.types";
+import type {
+  BackendAdminAssignmentsResponse,
+  BackendAdminAssignmentProperty,
+  BackendAdminAssignmentAgent,
+  BackendAdminAssignment,
+} from "@/myAccount/admin/api/admin.api";
+import type {
+  AdminAssignmentsResponse,
+  AdminAssignmentProperty,
+  AdminAssignmentAgent,
+  AdminAssignment,
+} from "@/myAccount/admin/types/admin.types";
+
+// ─── Mappers ──────────────────────────────────────────────────────────────────
+
+const mapAssignmentProperty = (b: BackendAdminAssignmentProperty): AdminAssignmentProperty => ({
+  id: b.id,
+  title: b.title,
+  propertyType: b.property_type,
+});
+
+const mapAssignmentAgent = (b: BackendAdminAssignmentAgent): AdminAssignmentAgent => ({
+  id: b.id,
+  membershipId: b.membership_id,
+  name: b.name,
+  isVisible: b.is_visible,
+});
+
+const mapAssignment = (b: BackendAdminAssignment): AdminAssignment => ({
+  property: mapAssignmentProperty(b.property),
+  agents: b.agents.map(mapAssignmentAgent),
+});
+
+const mapAssignmentsResponse = (b: BackendAdminAssignmentsResponse): AdminAssignmentsResponse => ({
+  unassignedProperties: b.unassigned_properties.map(mapAssignmentProperty),
+  assignments: b.assignments.map(mapAssignment),
+});
+
+// ─── Actions ──────────────────────────────────────────────────────────────────
 
 export const getAdminAssignmentsAction =
   async (): Promise<AdminAssignmentsResponse> => {
     try {
       const { data } = await adminApi.getAssignments();
-      return data;
+      return mapAssignmentsResponse(data);
     } catch (error) {
       console.error("[getAdminAssignmentsAction] Error al obtener asignaciones:", error);
       throw error;

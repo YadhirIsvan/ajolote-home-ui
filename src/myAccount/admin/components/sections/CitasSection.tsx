@@ -170,23 +170,23 @@ const emptyFormData: FormData = {
 const mapAdminAppointment = (item: AdminAppointment): Appointment => ({
   id: String(item.id),
   rawId: item.id,
-  date: item.scheduled_date,
-  time: item.scheduled_time.slice(0, 5),
-  client: item.client_name,
+  date: item.scheduledDate,
+  time: item.scheduledTime.slice(0, 5),
+  client: item.clientName,
   clientId: "",
   property: item.property.title,
   propertyId: item.property.id,
   agent: item.agent.name,
   agentMembershipId: item.agent.id,
-  typeId: item.appointment_type ?? "primera_visita",
-  duration: item.duration_minutes,
+  typeId: item.appointmentType ?? "primera_visita",
+  duration: item.durationMinutes,
   notes: "",
   status: item.status,
   matricula: item.matricula,
 });
 
 const mapAdminClient = (item: AdminClient): Client => ({
-  id: String(item.membership_id),
+  id: String(item.membershipId),
   name: item.name,
   matricula: item.email.split("@")[0].toUpperCase(),
   assignedAgent: "",
@@ -634,7 +634,7 @@ const CitasSection = () => {
           <Select value={formData.agent}
             onValueChange={v => {
               const ag = agentsQuery.data?.results.find(a => a.name === v);
-              setFormData(prev => ({ ...prev, agent: v, agentMembershipId: ag?.membership_id ?? "", time: "" }));
+              setFormData(prev => ({ ...prev, agent: v, agentMembershipId: ag?.membershipId ?? "", time: "" }));
             }}
             disabled={!isClientSelected}>
             <SelectTrigger className="h-12"><SelectValue placeholder="Seleccionar agente" /></SelectTrigger>

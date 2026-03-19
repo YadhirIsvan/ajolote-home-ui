@@ -1,9 +1,27 @@
 import { adminApi } from "@/myAccount/admin/api/admin.api";
+import type { BackendAdminSellerLead } from "@/myAccount/admin/api/admin.api";
 import type {
   AdminSellerLead,
   SellerLeadStatus,
   Paginated,
 } from "@/myAccount/admin/types/admin.types";
+
+// ─── Mapper ───────────────────────────────────────────────────────────────────
+
+const mapAdminSellerLead = (b: BackendAdminSellerLead): AdminSellerLead => ({
+  id: b.id,
+  fullName: b.full_name,
+  email: b.email,
+  phone: b.phone,
+  propertyType: b.property_type,
+  location: b.location,
+  expectedPrice: b.expected_price,
+  status: b.status as SellerLeadStatus,
+  assignedAgent: b.assigned_agent,
+  createdAt: b.created_at,
+});
+
+// ─── Actions ──────────────────────────────────────────────────────────────────
 
 export const getAdminSellerLeadsAction = async (params?: {
   status?: SellerLeadStatus;
@@ -13,7 +31,7 @@ export const getAdminSellerLeadsAction = async (params?: {
 }): Promise<Paginated<AdminSellerLead>> => {
   try {
     const { data } = await adminApi.getSellerLeads(params);
-    return data;
+    return { ...data, results: data.results.map(mapAdminSellerLead) };
   } catch (error) {
     console.error("[getAdminSellerLeadsAction] Error al obtener seller leads:", error);
     throw error;

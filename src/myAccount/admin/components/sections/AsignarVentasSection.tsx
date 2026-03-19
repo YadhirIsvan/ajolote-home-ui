@@ -125,7 +125,7 @@ const AsignarVentasSection = () => {
   // ─── Derived data ─────────────────────────────────────────────────────────────
 
   const agents: AgentRow[] = (agentsQuery.data?.results ?? []).map((a) => ({
-    membershipId: a.membership_id,
+    membershipId: a.membershipId,
     name: a.name,
     avatar: a.avatar ?? a.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2),
   }));
@@ -145,7 +145,7 @@ const AsignarVentasSection = () => {
   };
 
   const handleRemoveAgent = (entry: SaleProcessAssignmentEntry) => {
-    unassignMutation.mutate(entry.sale_process_id);
+    unassignMutation.mutate(entry.saleProcessId);
   };
 
   const handleOpenTransfer = (entry: SaleProcessAssignmentEntry) => {
@@ -156,7 +156,7 @@ const AsignarVentasSection = () => {
   const handleTransfer = (newMembershipId: number) => {
     if (!selectedEntry) return;
     transferMutation.mutate({
-      saleProcessId: selectedEntry.sale_process_id,
+      saleProcessId: selectedEntry.saleProcessId,
       newMembershipId,
     });
   };
@@ -165,7 +165,7 @@ const AsignarVentasSection = () => {
 
   const EntryCard = ({ entry, showAssignSelect }: { entry: SaleProcessAssignmentEntry; showAssignSelect: boolean }) => {
     const image = getMediaUrl(entry.property.image);
-    const agentRow = agents.find((a) => a.membershipId === entry.agent?.membership_id);
+    const agentRow = agents.find((a) => a.membershipId === entry.agent?.membershipId);
 
     return (
       <Card className="border-border/50 hover:border-champagne-gold/50 transition-all overflow-hidden">
@@ -196,7 +196,7 @@ const AsignarVentasSection = () => {
 
             {showAssignSelect ? (
               <Select
-                onValueChange={(value) => handleAssign(entry.sale_process_id, Number(value))}
+                onValueChange={(value) => handleAssign(entry.saleProcessId, Number(value))}
                 disabled={assignMutation.isPending}
               >
                 <SelectTrigger className="h-9 text-xs border-champagne-gold/50">
@@ -255,7 +255,7 @@ const AsignarVentasSection = () => {
 
   const TransferContent = () => {
     if (!selectedEntry) return null;
-    const otherAgents = agents.filter((a) => a.membershipId !== selectedEntry.agent?.membership_id);
+    const otherAgents = agents.filter((a) => a.membershipId !== selectedEntry.agent?.membershipId);
     const image = getMediaUrl(selectedEntry.property.image);
 
     return (
@@ -357,7 +357,7 @@ const AsignarVentasSection = () => {
                 </div>
               ) : (
                 filteredUnassigned.map((e) => (
-                  <EntryCard key={e.sale_process_id} entry={e} showAssignSelect />
+                  <EntryCard key={e.saleProcessId} entry={e} showAssignSelect />
                 ))
               )}
             </CardContent>
@@ -381,7 +381,7 @@ const AsignarVentasSection = () => {
                 </div>
               ) : (
                 filteredAssigned.map((e) => (
-                  <EntryCard key={e.sale_process_id} entry={e} showAssignSelect={false} />
+                  <EntryCard key={e.saleProcessId} entry={e} showAssignSelect={false} />
                 ))
               )}
             </CardContent>
@@ -398,7 +398,7 @@ const AsignarVentasSection = () => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {agents.map((agent) => {
               const count = assigned.filter(
-                (e) => e.agent?.membership_id === agent.membershipId
+                (e) => e.agent?.membershipId === agent.membershipId
               ).length;
               return (
                 <div

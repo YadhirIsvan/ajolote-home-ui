@@ -1,4 +1,5 @@
 import { adminApi } from "@/myAccount/admin/api/admin.api";
+import type { BackendAdminAppointment } from "@/myAccount/admin/api/admin.api";
 import type { AdminAppointment, AppointmentType, Paginated } from "@/myAccount/admin/types/admin.types";
 
 export interface GetAdminAppointmentsParams {
@@ -21,12 +22,31 @@ export interface CreateAdminAppointmentPayload {
   notes?: string;
 }
 
+// ─── Mapper ───────────────────────────────────────────────────────────────────
+
+const mapAdminAppointment = (b: BackendAdminAppointment): AdminAppointment => ({
+  id: b.id,
+  matricula: b.matricula,
+  scheduledDate: b.scheduled_date,
+  scheduledTime: b.scheduled_time,
+  durationMinutes: b.duration_minutes,
+  status: b.status,
+  appointmentType: b.appointment_type as AppointmentType,
+  clientName: b.client_name,
+  clientEmail: b.client_email,
+  clientPhone: b.client_phone,
+  property: b.property,
+  agent: b.agent,
+});
+
+// ─── Actions ──────────────────────────────────────────────────────────────────
+
 export const getAdminAppointmentsAction = async (
   params?: GetAdminAppointmentsParams
 ): Promise<Paginated<AdminAppointment>> => {
   try {
     const { data } = await adminApi.getAppointments(params);
-    return data;
+    return { ...data, results: data.results.map(mapAdminAppointment) };
   } catch (error) {
     console.error("[getAdminAppointmentsAction] Error al obtener citas:", error);
     throw error;
@@ -38,7 +58,7 @@ export const createAdminAppointmentAction = async (
 ): Promise<AdminAppointment> => {
   try {
     const { data } = await adminApi.createAppointment(payload);
-    return data;
+    return mapAdminAppointment(data);
   } catch (error) {
     console.error("[createAdminAppointmentAction] Error al crear cita:", error);
     throw error;
@@ -51,7 +71,7 @@ export const updateAdminAppointmentStatusAction = async (
 ): Promise<AdminAppointment> => {
   try {
     const { data } = await adminApi.updateAppointment(id, payload);
-    return data;
+    return mapAdminAppointment(data);
   } catch (error) {
     console.error("[updateAdminAppointmentStatusAction] Error al actualizar cita:", error);
     throw error;

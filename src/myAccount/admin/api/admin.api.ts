@@ -1,42 +1,295 @@
 import { axiosInstance } from "@/shared/api/axios.instance";
-import type {
-  AdminProperty,
-  AdminPropertyDetail,
-  AdminPropertyImage,
-  AdminAgent,
-  AgentSchedule,
-  AdminAppointment,
-  AdminAssignmentsResponse,
-  SaleProcessAssignmentsResponse,
-  AdminClient,
-  AdminClientDetail,
-  AdminPurchaseProcess,
-  AdminSaleProcess,
-  AdminSellerLead,
-  AdminSaleHistoryItem,
-  AdminInsights,
-  CatalogState,
-  CatalogCity,
-  CatalogAmenity,
-  Paginated,
-} from "@/myAccount/admin/types/admin.types";
+import type { Paginated } from "@/myAccount/admin/types/admin.types";
+
+// ─── Backend raw types (snake_case — mirrors actual API responses) ─────────────
+
+export interface BackendAdminProperty {
+  id: number;
+  title: string;
+  address: string;
+  price: string;
+  currency: string;
+  property_type: string;
+  listing_type: string;
+  status: string;
+  is_featured: boolean;
+  is_verified: boolean;
+  is_active: boolean;
+  image: string | null;
+  agent: { id: number; name: string } | null;
+  documents_count: number;
+  created_at: string;
+}
+
+export interface BackendAdminPropertyImage {
+  id: number;
+  image_url: string;
+  is_cover: boolean;
+  sort_order: number;
+}
+
+export interface BackendAdminPropertyDetail extends BackendAdminProperty {
+  description: string;
+  property_condition: string;
+  bedrooms: number;
+  bathrooms: number;
+  parking_spaces: number;
+  construction_sqm: string;
+  land_sqm: string;
+  address_street: string;
+  address_number: string;
+  address_neighborhood: string;
+  address_zip: string;
+  city: { id: number; name: string; state_id: number } | null;
+  zone: string;
+  video_id: string;
+  latitude: string;
+  longitude: string;
+  images: BackendAdminPropertyImage[];
+  amenities: { id: number; name: string; icon: string }[];
+}
+
+export interface BackendCatalogState {
+  id: number;
+  name: string;
+  code: string;
+  country_id: number;
+}
+
+export interface BackendCatalogCity {
+  id: number;
+  name: string;
+  state_id: number;
+}
+
+export interface BackendCatalogAmenity {
+  id: number;
+  name: string;
+  icon: string;
+}
+
+export interface BackendAdminAgent {
+  id: number;
+  membership_id: number;
+  name: string;
+  email: string;
+  phone: string;
+  avatar: string | null;
+  zone: string;
+  bio: string;
+  score: string;
+  properties_count: number;
+  sales_count: number;
+  leads_count: number;
+  active_leads: number;
+}
+
+export interface BackendAgentScheduleBreak {
+  id: number;
+  break_type: string;
+  name: string;
+  start_time: string;
+  end_time: string;
+}
+
+export interface BackendAgentSchedule {
+  id: number;
+  name: string;
+  monday: boolean;
+  tuesday: boolean;
+  wednesday: boolean;
+  thursday: boolean;
+  friday: boolean;
+  saturday: boolean;
+  sunday: boolean;
+  start_time: string;
+  end_time: string;
+  has_lunch_break: boolean;
+  lunch_start: string | null;
+  lunch_end: string | null;
+  valid_from: string;
+  valid_until: string | null;
+  is_active: boolean;
+  priority: number;
+  breaks: BackendAgentScheduleBreak[];
+}
+
+export interface BackendAdminAppointment {
+  id: number;
+  matricula: string;
+  scheduled_date: string;
+  scheduled_time: string;
+  duration_minutes: number;
+  status: string;
+  appointment_type: string;
+  client_name: string;
+  client_email: string;
+  client_phone: string;
+  property: { id: number; title: string };
+  agent: { id: number; name: string };
+}
+
+export interface BackendAdminAssignmentProperty {
+  id: number;
+  title: string;
+  property_type: string;
+}
+
+export interface BackendAdminAssignmentAgent {
+  id: number;
+  membership_id: number;
+  name: string;
+  is_visible: boolean;
+}
+
+export interface BackendAdminAssignment {
+  property: BackendAdminAssignmentProperty;
+  agents: BackendAdminAssignmentAgent[];
+}
+
+export interface BackendAdminAssignmentsResponse {
+  unassigned_properties: BackendAdminAssignmentProperty[];
+  assignments: BackendAdminAssignment[];
+}
+
+export interface BackendSaleProcessAssignmentEntry {
+  sale_process_id: number;
+  property: {
+    id: number;
+    title: string;
+    property_type: string;
+    image: string | null;
+    price: string | null;
+    address: string;
+  };
+  status: string;
+  agent: { membership_id: number; name: string } | null;
+}
+
+export interface BackendSaleProcessAssignmentsResponse {
+  unassigned: BackendSaleProcessAssignmentEntry[];
+  assigned: BackendSaleProcessAssignmentEntry[];
+}
+
+export interface BackendAdminClient {
+  id: number;
+  membership_id: number;
+  name: string;
+  email: string;
+  phone: string;
+  avatar: string | null;
+  city: string;
+  purchase_processes_count: number;
+  sale_processes_count: number;
+  date_joined: string;
+}
+
+export interface BackendAdminClientPurchaseProcess {
+  id: number;
+  status: string;
+  overall_progress: number;
+  property: { id: number; title: string; image: string | null };
+  agent: { name: string };
+  documents: { id: number; name: string; uploaded_at: string }[];
+  created_at: string;
+}
+
+export interface BackendAdminClientSaleProcess {
+  id: number;
+  status: string;
+  property: { id: number; title: string; image: string | null };
+  agent: { name: string };
+  created_at: string;
+}
+
+export interface BackendAdminClientDetail {
+  id: number;
+  membership_id: number;
+  name: string;
+  email: string;
+  phone: string;
+  avatar: string | null;
+  city: string;
+  purchase_processes: BackendAdminClientPurchaseProcess[];
+  sale_processes: BackendAdminClientSaleProcess[];
+}
+
+export interface BackendAdminPurchaseProcess {
+  id: number;
+  status: string;
+  overall_progress: number;
+  client: { id: number; name: string; avatar: string | null };
+  property: { id: number; title: string; image: string | null; price: string };
+  agent: { id: number; name: string };
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BackendAdminSaleProcess {
+  id: number;
+  status: string;
+  property: { id: number; title: string; image: string | null };
+  client: { id: number; name: string } | null;
+  agent: { id: number; name: string } | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BackendAdminSellerLead {
+  id: number;
+  full_name: string;
+  email: string;
+  phone: string;
+  property_type: string;
+  location: string;
+  expected_price: string;
+  status: string;
+  assigned_agent: { id: number; name: string } | null;
+  created_at: string;
+}
+
+export interface BackendAdminSaleHistoryItem {
+  id: number;
+  property: { title: string; property_type: string; zone: string };
+  client: { name: string };
+  agent: { name: string };
+  sale_price: string;
+  payment_method: string;
+  closed_at: string;
+}
+
+export interface BackendAdminInsights {
+  period: string;
+  sales_by_month: { month: string; count: number; total_amount: string }[];
+  distribution_by_type: { property_type: string; count: number; percentage: number }[];
+  activity_by_zone: { zone: string; views: number; leads: number; sales: number }[];
+  top_agents: { id: number; name: string; sales_count: number; leads_count: number; score: string }[];
+  summary: {
+    total_properties: number;
+    total_sales: number;
+    total_revenue: string;
+    active_leads: number;
+  };
+}
+
+// ─── API ──────────────────────────────────────────────────────────────────────
 
 export const adminApi = {
   // ─── Propiedades ────────────────────────────────────────────────────────────
   getProperties: (params?: object) =>
-    axiosInstance.get<Paginated<AdminProperty>>("/admin/properties", { params }),
+    axiosInstance.get<Paginated<BackendAdminProperty>>("/admin/properties", { params }),
 
   createProperty: (data: FormData | object) =>
-    axiosInstance.post<AdminPropertyDetail>("/admin/properties", data),
+    axiosInstance.post<BackendAdminPropertyDetail>("/admin/properties", data),
 
   updateProperty: (id: number, data: object) =>
-    axiosInstance.patch<AdminPropertyDetail>(`/admin/properties/${id}`, data),
+    axiosInstance.patch<BackendAdminPropertyDetail>(`/admin/properties/${id}`, data),
 
   deleteProperty: (id: number) =>
     axiosInstance.delete<void>(`/admin/properties/${id}`),
 
   uploadPropertyImages: (id: number, formData: FormData) =>
-    axiosInstance.post<AdminPropertyImage[]>(
+    axiosInstance.post<BackendAdminPropertyImage[]>(
       `/admin/properties/${id}/images`,
       formData,
       {
@@ -58,7 +311,7 @@ export const adminApi = {
     ),
 
   getPropertyDetail: (id: number) =>
-    axiosInstance.get<AdminPropertyDetail>(`/admin/properties/${id}`),
+    axiosInstance.get<BackendAdminPropertyDetail>(`/admin/properties/${id}`),
 
   deletePropertyImage: (propertyId: number, imageId: number) =>
     axiosInstance.delete<void>(
@@ -66,30 +319,30 @@ export const adminApi = {
     ),
 
   getStates: () =>
-    axiosInstance.get<Paginated<CatalogState>>("/catalogs/states", {
+    axiosInstance.get<Paginated<BackendCatalogState>>("/catalogs/states", {
       params: { country_id: 1 },
     }),
 
   getCities: (stateId: number) =>
-    axiosInstance.get<Paginated<CatalogCity>>("/catalogs/cities", {
+    axiosInstance.get<Paginated<BackendCatalogCity>>("/catalogs/cities", {
       params: { state_id: stateId },
     }),
 
   getAmenities: () =>
-    axiosInstance.get<Paginated<CatalogAmenity>>("/catalogs/amenities"),
+    axiosInstance.get<Paginated<BackendCatalogAmenity>>("/catalogs/amenities"),
 
   // ─── Agentes ────────────────────────────────────────────────────────────────
   getAgents: (params?: object) =>
-    axiosInstance.get<Paginated<AdminAgent>>("/admin/agents", { params }),
+    axiosInstance.get<Paginated<BackendAdminAgent>>("/admin/agents", { params }),
 
   createAgent: (data: object) =>
-    axiosInstance.post<AdminAgent>("/admin/agents", data),
+    axiosInstance.post<BackendAdminAgent>("/admin/agents", data),
 
   updateAgent: (id: number, data: object) =>
-    axiosInstance.patch<AdminAgent>(`/admin/agents/${id}`, data),
+    axiosInstance.patch<BackendAdminAgent>(`/admin/agents/${id}`, data),
 
   updateAgentAvatar: (id: number, formData: FormData) =>
-    axiosInstance.patch<AdminAgent>(`/admin/agents/${id}`, formData, {
+    axiosInstance.patch<BackendAdminAgent>(`/admin/agents/${id}`, formData, {
       transformRequest: [
         (data: unknown, headers: Record<string, string>) => {
           if (headers) {
@@ -106,12 +359,12 @@ export const adminApi = {
 
   // ─── Horarios de agente ─────────────────────────────────────────────────────
   getAgentSchedules: (agentId: number) =>
-    axiosInstance.get<AgentSchedule[]>(
+    axiosInstance.get<BackendAgentSchedule[]>(
       `/admin/agents/${agentId}/schedules`
     ),
 
   createAgentSchedule: (agentId: number, data: object) =>
-    axiosInstance.post<AgentSchedule>(
+    axiosInstance.post<BackendAgentSchedule>(
       `/admin/agents/${agentId}/schedules`,
       data
     ),
@@ -121,7 +374,7 @@ export const adminApi = {
     scheduleId: number,
     data: object
   ) =>
-    axiosInstance.patch<AgentSchedule>(
+    axiosInstance.patch<BackendAgentSchedule>(
       `/admin/agents/${agentId}/schedules/${scheduleId}`,
       data
     ),
@@ -133,15 +386,15 @@ export const adminApi = {
 
   // ─── Citas ──────────────────────────────────────────────────────────────────
   getAppointments: (params?: object) =>
-    axiosInstance.get<Paginated<AdminAppointment>>("/admin/appointments", {
+    axiosInstance.get<Paginated<BackendAdminAppointment>>("/admin/appointments", {
       params,
     }),
 
   createAppointment: (data: object) =>
-    axiosInstance.post<AdminAppointment>("/admin/appointments", data),
+    axiosInstance.post<BackendAdminAppointment>("/admin/appointments", data),
 
   updateAppointment: (id: number, data: object) =>
-    axiosInstance.patch<AdminAppointment>(
+    axiosInstance.patch<BackendAdminAppointment>(
       `/admin/appointments/${id}`,
       data
     ),
@@ -154,7 +407,7 @@ export const adminApi = {
 
   // ─── Asignaciones ───────────────────────────────────────────────────────────
   getAssignments: () =>
-    axiosInstance.get<AdminAssignmentsResponse>("/admin/assignments"),
+    axiosInstance.get<BackendAdminAssignmentsResponse>("/admin/assignments"),
 
   createAssignment: (
     propertyId: number,
@@ -175,7 +428,7 @@ export const adminApi = {
 
   // ─── Asignaciones SaleProcess ────────────────────────────────────────────────
   getSaleProcessAssignments: () =>
-    axiosInstance.get<SaleProcessAssignmentsResponse>(
+    axiosInstance.get<BackendSaleProcessAssignmentsResponse>(
       "/admin/sale-processes/assignments"
     ),
 
@@ -195,14 +448,14 @@ export const adminApi = {
 
   // ─── Clientes ───────────────────────────────────────────────────────────────
   getClients: (params?: object) =>
-    axiosInstance.get<Paginated<AdminClient>>("/admin/clients", { params }),
+    axiosInstance.get<Paginated<BackendAdminClient>>("/admin/clients", { params }),
 
   getClientDetail: (id: number) =>
-    axiosInstance.get<AdminClientDetail>(`/admin/clients/${id}`),
+    axiosInstance.get<BackendAdminClientDetail>(`/admin/clients/${id}`),
 
   // ─── Pipeline de compra (Kanban) ─────────────────────────────────────────────
   getPurchaseProcesses: (params?: object) =>
-    axiosInstance.get<Paginated<AdminPurchaseProcess>>(
+    axiosInstance.get<Paginated<BackendAdminPurchaseProcess>>(
       "/admin/purchase-processes",
       { params }
     ),
@@ -218,7 +471,7 @@ export const adminApi = {
 
   // ─── Pipeline de venta ──────────────────────────────────────────────────────
   getSaleProcesses: (params?: object) =>
-    axiosInstance.get<Paginated<AdminSaleProcess>>("/admin/sale-processes", {
+    axiosInstance.get<Paginated<BackendAdminSaleProcess>>("/admin/sale-processes", {
       params,
     }),
 
@@ -233,7 +486,7 @@ export const adminApi = {
 
   // ─── Seller Leads ───────────────────────────────────────────────────────────
   getSellerLeads: (params?: object) =>
-    axiosInstance.get<Paginated<AdminSellerLead>>("/admin/seller-leads", {
+    axiosInstance.get<Paginated<BackendAdminSellerLead>>("/admin/seller-leads", {
       params,
     }),
 
@@ -249,13 +502,13 @@ export const adminApi = {
 
   // ─── Historial ──────────────────────────────────────────────────────────────
   getSalesHistory: (params?: object) =>
-    axiosInstance.get<Paginated<AdminSaleHistoryItem>>("/admin/history", {
+    axiosInstance.get<Paginated<BackendAdminSaleHistoryItem>>("/admin/history", {
       params,
     }),
 
   // ─── Insights ───────────────────────────────────────────────────────────────
   getInsights: (period: string) =>
-    axiosInstance.get<AdminInsights>("/admin/insights", {
+    axiosInstance.get<BackendAdminInsights>("/admin/insights", {
       params: { period },
     }),
 };

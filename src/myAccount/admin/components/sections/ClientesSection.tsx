@@ -271,25 +271,25 @@ const ClientesSection = () => {
               className="data-[state=active]:bg-champagne-gold data-[state=active]:text-white gap-2"
             >
               <ShoppingCart className="w-4 h-4" />
-              En Compra ({clientDetail.purchase_processes.length})
+              En Compra ({clientDetail.purchaseProcesses.length})
             </TabsTrigger>
             <TabsTrigger
               value="selling"
               className="data-[state=active]:bg-champagne-gold data-[state=active]:text-white gap-2"
             >
               <Home className="w-4 h-4" />
-              En Venta ({clientDetail.sale_processes.length})
+              En Venta ({clientDetail.saleProcesses.length})
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="buying" className="space-y-4 mt-4">
-            {clientDetail.purchase_processes.length === 0 ? (
+            {clientDetail.purchaseProcesses.length === 0 ? (
               <div className="text-center py-8 text-foreground/50">
                 <ShoppingCart className="w-12 h-12 mx-auto mb-3" />
                 <p>No hay propiedades en proceso de compra</p>
               </div>
             ) : (
-              clientDetail.purchase_processes.map((proc) => {
+              clientDetail.purchaseProcesses.map((proc) => {
                 const propImg = getMediaUrl(proc.property.image);
                 return (
                   <Card key={proc.id} className="border-border/30 hover:border-champagne-gold/50 transition-all">
@@ -318,12 +318,12 @@ const ClientesSection = () => {
                       <div className="mb-3">
                         <div className="flex justify-between text-xs text-foreground/60 mb-1">
                           <span>Progreso</span>
-                          <span className="font-medium text-midnight">{proc.overall_progress}%</span>
+                          <span className="font-medium text-midnight">{proc.overallProgress}%</span>
                         </div>
                         <div className="h-2 rounded-full bg-muted overflow-hidden">
                           <div
                             className="h-full bg-champagne-gold transition-all rounded-full"
-                            style={{ width: `${proc.overall_progress}%` }}
+                            style={{ width: `${proc.overallProgress}%` }}
                           />
                         </div>
                       </div>
@@ -360,13 +360,13 @@ const ClientesSection = () => {
           </TabsContent>
 
           <TabsContent value="selling" className="space-y-4 mt-4">
-            {clientDetail.sale_processes.length === 0 ? (
+            {clientDetail.saleProcesses.length === 0 ? (
               <div className="text-center py-8 text-foreground/50">
                 <Home className="w-12 h-12 mx-auto mb-3" />
                 <p>No hay propiedades en proceso de venta</p>
               </div>
             ) : (
-              clientDetail.sale_processes.map((proc) => {
+              clientDetail.saleProcesses.map((proc) => {
                 const propImg = getMediaUrl(proc.property.image);
                 return (
                   <Card key={proc.id} className="border-border/30 hover:border-champagne-gold/50 transition-all">
@@ -492,11 +492,11 @@ const ClientesSection = () => {
               <div className="flex gap-4">
                 <div className="flex items-center gap-2 text-sm">
                   <ShoppingCart className="w-4 h-4 text-champagne-gold" />
-                  <span className="text-midnight">{client.purchase_processes_count} comprando</span>
+                  <span className="text-midnight">{client.purchaseProcessesCount} comprando</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <Home className="w-4 h-4 text-champagne-gold" />
-                  <span className="text-midnight">{client.sale_processes_count} vendiendo</span>
+                  <span className="text-midnight">{client.saleProcessesCount} vendiendo</span>
                 </div>
               </div>
 

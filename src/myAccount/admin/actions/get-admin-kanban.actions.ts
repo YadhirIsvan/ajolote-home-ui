@@ -1,4 +1,5 @@
 import { adminApi } from "@/myAccount/admin/api/admin.api";
+import type { BackendAdminPurchaseProcess, BackendAdminSaleProcess } from "@/myAccount/admin/api/admin.api";
 import type {
   AdminPurchaseProcess,
   AdminSaleProcess,
@@ -6,6 +7,31 @@ import type {
   SaleProcessStatus,
   Paginated,
 } from "@/myAccount/admin/types/admin.types";
+
+// ─── Mappers ──────────────────────────────────────────────────────────────────
+
+const mapAdminPurchaseProcess = (b: BackendAdminPurchaseProcess): AdminPurchaseProcess => ({
+  id: b.id,
+  status: b.status as PurchaseProcessStatus,
+  overallProgress: b.overall_progress,
+  client: b.client,
+  property: b.property,
+  agent: b.agent,
+  createdAt: b.created_at,
+  updatedAt: b.updated_at,
+});
+
+const mapAdminSaleProcess = (b: BackendAdminSaleProcess): AdminSaleProcess => ({
+  id: b.id,
+  status: b.status as SaleProcessStatus,
+  property: b.property,
+  client: b.client,
+  agent: b.agent,
+  createdAt: b.created_at,
+  updatedAt: b.updated_at,
+});
+
+// ─── Actions ──────────────────────────────────────────────────────────────────
 
 export const getAdminPurchaseProcessesAction = async (params?: {
   status?: PurchaseProcessStatus;
@@ -15,7 +41,7 @@ export const getAdminPurchaseProcessesAction = async (params?: {
 }): Promise<Paginated<AdminPurchaseProcess>> => {
   try {
     const { data } = await adminApi.getPurchaseProcesses(params);
-    return data;
+    return { ...data, results: data.results.map(mapAdminPurchaseProcess) };
   } catch (error) {
     console.error("[getAdminPurchaseProcessesAction] Error al obtener pipeline de compra:", error);
     throw error;
@@ -44,7 +70,7 @@ export const getAdminSaleProcessesAction = async (params?: {
 }): Promise<Paginated<AdminSaleProcess>> => {
   try {
     const { data } = await adminApi.getSaleProcesses(params);
-    return data;
+    return { ...data, results: data.results.map(mapAdminSaleProcess) };
   } catch (error) {
     console.error("[getAdminSaleProcessesAction] Error al obtener pipeline de venta:", error);
     throw error;

@@ -1,5 +1,15 @@
 import { adminApi } from "@/myAccount/admin/api/admin.api";
-import type { AdminAgent, AgentSchedule, Paginated } from "@/myAccount/admin/types/admin.types";
+import type {
+  BackendAdminAgent,
+  BackendAgentScheduleBreak,
+  BackendAgentSchedule,
+} from "@/myAccount/admin/api/admin.api";
+import type {
+  AdminAgent,
+  AgentSchedule,
+  AgentScheduleBreak,
+  Paginated,
+} from "@/myAccount/admin/types/admin.types";
 
 export interface AgentFormPayload {
   first_name: string;
@@ -44,10 +54,60 @@ export interface ScheduleFormPayload {
   breaks: ScheduleBreakPayload[];
 }
 
+// ─── Mappers ──────────────────────────────────────────────────────────────────
+
+const mapAgentScheduleBreak = (b: BackendAgentScheduleBreak): AgentScheduleBreak => ({
+  id: b.id,
+  breakType: b.break_type,
+  name: b.name,
+  startTime: b.start_time,
+  endTime: b.end_time,
+});
+
+const mapAgentSchedule = (b: BackendAgentSchedule): AgentSchedule => ({
+  id: b.id,
+  name: b.name,
+  monday: b.monday,
+  tuesday: b.tuesday,
+  wednesday: b.wednesday,
+  thursday: b.thursday,
+  friday: b.friday,
+  saturday: b.saturday,
+  sunday: b.sunday,
+  startTime: b.start_time,
+  endTime: b.end_time,
+  hasLunchBreak: b.has_lunch_break,
+  lunchStart: b.lunch_start,
+  lunchEnd: b.lunch_end,
+  validFrom: b.valid_from,
+  validUntil: b.valid_until,
+  isActive: b.is_active,
+  priority: b.priority,
+  breaks: b.breaks.map(mapAgentScheduleBreak),
+});
+
+const mapAdminAgent = (b: BackendAdminAgent): AdminAgent => ({
+  id: b.id,
+  membershipId: b.membership_id,
+  name: b.name,
+  email: b.email,
+  phone: b.phone,
+  avatar: b.avatar,
+  zone: b.zone,
+  bio: b.bio,
+  score: b.score,
+  propertiesCount: b.properties_count,
+  salesCount: b.sales_count,
+  leadsCount: b.leads_count,
+  activeLeads: b.active_leads,
+});
+
+// ─── Actions ──────────────────────────────────────────────────────────────────
+
 export const getAdminAgentsAction = async (): Promise<Paginated<AdminAgent>> => {
   try {
     const { data } = await adminApi.getAgents();
-    return data;
+    return { ...data, results: data.results.map(mapAdminAgent) };
   } catch (error) {
     console.error("[getAdminAgentsAction] Error al obtener agentes:", error);
     throw error;
@@ -59,7 +119,7 @@ export const getAdminAgentSchedulesAction = async (
 ): Promise<AgentSchedule[]> => {
   try {
     const { data } = await adminApi.getAgentSchedules(agentId);
-    return data;
+    return data.map(mapAgentSchedule);
   } catch (error) {
     console.error("[getAdminAgentSchedulesAction] Error al obtener horarios:", error);
     throw error;
@@ -72,7 +132,7 @@ export const createAdminAgentScheduleAction = async (
 ): Promise<AgentSchedule> => {
   try {
     const { data } = await adminApi.createAgentSchedule(agentId, payload);
-    return data;
+    return mapAgentSchedule(data);
   } catch (error) {
     console.error("[createAdminAgentScheduleAction] Error al crear horario:", error);
     throw error;
@@ -86,7 +146,7 @@ export const updateAdminAgentScheduleAction = async (
 ): Promise<AgentSchedule> => {
   try {
     const { data } = await adminApi.updateAgentSchedule(agentId, scheduleId, payload);
-    return data;
+    return mapAgentSchedule(data);
   } catch (error) {
     console.error("[updateAdminAgentScheduleAction] Error al actualizar horario:", error);
     throw error;
@@ -110,7 +170,7 @@ export const createAdminAgentAction = async (
 ): Promise<AdminAgent> => {
   try {
     const { data } = await adminApi.createAgent(payload);
-    return data;
+    return mapAdminAgent(data);
   } catch (error) {
     console.error("[createAdminAgentAction] Error al crear agente:", error);
     throw error;
@@ -123,7 +183,7 @@ export const updateAdminAgentAction = async (
 ): Promise<AdminAgent> => {
   try {
     const { data } = await adminApi.updateAgent(id, payload);
-    return data;
+    return mapAdminAgent(data);
   } catch (error) {
     console.error("[updateAdminAgentAction] Error al actualizar agente:", error);
     throw error;
@@ -138,7 +198,7 @@ export const uploadAdminAgentAvatarAction = async (
     const formData = new FormData();
     formData.append("avatar", file);
     const { data } = await adminApi.updateAgentAvatar(agentId, formData);
-    return data;
+    return mapAdminAgent(data);
   } catch (error) {
     console.error("[uploadAdminAgentAvatarAction] Error al subir avatar:", error);
     throw error;

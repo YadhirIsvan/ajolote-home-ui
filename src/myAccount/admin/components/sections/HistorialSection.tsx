@@ -46,20 +46,20 @@ interface SoldProperty {
 const mapHistoryItem = (item: AdminSaleHistoryItem): SoldProperty => ({
   id: String(item.id),
   property: item.property.title,
-  type: item.property.property_type,
+  type: item.property.propertyType,
   client: item.client.name,
   clientEmail: "",
   agent: item.agent.name,
-  price: `$${Number(item.sale_price).toLocaleString("es-MX")}`,
-  priceNum: Number(item.sale_price) || 0,
+  price: `$${Number(item.salePrice).toLocaleString("es-MX")}`,
+  priceNum: Number(item.salePrice) || 0,
   location: item.property.zone,
   zone: item.property.zone,
-  soldDate: item.closed_at.split("T")[0],
+  soldDate: item.closedAt.split("T")[0],
   daysToSell: 0,
-  paymentMethod: item.payment_method,
+  paymentMethod: item.paymentMethod,
   documents: [],
   closedBy: item.agent.name,
-  closedAt: item.closed_at.split("T")[0],
+  closedAt: item.closedAt.split("T")[0],
 });
 
 const HistorialSection = () => {
