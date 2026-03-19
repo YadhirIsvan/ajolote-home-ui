@@ -20,6 +20,7 @@ export const useAuth = () => {
     () => !!localStorage.getItem("access_token")
   );
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [user, setUser] = useState<AuthUser | null>(() => {
     try {
       return JSON.parse(localStorage.getItem("user") ?? "null");
@@ -40,6 +41,7 @@ export const useAuth = () => {
     }
     setIsAuthenticated(true);
     setShowAuthModal(false);
+    window.location.reload();
   };
 
   const handleLogout = async () => {
@@ -51,8 +53,20 @@ export const useAuth = () => {
     setUser(null);
   };
 
-  const handleLogoutRef = useRef(handleLogout);
-  handleLogoutRef.current = handleLogout;
+  const handleAutoLogout = async () => {
+    setIsLoggingOut(true);
+    await new Promise<void>((resolve) => setTimeout(resolve, 1500));
+    await logoutAction();
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+    localStorage.removeItem("user");
+    setIsLoggingOut(false);
+    setIsAuthenticated(false);
+    setUser(null);
+  };
+
+  const autoLogoutRef = useRef(handleAutoLogout);
+  autoLogoutRef.current = handleAutoLogout;
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -64,12 +78,12 @@ export const useAuth = () => {
     if (msLeft === null) return;
 
     if (msLeft <= 0) {
-      handleLogoutRef.current();
+      autoLogoutRef.current();
       return;
     }
 
     const timer = setTimeout(
-      () => handleLogoutRef.current(),
+      () => autoLogoutRef.current(),
       Math.min(msLeft, 2_147_483_647)
     );
     return () => clearTimeout(timer);
@@ -80,6 +94,7 @@ export const useAuth = () => {
 
   return {
     isAuthenticated,
+    isLoggingOut,
     showAuthModal,
     role,
     user,
