@@ -6,7 +6,7 @@ import { BrowserRouter } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import AppRouter from "@/router/app.router";
 import { FinancialModalProvider } from "@/shared/hooks/financial-modal.context";
-import { useAuth } from "@/shared/hooks/use-auth.hook";
+import { AuthProvider, useAuth } from "@/shared/hooks/auth.context";
 
 const queryClient = new QueryClient();
 
@@ -35,7 +35,9 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <AppContent />
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

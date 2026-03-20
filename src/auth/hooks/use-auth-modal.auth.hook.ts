@@ -34,10 +34,28 @@ export const useAuthModal = ({ onLoginSuccess, onClose }: UseAuthModalOptions) =
       return;
     }
 
+    // Cuando el usuario cierra el popup de Google sin completar el flujo,
+    // el callback de initTokenClient nunca se invoca. Detectamos el cierre del
+    // popup escuchando cuando la ventana principal recupera el foco.
+    let callbackInvoked = false;
+
+    const onWindowFocus = () => {
+      // Damos 500 ms para que el callback pueda dispararse primero si el flujo
+      // completó justo al cerrarse el popup (ej. redirección automática).
+      setTimeout(() => {
+        if (!callbackInvoked) setIsLoading(false);
+      }, 500);
+      window.removeEventListener("focus", onWindowFocus);
+    };
+    window.addEventListener("focus", onWindowFocus);
+
     const client = google.accounts.oauth2.initTokenClient({
       client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID as string,
       scope: "email profile",
       callback: async (tokenResponse) => {
+        callbackInvoked = true;
+        window.removeEventListener("focus", onWindowFocus);
+
         if (tokenResponse.error) {
           setError("Error al autenticar con Google");
           setIsLoading(false);
