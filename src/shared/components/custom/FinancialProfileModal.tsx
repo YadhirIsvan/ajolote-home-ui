@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import axios from "axios";
+import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/shared/components/ui/dialog";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
@@ -101,21 +103,60 @@ const FinancialProfileModal = () => {
     setFormData((prev) => ({ ...prev, infonautSubcuentaBalance: parseRawNumber(e.target.value) }));
   };
 
+  // Límite derivado del backend: DecimalField(max_digits=12, decimal_places=2) → máx 10 dígitos enteros
+  const MAX_AMOUNT = 9_999_999_999;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.loanType || !formData.monthlyIncome || !formData.savingsForEnganche) {
-      alert("Por favor completa todos los campos requeridos");
+      toast.error("Campos incompletos", {
+        description: "Por favor completa todos los campos requeridos.",
+      });
       return;
     }
 
     if (formData.loanType === "conyugal" && !formData.partnerMonthlyIncome) {
-      alert("Por favor ingresa el ingreso de la persona con la que vas a comprar");
+      toast.error("Ingreso faltante", {
+        description: "Ingresa el ingreso mensual de la persona con la que vas a comprar.",
+      });
       return;
     }
 
     if (formData.hasInfonavit && !formData.infonautSubcuentaBalance) {
-      alert("Por favor ingresa el saldo de la subcuenta");
+      toast.error("Saldo faltante", {
+        description: "Ingresa el saldo de tu subcuenta Infonavit.",
+      });
+      return;
+    }
+
+    const monthlyIncome = parseFloat(formData.monthlyIncome);
+    const partnerIncome = formData.partnerMonthlyIncome ? parseFloat(formData.partnerMonthlyIncome) : 0;
+    const savings = parseFloat(formData.savingsForEnganche);
+    const subcuenta = formData.infonautSubcuentaBalance ? parseFloat(formData.infonautSubcuentaBalance) : 0;
+
+    if (monthlyIncome > MAX_AMOUNT) {
+      toast.error("Ingreso mensual inválido", {
+        description: "El valor ingresado es demasiado alto. Verifica que no tengas dígitos de más.",
+      });
+      return;
+    }
+    if (formData.loanType === "conyugal" && partnerIncome > MAX_AMOUNT) {
+      toast.error("Ingreso de pareja inválido", {
+        description: "El valor ingresado es demasiado alto. Verifica que no tengas dígitos de más.",
+      });
+      return;
+    }
+    if (savings > MAX_AMOUNT) {
+      toast.error("Ahorro para enganche inválido", {
+        description: "El valor ingresado es demasiado alto. Verifica que no tengas dígitos de más.",
+      });
+      return;
+    }
+    if (formData.hasInfonavit && subcuenta > MAX_AMOUNT) {
+      toast.error("Saldo de subcuenta inválido", {
+        description: "El valor ingresado es demasiado alto. Verifica que no tengas dígitos de más.",
+      });
       return;
     }
 
@@ -123,19 +164,27 @@ const FinancialProfileModal = () => {
     try {
       const result = await saveFinancialProfileAction({
         loan_type: formData.loanType,
-        monthly_income: parseFloat(formData.monthlyIncome),
+        monthly_income: monthlyIncome,
         partner_monthly_income:
-          formData.loanType === "conyugal" ? parseFloat(formData.partnerMonthlyIncome) : null,
-        savings_for_enganche: parseFloat(formData.savingsForEnganche),
+          formData.loanType === "conyugal" ? partnerIncome : null,
+        savings_for_enganche: savings,
         has_infonavit: formData.hasInfonavit,
-        infonavit_subcuenta_balance: formData.hasInfonavit
-          ? parseFloat(formData.infonautSubcuentaBalance)
-          : null,
+        infonavit_subcuenta_balance: formData.hasInfonavit ? subcuenta : null,
       });
       setCalculatedBudget(result.calculatedBudget);
       setShowResult(true);
-    } catch {
-      alert("Hubo un error al guardar tu perfil. Intenta de nuevo.");
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const detail: string =
+          error.response?.data?.detail ??
+          error.response?.data?.message ??
+          "Verifica los datos e intenta de nuevo.";
+        toast.error("Error al guardar tu perfil", { description: detail });
+      } else {
+        toast.error("Error inesperado", {
+          description: "No se pudo guardar tu perfil. Intenta de nuevo.",
+        });
+      }
     } finally {
       setLoading(false);
     }

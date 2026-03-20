@@ -1,3 +1,4 @@
+import axios from "axios";
 import { axiosInstance } from "@/shared/api/axios.instance";
 
 export interface FinancialProfilePayload {
@@ -60,7 +61,13 @@ export const saveFinancialProfileAction = async (
     );
     return { calculatedBudget: data.calculated_budget ?? 0 };
   } catch (putError) {
-    // Si no existe el perfil, crear con POST
+    // 400 = datos inválidos → no intentar POST, el error viene del payload
+    if (axios.isAxiosError(putError) && putError.response?.status === 400) {
+      console.error("[saveFinancialProfileAction] Error al guardar perfil financiero:", putError);
+      throw putError;
+    }
+
+    // Cualquier otro error (404, 405, red) → intentar crear con POST
     try {
       const { data } = await axiosInstance.post<BackendFinancialProfile>(
         "/client/financial-profile",
