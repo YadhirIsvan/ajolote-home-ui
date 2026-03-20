@@ -1,5 +1,6 @@
 import { createContext, useState, useContext } from "react";
 import type { ReactNode } from "react";
+import { useAuth } from "@/shared/hooks/auth.context";
 
 interface FinancialModalContextType {
   isOpen: boolean;
@@ -15,10 +16,10 @@ const FinancialModalContext = createContext<FinancialModalContextType | undefine
 export const FinancialModalProvider = ({ children }: { children: ReactNode }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [showAuthFirst, setShowAuthFirst] = useState(false);
+  const { syncAuthState, isAuthenticated } = useAuth();
 
   const openFinancialModal = () => {
-    const token = localStorage.getItem("access_token");
-    if (!token) {
+    if (!isAuthenticated) {
       setShowAuthFirst(true);
     } else {
       setIsOpen(true);
@@ -30,6 +31,7 @@ export const FinancialModalProvider = ({ children }: { children: ReactNode }) =>
   const closeAuthModal = () => setShowAuthFirst(false);
 
   const onAuthSuccess = () => {
+    syncAuthState();
     setShowAuthFirst(false);
     setIsOpen(true);
   };

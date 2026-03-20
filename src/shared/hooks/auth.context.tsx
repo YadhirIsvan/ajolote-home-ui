@@ -30,6 +30,10 @@ interface AuthContextValue {
   role: UserRole | null;
   openAuthModal: () => void;
   closeAuthModal: () => void;
+  /** Actualiza el estado de auth desde localStorage sin recargar la página.
+   *  Usar cuando el login ocurre fuera de MiCuentaPage (ej: FinancialModal). */
+  syncAuthState: () => void;
+  /** Actualiza el estado de auth y recarga la página (comportamiento de MiCuentaPage). */
   handleLoginSuccess: () => void;
   handleLogout: () => Promise<void>;
 }
@@ -52,7 +56,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const role: UserRole | null = user?.memberships?.[0]?.role ?? null;
 
-  const handleLoginSuccess = () => {
+  const syncAuthState = () => {
     try {
       const stored = localStorage.getItem("user");
       const parsedUser: AuthUser | null = stored ? JSON.parse(stored) : null;
@@ -62,6 +66,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     setIsAuthenticated(true);
     setShowAuthModal(false);
+  };
+
+  const handleLoginSuccess = () => {
+    syncAuthState();
     window.location.reload();
   };
 
@@ -142,6 +150,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         role,
         openAuthModal,
         closeAuthModal,
+        syncAuthState,
         handleLoginSuccess,
         handleLogout,
       }}
