@@ -32,7 +32,7 @@ export const useClientVentas = () => {
 
   const refetchAll = () => {
     ventasQuery.refetch();
-    detailQuery.refetch();
+    if (selectedPropertyId !== null) detailQuery.refetch();
   };
 
   return {
