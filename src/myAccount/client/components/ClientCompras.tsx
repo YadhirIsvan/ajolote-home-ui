@@ -10,6 +10,15 @@ import type {
 } from "@/myAccount/client/types/client.types";
 import { UseMutationResult } from "@tanstack/react-query";
 
+const EXCLUDED_STATUSES = ["cerrado", "cancelado"];
+
+const capitalizeFirst = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+const getStatusBadgeClass = (status: string) =>
+  status === "cerrado"
+    ? "bg-emerald-600 text-white text-xs"
+    : "bg-champagne-gold text-white text-xs";
+
 const formatPrice = (price: string | number | undefined): string => {
   if (!price) return "$0";
   const num = typeof price === "string" ? parseFloat(price) : price;
@@ -56,8 +65,8 @@ const PropertyDetailCard = ({
               alt={prop.title}
               className="w-full h-full object-cover"
             />
-            <Badge className="absolute top-3 left-3 bg-champagne-gold text-white text-xs">
-              {prop.status}
+            <Badge className={`absolute top-3 left-3 ${getStatusBadgeClass(prop.status)}`}>
+              {capitalizeFirst(prop.status)}
             </Badge>
           </div>
           <div className="flex-1 p-6">
@@ -166,15 +175,13 @@ const PropertyDetailCard = ({
           </div>
         </div>
 
-        <div className="px-6 py-4 bg-champagne-gold/5 border-t border-champagne-gold/10 flex items-center justify-between flex-wrap gap-2">
-          <div className="flex items-center gap-2 text-sm">
-            <AlertCircle className="w-4 h-4 text-champagne-gold" />
-            <span className="text-foreground/70">Siguiente paso:</span>
-            <span className="font-semibold text-midnight">
-              {showUploadAction ? "Subir documentos" : "Agendar"}
-            </span>
-          </div>
-          {showUploadAction ? (
+        {showUploadAction && (
+          <div className="px-6 py-4 bg-champagne-gold/5 border-t border-champagne-gold/10 flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-2 text-sm">
+              <AlertCircle className="w-4 h-4 text-champagne-gold" />
+              <span className="text-foreground/70">Siguiente paso:</span>
+              <span className="font-semibold text-midnight">Subir documentos</span>
+            </div>
             <Button
               variant="gold"
               size="sm"
@@ -184,12 +191,8 @@ const PropertyDetailCard = ({
               <Upload className="w-4 h-4 mr-1" />
               {uploadMutation.isPending ? "Subiendo..." : "Subir documentos"}
             </Button>
-          ) : (
-            <Button variant="gold" size="sm">
-              Agendar
-            </Button>
-          )}
-        </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -254,7 +257,7 @@ const ClientCompras = ({ onBack }: ClientComprasProps) => {
       <div>
         <h1 className="text-2xl font-bold text-midnight">Proceso de Compra</h1>
         <p className="text-sm text-foreground/60 mt-1">
-          {comprasLoading ? "Cargando..." : `${comprasList.length} propiedad(es) en proceso`}
+          {comprasLoading ? "Cargando..." : `${comprasList.filter((p) => !EXCLUDED_STATUSES.includes(p.status)).length} propiedad(es) en proceso`}
         </p>
       </div>
 
@@ -303,8 +306,8 @@ const ClientCompras = ({ onBack }: ClientComprasProps) => {
                       alt={prop.title}
                       className="w-full h-full object-cover"
                     />
-                    <Badge className="absolute top-3 left-3 bg-champagne-gold text-white text-xs">
-                      {prop.status}
+                    <Badge className={`absolute top-3 left-3 ${getStatusBadgeClass(prop.status)}`}>
+                      {capitalizeFirst(prop.status)}
                     </Badge>
                   </div>
                   <div className="flex-1 p-5">

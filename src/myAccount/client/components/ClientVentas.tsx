@@ -361,16 +361,6 @@ const ClientVentas = ({ onBack }: ClientVentasProps) => {
                             <TrendingUp className="w-4 h-4" />
                             <span>{prop.trend}</span>
                           </div>
-                          <div className="ml-auto">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-xs border-champagne-gold/30 text-champagne-gold hover:bg-champagne-gold/5"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              Editar
-                            </Button>
-                          </div>
                         </div>
                       ) : (
                         <div className="mt-4 pt-4 border-t border-border/10">

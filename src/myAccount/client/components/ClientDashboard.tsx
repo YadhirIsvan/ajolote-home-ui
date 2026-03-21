@@ -450,7 +450,7 @@ const ClientDashboard = ({ onNavigateVentas, onNavigateCompras, onNavigateCitas 
                   <ShoppingCart className="w-5 h-5 text-emerald-600" />
                 </div>
                 <span className="text-xs font-medium px-2 py-1 rounded-full bg-emerald-50 text-emerald-600">
-                  {comprasLoading ? "..." : comprasList.length} en proceso
+                  {comprasLoading ? "..." : comprasList.filter((p) => !["cerrado", "cancelado"].includes(p.status)).length} en proceso
                 </span>
               </div>
               <h3 className="text-lg font-semibold text-midnight mb-2">Proceso de Compra</h3>
