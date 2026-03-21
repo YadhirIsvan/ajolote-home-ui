@@ -253,13 +253,6 @@ const FinancialProfileModal = () => {
                 </div>
 
                 <div className="space-y-3 pt-2">
-                  <Button
-                    onClick={handleClose}
-                    className="w-full h-11 bg-champagne-gold hover:bg-champagne-gold-dark text-white font-semibold rounded-lg transition-colors"
-                  >
-                    Explorar Propiedades
-                  </Button>
-
                   <button
                     onClick={handleUpdateData}
                     className="w-full h-10 text-sm font-medium text-champagne-gold hover:text-champagne-gold-dark hover:bg-champagne-gold/5 rounded-lg transition-colors py-2 px-4"

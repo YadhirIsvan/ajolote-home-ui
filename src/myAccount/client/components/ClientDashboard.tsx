@@ -274,17 +274,13 @@ const ClientDashboard = ({ onNavigateVentas, onNavigateCompras, onNavigateCitas 
                 </div>
 
                 {/* CTA contacto */}
-                <div className="p-3 bg-blue-50 rounded-xl border border-blue-200 mb-4">
-                  <p className="text-xs text-blue-800">
-                    ¿Quieres asesoría personalizada? Un agente puede ayudarte a encontrar la propiedad ideal dentro de tu presupuesto.
-                  </p>
+                <div className="mb-4">
                   <Button
                     variant="outline"
                     size="sm"
-                    className="mt-2 w-full border-blue-300 text-blue-700 hover:bg-blue-100 text-xs"
+                    className="w-full border-blue-300 text-blue-700 hover:bg-blue-100 text-xs"
                     onClick={() => navigate("/comprar")}
                   >
-                    <Phone className="w-3 h-3 mr-1" />
                     Explorar Propiedades
                   </Button>
                 </div>
