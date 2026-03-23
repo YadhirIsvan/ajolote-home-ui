@@ -17,6 +17,17 @@ export interface BuyPropertyListItem {
   isVerified: boolean;
 }
 
+export interface SimilarProperty {
+  id: number;
+  title: string;
+  address: string;
+  price: string;
+  image: string;
+  beds: number;
+  baths: number;
+  sqm: number;
+}
+
 export interface PropertyDetailData {
   id: number;
   images: string[];
@@ -36,6 +47,7 @@ export interface PropertyDetailData {
   nearbyPlaces?: { icon: string; label: string }[];
   amenities?: { id: number; name: string; icon: string }[];
   agent: { name: string; photo: string; phone: string; email: string } | null;
+  similarProperties: SimilarProperty[];
 }
 
 export interface FinancialProfile {

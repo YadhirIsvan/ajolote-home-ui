@@ -17,6 +17,7 @@ import { TIME_SLOTS } from "@/buy/types/property.types";
 import AuthModal from "@/auth/components/AuthModal";
 import MortgageCallToAction from "@/buy/components/MortgageCallToAction";
 import MortgageCalculatorWidget from "@/buy/components/MortgageCalculatorWidget";
+import SimilarPropertiesSection from "@/buy/components/SimilarPropertiesSection";
 import { useFinancialModal } from "@/shared/hooks/financial-modal.context";
 
 const getPOIIcon = (iconType: string) => {
@@ -609,6 +610,11 @@ const PropertyDetailPage = () => {
             </div>
           </div>
         </div>
+
+        {/* Propiedades similares */}
+        {property.similarProperties.length > 0 && (
+          <SimilarPropertiesSection properties={property.similarProperties} />
+        )}
       </main>
 
       {/* Mobile Sticky Bottom CTA */}

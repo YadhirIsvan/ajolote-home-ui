@@ -1,5 +1,5 @@
 import { buyApi, ENDPOINTS } from "@/buy/api/buy.api";
-import type { PropertyDetailData } from "@/buy/types/property.types";
+import type { PropertyDetailData, SimilarProperty } from "@/buy/types/property.types";
 
 export interface GetPropertyDetailResponse {
   data: PropertyDetailData;
@@ -17,6 +17,17 @@ interface BackendImage {
   image_url: string;
   is_cover: boolean;
   sort_order: number;
+}
+
+interface BackendSimilarPropertyItem {
+  id: number;
+  title: string;
+  address: string;
+  price: string;
+  image: string | null;
+  bedrooms: number;
+  bathrooms: number;
+  construction_sqm: string | null;
 }
 
 interface BackendPropertyDetail {
@@ -48,6 +59,7 @@ interface BackendPropertyDetail {
   video_thumbnail?: string;
   agent: { name: string; photo: string; phone: string; email: string };
   coordinates: { lat: number; lng: number };
+  similar_properties: BackendSimilarPropertyItem[];
 }
 
 const formatPrice = (raw: string): string => {
@@ -58,6 +70,17 @@ const formatPrice = (raw: string): string => {
     maximumFractionDigits: 0,
   }).format(num);
 };
+
+const mapSimilarProperty = (item: BackendSimilarPropertyItem): SimilarProperty => ({
+  id: item.id,
+  title: item.title,
+  address: item.address,
+  price: formatPrice(item.price),
+  image: item.image || "/placeholder.svg",
+  beds: item.bedrooms,
+  baths: item.bathrooms,
+  sqm: item.construction_sqm ? parseFloat(item.construction_sqm) : 0,
+});
 
 const mapDetail = (item: BackendPropertyDetail): PropertyDetailData => ({
   id: item.id,
@@ -93,6 +116,7 @@ const mapDetail = (item: BackendPropertyDetail): PropertyDetailData => ({
         email: item.agent.email,
       }
     : null,
+  similarProperties: (item.similar_properties ?? []).map(mapSimilarProperty),
 });
 
 export const getPropertyDetailAction = async (
@@ -122,6 +146,7 @@ export const getPropertyDetailAction = async (
         coordinates: { lat: 0, lng: 0 },
         amenities: [],
         agent: { name: "", photo: "", phone: "", email: "" },
+        similarProperties: [],
       },
       fromFallback: true,
     };
