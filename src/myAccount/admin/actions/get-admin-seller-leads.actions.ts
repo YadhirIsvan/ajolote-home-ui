@@ -1,6 +1,6 @@
 import { adminApi } from "@/myAccount/admin/api/admin.api";
-import type { BackendAdminSellerLead } from "@/myAccount/admin/api/admin.api";
 import type {
+  BackendAdminSellerLead,
   AdminSellerLead,
   SellerLeadStatus,
   Paginated,

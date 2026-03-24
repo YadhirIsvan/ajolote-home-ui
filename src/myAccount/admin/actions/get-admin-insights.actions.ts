@@ -1,6 +1,5 @@
 import { adminApi } from "@/myAccount/admin/api/admin.api";
-import type { BackendAdminInsights } from "@/myAccount/admin/api/admin.api";
-import type { AdminInsights } from "@/myAccount/admin/types/admin.types";
+import type { BackendAdminInsights, AdminInsights } from "@/myAccount/admin/types/admin.types";
 
 export type InsightsPeriod = "month" | "quarter" | "year" | "all";
 

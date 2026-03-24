@@ -3,8 +3,6 @@ import type {
   BackendAdminAgent,
   BackendAgentScheduleBreak,
   BackendAgentSchedule,
-} from "@/myAccount/admin/api/admin.api";
-import type {
   AdminAgent,
   AgentSchedule,
   AgentScheduleBreak,

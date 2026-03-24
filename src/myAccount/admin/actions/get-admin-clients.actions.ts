@@ -4,8 +4,6 @@ import type {
   BackendAdminClientDetail,
   BackendAdminClientPurchaseProcess,
   BackendAdminClientSaleProcess,
-} from "@/myAccount/admin/api/admin.api";
-import type {
   AdminClient,
   AdminClientDetail,
   AdminClientPurchaseProcess,

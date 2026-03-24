@@ -4,8 +4,6 @@ import type {
   BackendAdminAssignmentProperty,
   BackendAdminAssignmentAgent,
   BackendAdminAssignment,
-} from "@/myAccount/admin/api/admin.api";
-import type {
   AdminAssignmentsResponse,
   AdminAssignmentProperty,
   AdminAssignmentAgent,

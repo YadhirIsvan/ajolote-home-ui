@@ -6,8 +6,6 @@ import type {
   BackendCatalogState,
   BackendCatalogCity,
   BackendCatalogAmenity,
-} from "@/myAccount/admin/api/admin.api";
-import type {
   AdminProperty,
   AdminPropertyImage,
   AdminPropertyDetail,

@@ -2,8 +2,6 @@ import { adminApi } from "@/myAccount/admin/api/admin.api";
 import type {
   BackendSaleProcessAssignmentsResponse,
   BackendSaleProcessAssignmentEntry,
-} from "@/myAccount/admin/api/admin.api";
-import type {
   SaleProcessAssignmentsResponse,
   SaleProcessAssignmentEntry,
 } from "@/myAccount/admin/types/admin.types";

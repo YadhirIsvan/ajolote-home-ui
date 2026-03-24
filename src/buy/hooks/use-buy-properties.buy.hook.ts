@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { getPropertiesAction } from "@/buy/actions/get-properties.actions";
 import { getCitiesAction, type CityItem } from "@/shared/actions/get-cities.actions";
+import { naturalSearchAction } from "@/buy/actions/natural-search.actions";
 import {
   DEFAULT_BUY_FILTERS,
   PRICE_RANGE_LIMITS,
@@ -30,6 +31,9 @@ export const useBuyProperties = () => {
   const [searchParams] = useSearchParams();
   const [filters, setFilters] = useState<BuyFilters>(DEFAULT_BUY_FILTERS);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isNaturalSearching, setIsNaturalSearching] = useState(false);
+  const [naturalSearchError, setNaturalSearchError] = useState<string | null>(null);
+  const [naturalSearchQuery, setNaturalSearchQuery] = useState<string>("");
 
   // Leer parámetro zone de la URL al cargar el componente
   useEffect(() => {
@@ -155,6 +159,39 @@ export const useBuyProperties = () => {
     []
   );
 
+  const handleNaturalSearch = useCallback(async (query: string) => {
+    const trimmed = query.trim();
+    if (!trimmed) return;
+
+    setIsNaturalSearching(true);
+    setNaturalSearchError(null);
+
+    try {
+      const result = await naturalSearchAction(trimmed);
+      setNaturalSearchQuery(trimmed);
+      setFilters({
+        zone: result.zone ?? "Todas las zonas",
+        type: result.type,
+        state: result.state,
+        priceRange: [
+          result.price_min ?? PRICE_RANGE_LIMITS.min,
+          result.price_max ?? PRICE_RANGE_LIMITS.max,
+        ],
+        amenities: result.amenities,
+      });
+    } catch {
+      setNaturalSearchError("No se pudo procesar tu búsqueda. Intenta de nuevo.");
+    } finally {
+      setIsNaturalSearching(false);
+    }
+  }, []);
+
+  const clearNaturalSearch = useCallback(() => {
+    setNaturalSearchQuery("");
+    setNaturalSearchError(null);
+    setFilters(DEFAULT_BUY_FILTERS);
+  }, []);
+
   return {
     filteredProperties,
     totalCount,
@@ -175,5 +212,10 @@ export const useBuyProperties = () => {
     sentinelRef,
     isFetchingNextPage,
     hasNextPage,
+    handleNaturalSearch,
+    clearNaturalSearch,
+    isNaturalSearching,
+    naturalSearchError,
+    naturalSearchQuery,
   };
 };

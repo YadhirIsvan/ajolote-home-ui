@@ -1,6 +1,7 @@
 import { adminApi } from "@/myAccount/admin/api/admin.api";
-import type { BackendAdminPurchaseProcess, BackendAdminSaleProcess } from "@/myAccount/admin/api/admin.api";
 import type {
+  BackendAdminPurchaseProcess,
+  BackendAdminSaleProcess,
   AdminPurchaseProcess,
   AdminSaleProcess,
   PurchaseProcessStatus,

@@ -1,6 +1,5 @@
 import { adminApi } from "@/myAccount/admin/api/admin.api";
-import type { BackendAdminSaleHistoryItem } from "@/myAccount/admin/api/admin.api";
-import type { AdminSaleHistoryItem, Paginated } from "@/myAccount/admin/types/admin.types";
+import type { BackendAdminSaleHistoryItem, AdminSaleHistoryItem, Paginated } from "@/myAccount/admin/types/admin.types";
 
 export interface GetAdminHistoryParams {
   zone?: string;

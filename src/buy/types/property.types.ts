@@ -50,6 +50,15 @@ export interface PropertyDetailData {
   similarProperties: SimilarProperty[];
 }
 
+export interface NaturalSearchResult {
+  zone: string | null;
+  type: string;
+  state: string;
+  price_min: number | null;
+  price_max: number | null;
+  amenities: string[];
+}
+
 export interface FinancialProfile {
   loanType: string;
   monthlyIncome: string;

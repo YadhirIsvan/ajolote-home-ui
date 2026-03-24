@@ -4,6 +4,7 @@ import { SlidersHorizontal, Loader2 } from "lucide-react";
 import PropertyCard from "@/shared/components/custom/PropertyCard";
 import PropertyFilters from "@/buy/components/PropertyFilters";
 import MortgageCallToAction from "@/buy/components/MortgageCallToAction";
+import NaturalSearchBar from "@/buy/components/NaturalSearchBar";
 import { useBuyProperties } from "@/buy/hooks/use-buy-properties.buy.hook";
 import { useFinancialModal } from "@/shared/hooks/financial-modal.context";
 
@@ -28,6 +29,11 @@ const BuyPage = () => {
     sentinelRef,
     isFetchingNextPage,
     hasNextPage,
+    handleNaturalSearch,
+    clearNaturalSearch,
+    isNaturalSearching,
+    naturalSearchError,
+    naturalSearchQuery,
   } = useBuyProperties();
 
   return (
@@ -43,6 +49,15 @@ const BuyPage = () => {
               </p>
             </div>
           </div>
+
+          {/* Natural Language Search */}
+          <NaturalSearchBar
+            onSearch={handleNaturalSearch}
+            onClear={clearNaturalSearch}
+            isSearching={isNaturalSearching}
+            error={naturalSearchError}
+            appliedQuery={naturalSearchQuery}
+          />
 
           <div className="flex gap-8">
             {/* Desktop Filters Sidebar — sticky que scrollea con el contenido */}

@@ -1,6 +1,5 @@
 import { adminApi } from "@/myAccount/admin/api/admin.api";
-import type { BackendAdminAppointment } from "@/myAccount/admin/api/admin.api";
-import type { AdminAppointment, AppointmentType, Paginated } from "@/myAccount/admin/types/admin.types";
+import type { BackendAdminAppointment, AdminAppointment, AppointmentType, Paginated } from "@/myAccount/admin/types/admin.types";
 
 export interface GetAdminAppointmentsParams {
   date?: string;
