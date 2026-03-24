@@ -223,7 +223,8 @@ export const deleteAdminPropertyImageAction = async (
 export const getAdminStatesAction = async (): Promise<CatalogState[]> => {
   try {
     const { data } = await adminApi.getStates();
-    return data.results.map(mapCatalogState);
+    const items = Array.isArray(data) ? data : data.results ?? [];
+    return items.map(mapCatalogState);
   } catch (error) {
     console.error("[getAdminStatesAction] Error al obtener estados:", error);
     throw error;
@@ -233,7 +234,8 @@ export const getAdminStatesAction = async (): Promise<CatalogState[]> => {
 export const getAdminCitiesAction = async (stateId: number): Promise<CatalogCity[]> => {
   try {
     const { data } = await adminApi.getCities(stateId);
-    return data.results.map(mapCatalogCity);
+    const items = Array.isArray(data) ? data : data.results ?? [];
+    return items.map(mapCatalogCity);
   } catch (error) {
     console.error("[getAdminCitiesAction] Error al obtener ciudades:", error);
     throw error;
@@ -243,7 +245,8 @@ export const getAdminCitiesAction = async (stateId: number): Promise<CatalogCity
 export const getAdminAmenitiesAction = async (): Promise<CatalogAmenity[]> => {
   try {
     const { data } = await adminApi.getAmenities();
-    return data.results.map(mapCatalogAmenity);
+    const items = Array.isArray(data) ? data : data.results ?? [];
+    return items.map(mapCatalogAmenity);
   } catch (error) {
     console.error("[getAdminAmenitiesAction] Error al obtener amenidades:", error);
     throw error;
