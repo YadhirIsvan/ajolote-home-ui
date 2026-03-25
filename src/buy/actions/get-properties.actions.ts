@@ -88,6 +88,7 @@ export const getPropertiesAction = async (
   }
   if (params.price_min != null) searchParams.set("price_min", String(params.price_min));
   if (params.price_max != null) searchParams.set("price_max", String(params.price_max));
+  if (params.ordering) searchParams.set("ordering", params.ordering);
   if (params.limit != null) searchParams.set("limit", String(params.limit));
   if (params.offset != null) searchParams.set("offset", String(params.offset));
 

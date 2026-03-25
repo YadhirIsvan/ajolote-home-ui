@@ -104,9 +104,12 @@ export interface GetPropertiesParams {
   amenities?: string[];
   price_min?: number;
   price_max?: number;
+  ordering?: string;
   limit?: number;
   offset?: number;
 }
+
+export type PriceOrdering = "" | "price" | "-price";
 
 export interface BuyFilters {
   zone: string;
@@ -114,6 +117,7 @@ export interface BuyFilters {
   type: string;
   amenities: string[];
   state: string;
+  ordering: PriceOrdering;
 }
 
 export const DEFAULT_BUY_FILTERS: BuyFilters = {
@@ -122,6 +126,7 @@ export const DEFAULT_BUY_FILTERS: BuyFilters = {
   type: "all",
   amenities: [],
   state: "all",
+  ordering: "",
 };
 
 export const BUY_ZONES = [

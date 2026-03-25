@@ -34,6 +34,7 @@ const BuyPage = () => {
     isNaturalSearching,
     naturalSearchError,
     naturalSearchQuery,
+    setOrdering,
   } = useBuyProperties();
 
   return (
@@ -74,6 +75,7 @@ const BuyPage = () => {
                       onStateChange={setState}
                       onPriceRangeChange={setPriceRange}
                       onAmenityToggle={toggleAmenity}
+                      onOrderingChange={setOrdering}
                       onClearFilters={clearFilters}
                     />
                   </div>
@@ -171,6 +173,7 @@ const BuyPage = () => {
                 onStateChange={setState}
                 onPriceRangeChange={setPriceRange}
                 onAmenityToggle={toggleAmenity}
+                onOrderingChange={setOrdering}
                 onClearFilters={clearFilters}
               />
             </div>

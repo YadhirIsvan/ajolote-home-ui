@@ -9,6 +9,7 @@ import {
   PRICE_RANGE_LIMITS,
   type BuyFilters,
   type BuyPropertyListItem,
+  type PriceOrdering,
 } from "@/buy/types/property.types";
 import type { PropertyStatus } from "@/shared/components/custom/PropertyCard";
 
@@ -66,6 +67,7 @@ export const useBuyProperties = () => {
         type: filters.type,
         state: filters.state,
         amenities: filters.amenities,
+        ordering: filters.ordering,
       },
     ],
     queryFn: ({ pageParam = 0 }) =>
@@ -74,6 +76,7 @@ export const useBuyProperties = () => {
         type: filters.type === "all" ? undefined : filters.type,
         state: filters.state === "all" ? undefined : filters.state,
         amenities: filters.amenities.length > 0 ? filters.amenities : undefined,
+        ordering: filters.ordering || undefined,
         limit: PAGE_SIZE,
         offset: pageParam,
       }),
@@ -129,6 +132,7 @@ export const useBuyProperties = () => {
     filters.type !== "all",
     filters.state !== "all",
     filters.amenities.length > 0,
+    filters.ordering !== "",
   ].filter(Boolean).length;
 
   const toggleAmenity = useCallback((amenityId: string) => {
@@ -158,6 +162,10 @@ export const useBuyProperties = () => {
     (state: string) => setFilters((prev) => ({ ...prev, state })),
     []
   );
+  const setOrdering = useCallback(
+    (ordering: PriceOrdering) => setFilters((prev) => ({ ...prev, ordering })),
+    []
+  );
 
   const handleNaturalSearch = useCallback(async (query: string) => {
     const trimmed = query.trim();
@@ -169,7 +177,8 @@ export const useBuyProperties = () => {
     try {
       const result = await naturalSearchAction(trimmed);
       setNaturalSearchQuery(trimmed);
-      setFilters({
+      setFilters((prev) => ({
+        ...prev,
         zone: result.zone ?? "Todas las zonas",
         type: result.type,
         state: result.state,
@@ -178,7 +187,7 @@ export const useBuyProperties = () => {
           result.price_max ?? PRICE_RANGE_LIMITS.max,
         ],
         amenities: result.amenities,
-      });
+      }));
     } catch {
       setNaturalSearchError("No se pudo procesar tu búsqueda. Intenta de nuevo.");
     } finally {
@@ -207,6 +216,7 @@ export const useBuyProperties = () => {
     setPriceRange,
     setState,
     setType,
+    setOrdering,
     mapStateToStatus,
     cities,
     sentinelRef,

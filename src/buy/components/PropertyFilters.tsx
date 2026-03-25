@@ -1,14 +1,16 @@
+import { useState } from "react";
 import { Button } from "@/shared/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select";
 import { Slider } from "@/shared/components/ui/slider";
 import { Checkbox } from "@/shared/components/ui/checkbox";
-import { X } from "lucide-react";
+import { X, ArrowUpNarrowWide, ArrowDownNarrowWide, ArrowUpDown } from "lucide-react";
 import {
   PROPERTY_TYPES,
   PROPERTY_STATES,
   AMENITY_OPTIONS,
   PRICE_RANGE_LIMITS,
   type BuyFilters,
+  type PriceOrdering,
 } from "@/buy/types/property.types";
 import type { CityItem } from "@/shared/actions/get-cities.actions";
 import { formatPrice } from "@/buy/hooks/use-buy-properties.buy.hook";
@@ -21,6 +23,7 @@ interface PropertyFiltersProps {
   onStateChange: (state: string) => void;
   onPriceRangeChange: (range: [number, number]) => void;
   onAmenityToggle: (id: string) => void;
+  onOrderingChange: (ordering: PriceOrdering) => void;
   onClearFilters: () => void;
 }
 
@@ -32,8 +35,21 @@ const PropertyFilters = ({
   onStateChange,
   onPriceRangeChange,
   onAmenityToggle,
+  onOrderingChange,
   onClearFilters,
-}: PropertyFiltersProps) => (
+}: PropertyFiltersProps) => {
+  const [orderingExpanded, setOrderingExpanded] = useState(filters.ordering !== "");
+
+  const handleOrderingToggle = () => {
+    if (orderingExpanded) {
+      setOrderingExpanded(false);
+      onOrderingChange("");
+    } else {
+      setOrderingExpanded(true);
+    }
+  };
+
+  return (
   <div className="space-y-6">
     {/* Zone */}
     <div>
@@ -112,6 +128,61 @@ const PropertyFilters = ({
       </div>
     </div>
 
+    {/* Ordering */}
+    <div>
+      <div className="flex items-center gap-2 mb-3">
+        <button
+          type="button"
+          onClick={handleOrderingToggle}
+          className={`
+            flex items-center justify-center w-7 h-7 rounded-lg border transition-all duration-200
+            ${orderingExpanded
+              ? "bg-champagne border-champagne text-white shadow-sm"
+              : "border-border text-muted-foreground hover:border-champagne/50 hover:text-champagne"
+            }
+          `}
+        >
+          <ArrowUpDown className="w-3.5 h-3.5" />
+        </button>
+        <span className="text-sm font-medium text-foreground">Ordenar por Precio</span>
+      </div>
+
+      {orderingExpanded && (
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => onOrderingChange("price")}
+            className={`
+              flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl border text-xs font-medium
+              transition-all duration-200
+              ${filters.ordering === "price"
+                ? "bg-champagne border-champagne text-white shadow-sm"
+                : "border-border text-muted-foreground hover:border-champagne/50 hover:text-foreground bg-card"
+              }
+            `}
+          >
+            <ArrowUpNarrowWide className="w-3.5 h-3.5" />
+            Ascendente
+          </button>
+          <button
+            type="button"
+            onClick={() => onOrderingChange("-price")}
+            className={`
+              flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl border text-xs font-medium
+              transition-all duration-200
+              ${filters.ordering === "-price"
+                ? "bg-champagne border-champagne text-white shadow-sm"
+                : "border-border text-muted-foreground hover:border-champagne/50 hover:text-foreground bg-card"
+              }
+            `}
+          >
+            <ArrowDownNarrowWide className="w-3.5 h-3.5" />
+            Descendente
+          </button>
+        </div>
+      )}
+    </div>
+
     {/* Price Range */}
     <div>
       <label className="block text-sm font-medium text-foreground mb-2">Rango de Precio</label>
@@ -137,6 +208,7 @@ const PropertyFilters = ({
       Limpiar Filtros
     </Button>
   </div>
-);
+  );
+};
 
 export default PropertyFilters;
