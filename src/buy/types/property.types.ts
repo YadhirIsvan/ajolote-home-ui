@@ -57,6 +57,11 @@ export interface NaturalSearchResult {
   price_min: number | null;
   price_max: number | null;
   amenities: string[];
+  bedrooms_min: number | null;
+  bathrooms_min: number | null;
+  parking_min: number | null;
+  sqm_min: number | null;
+  sqm_max: number | null;
 }
 
 export interface FinancialProfile {
@@ -105,6 +110,11 @@ export interface GetPropertiesParams {
   price_min?: number;
   price_max?: number;
   ordering?: string;
+  bedrooms_min?: number;
+  bathrooms_min?: number;
+  parking_min?: number;
+  sqm_min?: number;
+  sqm_max?: number;
   limit?: number;
   offset?: number;
 }
@@ -118,6 +128,11 @@ export interface BuyFilters {
   amenities: string[];
   state: string;
   ordering: PriceOrdering;
+  bedroomsMin: number | null;
+  bathroomsMin: number | null;
+  parkingMin: number | null;
+  sqmMin: number | null;
+  sqmMax: number | null;
 }
 
 export const DEFAULT_BUY_FILTERS: BuyFilters = {
@@ -127,6 +142,11 @@ export const DEFAULT_BUY_FILTERS: BuyFilters = {
   amenities: [],
   state: "all",
   ordering: "",
+  bedroomsMin: null,
+  bathroomsMin: null,
+  parkingMin: null,
+  sqmMin: null,
+  sqmMax: null,
 };
 
 export const BUY_ZONES = [

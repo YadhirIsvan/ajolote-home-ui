@@ -68,6 +68,11 @@ export const useBuyProperties = () => {
         state: filters.state,
         amenities: filters.amenities,
         ordering: filters.ordering,
+        bedroomsMin: filters.bedroomsMin,
+        bathroomsMin: filters.bathroomsMin,
+        parkingMin: filters.parkingMin,
+        sqmMin: filters.sqmMin,
+        sqmMax: filters.sqmMax,
       },
     ],
     queryFn: ({ pageParam = 0 }) =>
@@ -77,6 +82,11 @@ export const useBuyProperties = () => {
         state: filters.state === "all" ? undefined : filters.state,
         amenities: filters.amenities.length > 0 ? filters.amenities : undefined,
         ordering: filters.ordering || undefined,
+        bedrooms_min: filters.bedroomsMin ?? undefined,
+        bathrooms_min: filters.bathroomsMin ?? undefined,
+        parking_min: filters.parkingMin ?? undefined,
+        sqm_min: filters.sqmMin ?? undefined,
+        sqm_max: filters.sqmMax ?? undefined,
         limit: PAGE_SIZE,
         offset: pageParam,
       }),
@@ -133,6 +143,10 @@ export const useBuyProperties = () => {
     filters.state !== "all",
     filters.amenities.length > 0,
     filters.ordering !== "",
+    filters.bedroomsMin !== null,
+    filters.bathroomsMin !== null,
+    filters.parkingMin !== null,
+    filters.sqmMin !== null || filters.sqmMax !== null,
   ].filter(Boolean).length;
 
   const toggleAmenity = useCallback((amenityId: string) => {
@@ -187,6 +201,11 @@ export const useBuyProperties = () => {
           result.price_max ?? PRICE_RANGE_LIMITS.max,
         ],
         amenities: result.amenities,
+        bedroomsMin: result.bedrooms_min ?? null,
+        bathroomsMin: result.bathrooms_min ?? null,
+        parkingMin: result.parking_min ?? null,
+        sqmMin: result.sqm_min ?? null,
+        sqmMax: result.sqm_max ?? null,
       }));
     } catch {
       setNaturalSearchError("No se pudo procesar tu búsqueda. Intenta de nuevo.");

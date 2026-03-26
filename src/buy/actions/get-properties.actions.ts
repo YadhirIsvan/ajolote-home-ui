@@ -89,6 +89,11 @@ export const getPropertiesAction = async (
   if (params.price_min != null) searchParams.set("price_min", String(params.price_min));
   if (params.price_max != null) searchParams.set("price_max", String(params.price_max));
   if (params.ordering) searchParams.set("ordering", params.ordering);
+  if (params.bedrooms_min != null) searchParams.set("bedrooms_min", String(params.bedrooms_min));
+  if (params.bathrooms_min != null) searchParams.set("bathrooms_min", String(params.bathrooms_min));
+  if (params.parking_min != null) searchParams.set("parking_min", String(params.parking_min));
+  if (params.sqm_min != null) searchParams.set("sqm_min", String(params.sqm_min));
+  if (params.sqm_max != null) searchParams.set("sqm_max", String(params.sqm_max));
   if (params.limit != null) searchParams.set("limit", String(params.limit));
   if (params.offset != null) searchParams.set("offset", String(params.offset));
 
