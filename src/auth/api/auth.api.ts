@@ -1,5 +1,4 @@
 import { axiosInstance } from "@/shared/api/axios.instance";
-import { tokenStore } from "@/shared/api/token.store";
 import type { RegisterRequest, RegisterResponse } from "@/auth/types/auth.types";
 
 export const authApi = {
@@ -23,12 +22,12 @@ export const authApi = {
     axiosInstance.post("/auth/apple", { identityToken }),
 
   logout: () => {
-    const refresh = tokenStore.getRefreshToken();
+    const refresh = localStorage.getItem("refresh_token");
     return axiosInstance.post("/auth/logout", { refresh });
   },
 
   refreshToken: () => {
-    const refresh = tokenStore.getRefreshToken();
+    const refresh = localStorage.getItem("refresh_token");
     return axiosInstance.post("/auth/refresh", { refresh });
   },
 };

@@ -1,5 +1,4 @@
 import axios from "axios";
-import { tokenStore } from "@/shared/api/token.store";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
 
@@ -10,7 +9,7 @@ const axiosInstance = axios.create({
 
 // ─── REQUEST: adjunta access token ──────────────────────────────────────────
 axiosInstance.interceptors.request.use((config) => {
-  const token = tokenStore.getAccessToken();
+  const token = localStorage.getItem("access_token");
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
@@ -42,10 +41,10 @@ axiosInstance.interceptors.response.use(
       }
       originalRequest._retry = true;
       isRefreshing = true;
-      const refresh = tokenStore.getRefreshToken();
+      const refresh = localStorage.getItem("refresh_token");
       if (!refresh) {
         isRefreshing = false;
-        tokenStore.clearTokens();
+        localStorage.removeItem("access_token");
         window.location.href = "/";
         return Promise.reject(error);
       }
@@ -53,13 +52,15 @@ axiosInstance.interceptors.response.use(
         const { data } = await axios.post(`${BASE_URL}/auth/refresh`, {
           refresh,
         });
-        tokenStore.setTokens(data.access, data.refresh);
+        localStorage.setItem("access_token", data.access);
+        localStorage.setItem("refresh_token", data.refresh);
         processQueue(null, data.access);
         originalRequest.headers.Authorization = `Bearer ${data.access}`;
         return axiosInstance(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError, null);
-        tokenStore.clearTokens();
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
         window.location.href = "/";
         return Promise.reject(refreshError);
       } finally {
