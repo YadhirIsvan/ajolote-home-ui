@@ -1,5 +1,6 @@
 import { authApi } from "@/auth/api/auth.api";
 import type { AuthTokens, AuthUser } from "@/auth/types/auth.types";
+import { tokenStore } from "@/shared/api/token.store";
 
 export interface LoginWithAppleResult {
   success: boolean;
@@ -14,8 +15,7 @@ export const loginWithAppleAction = async (
     const { data } = await authApi.loginWithApple(identityToken);
     const authData = data as AuthTokens;
 
-    localStorage.setItem("access_token", authData.access);
-    localStorage.setItem("refresh_token", authData.refresh);
+    tokenStore.setTokens(authData.access, authData.refresh);
     localStorage.setItem("user", JSON.stringify(authData.user));
     if (authData.user.memberships?.length) {
       localStorage.setItem(

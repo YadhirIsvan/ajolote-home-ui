@@ -19,6 +19,7 @@ import MortgageCallToAction from "@/buy/components/MortgageCallToAction";
 import MortgageCalculatorWidget from "@/buy/components/MortgageCalculatorWidget";
 import SimilarPropertiesSection from "@/buy/components/SimilarPropertiesSection";
 import { useFinancialModal } from "@/shared/hooks/financial-modal.context";
+import { tokenStore } from "@/shared/api/token.store";
 
 const getPOIIcon = (iconType: string) => {
   switch (iconType) {
@@ -128,7 +129,7 @@ const PropertyDetailPage = () => {
     showMortgageCalculator,
   } = usePropertyDetail();
 
-  const isAuthenticated = !!localStorage.getItem("access_token");
+  const isAuthenticated = !!tokenStore.getAccessToken();
 
   if (isLoading) {
     return (

@@ -1,5 +1,6 @@
 import { authApi } from "@/auth/api/auth.api";
 import type { AuthTokens } from "@/auth/types/auth.types";
+import { tokenStore } from "@/shared/api/token.store";
 
 export interface VerifyOtpExtra {
   first_name?: string;
@@ -27,8 +28,7 @@ export const verifyOtpAction = async (
     const { data } = await authApi.verifyOtp(email, token, extra);
     const authData = data as AuthTokens;
 
-    localStorage.setItem("access_token", authData.access);
-    localStorage.setItem("refresh_token", authData.refresh);
+    tokenStore.setTokens(authData.access, authData.refresh);
     localStorage.setItem("user", JSON.stringify(authData.user));
     if (authData.user.memberships?.length) {
       localStorage.setItem(

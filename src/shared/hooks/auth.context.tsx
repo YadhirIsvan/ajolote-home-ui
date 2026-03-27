@@ -8,6 +8,7 @@ import {
 } from "react";
 import type { AuthUser, UserRole } from "@/shared/types/user.types";
 import { logoutAction } from "@/shared/actions/logout.actions";
+import { tokenStore } from "@/shared/api/token.store";
 
 /** Lee el claim `exp` de un JWT sin verificar firma. Retorna null si falla. */
 function getRefreshTokenExpiresInMs(token: string): number | null {
@@ -42,7 +43,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(
-    () => !!localStorage.getItem("access_token")
+    () => !!tokenStore.getAccessToken()
   );
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -75,8 +76,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const handleLogout = async () => {
     await logoutAction();
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
+    tokenStore.clearTokens();
     localStorage.removeItem("user");
     setIsAuthenticated(false);
     setUser(null);
@@ -86,8 +86,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsLoggingOut(true);
     await new Promise<void>((resolve) => setTimeout(resolve, 1500));
     await logoutAction();
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
+    tokenStore.clearTokens();
     localStorage.removeItem("user");
     setIsLoggingOut(false);
     setIsAuthenticated(false);
@@ -104,7 +103,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    const refresh = localStorage.getItem("refresh_token");
+    const refresh = tokenStore.getRefreshToken();
     if (!refresh) return;
 
     const msLeft = getRefreshTokenExpiresInMs(refresh);
@@ -128,7 +127,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (!isAuthenticated) return;
 
     const checkTokensOnFocus = () => {
-      if (!document.hidden && !localStorage.getItem("access_token")) {
+      if (!document.hidden && !tokenStore.getAccessToken()) {
         handleLogoutRef.current();
       }
     };

@@ -12,6 +12,7 @@ import type {
   AppointmentSlot,
   FinancialProfile,
 } from "@/buy/types/property.types";
+import { tokenStore } from "@/shared/api/token.store";
 
 export const PROPERTY_DETAIL_QUERY_KEY = "buy-property-detail";
 export const APPOINTMENT_SLOTS_QUERY_KEY = "buy-appointment-slots";
@@ -20,8 +21,8 @@ export const usePropertyDetail = () => {
   const { id } = useParams<{ id: string }>();
   const numId = id ? parseInt(id, 10) : NaN;
 
-  // Verifica auth leyendo localStorage (buy/ no puede importar auth/)
-  const isAuthenticated = !!localStorage.getItem("access_token");
+  // Verifica auth leyendo el token store en memoria (buy/ no puede importar auth/)
+  const isAuthenticated = !!tokenStore.getAccessToken();
 
   // ── Modal / UI state ──────────────────────────────────────────────
   const [showFullDescription, setShowFullDescription] = useState(false);
