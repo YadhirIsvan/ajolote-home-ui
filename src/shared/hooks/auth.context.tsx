@@ -9,7 +9,12 @@ import {
 import type { AuthUser, UserRole } from "@/shared/types/user.types";
 import { logoutAction } from "@/shared/actions/logout.actions";
 
-/** Lee el claim `exp` de un JWT sin verificar firma. Retorna null si falla. */
+/**
+ * Lee el claim `exp` de un JWT sin verificar firma. Retorna null si falla.
+ * USO ACEPTABLE: únicamente para el timer de auto-logout en el cliente (UX).
+ * PROHIBIDO: usar el payload decodificado aquí para decisiones de autorización
+ * o verificación de roles — eso siempre debe hacerlo el servidor.
+ */
 function getRefreshTokenExpiresInMs(token: string): number | null {
   try {
     const payload = JSON.parse(

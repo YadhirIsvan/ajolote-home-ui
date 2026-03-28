@@ -77,6 +77,7 @@ const RegisterPage = () => {
                     value={form.first_name}
                     onChange={handleChange}
                     className="h-12 border-border/50 focus:border-champagne-gold focus:ring-champagne-gold/20"
+                    maxLength={100}
                     required
                   />
                 </div>
@@ -92,6 +93,7 @@ const RegisterPage = () => {
                     value={form.last_name}
                     onChange={handleChange}
                     className="h-12 border-border/50 focus:border-champagne-gold focus:ring-champagne-gold/20"
+                    maxLength={100}
                     required
                   />
                 </div>
@@ -109,6 +111,7 @@ const RegisterPage = () => {
                   value={form.email}
                   onChange={handleChange}
                   className="h-12 border-border/50 focus:border-champagne-gold focus:ring-champagne-gold/20"
+                  maxLength={254}
                   required
                 />
               </div>
@@ -125,6 +128,7 @@ const RegisterPage = () => {
                   value={form.phone}
                   onChange={handleChange}
                   className="h-12 border-border/50 focus:border-champagne-gold focus:ring-champagne-gold/20"
+                  maxLength={20}
                 />
               </div>
 
