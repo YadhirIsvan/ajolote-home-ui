@@ -88,7 +88,8 @@ export const useAuthModal = ({ onLoginSuccess, onClose }: UseAuthModalOptions) =
   };
 
   const handleEmailSubmit = async () => {
-    if (!email || !email.includes("@")) {
+    const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !EMAIL_REGEX.test(email)) {
       setError("Por favor ingresa un correo válido");
       return;
     }

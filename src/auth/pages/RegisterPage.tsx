@@ -39,7 +39,7 @@ const RegisterPage = () => {
       ...(form.phone ? { phone: form.phone } : {}),
     });
     if (result.success) {
-      navigate(`/auth/verify?email=${encodeURIComponent(form.email)}&mode=register`);
+      navigate("/auth/verify", { state: { email: form.email } });
     } else if (result.userExists) {
       setUserExists(true);
       setError(result.message);
