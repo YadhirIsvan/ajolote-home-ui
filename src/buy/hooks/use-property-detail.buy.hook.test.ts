@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach, createContext, useContext } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, act, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { createElement, type ReactNode, createContext as reactCreateContext, useContext as reactUseContext } from "react";
+import { createElement, type ReactNode } from "react";
 import { usePropertyDetail } from "./use-property-detail.buy.hook";
 import { getPropertyDetailAction } from "@/buy/actions/get-property-detail.actions";
 import { getFinancialProfileAction } from "@/buy/actions/get-financial-profile.actions";
@@ -19,6 +19,11 @@ vi.mock("@/buy/actions/schedule-appointment.actions");
 vi.mock("@/shared/actions/check-saved-property.actions");
 vi.mock("@/shared/actions/toggle-saved-property.actions");
 
+// El hook usa useAuth() — lo mockeamos para controlar isAuthenticated en cada test
+vi.mock("@/shared/hooks/auth.context", () => ({
+  useAuth: vi.fn(() => ({ isAuthenticated: false })),
+}));
+
 // Mockeamos useParams para controlar el id sin necesitar un router completo
 vi.mock("react-router-dom", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react-router-dom")>();
@@ -26,8 +31,10 @@ vi.mock("react-router-dom", async (importOriginal) => {
 });
 
 import { useParams } from "react-router-dom";
+import { useAuth } from "@/shared/hooks/auth.context";
 
 const mockedUseParams = vi.mocked(useParams);
+const mockedUseAuth = vi.mocked(useAuth);
 const mockedGetDetail = vi.mocked(getPropertyDetailAction);
 const mockedGetFinancial = vi.mocked(getFinancialProfileAction);
 const mockedGetSlots = vi.mocked(getAppointmentSlotsAction);
@@ -65,6 +72,7 @@ function makeWrapper() {
 }
 
 function setupDefaultMocks() {
+  mockedUseAuth.mockReturnValue({ isAuthenticated: false } as ReturnType<typeof useAuth>);
   mockedGetDetail.mockResolvedValue({ data: MOCK_PROPERTY, fromFallback: false });
   mockedGetFinancial.mockResolvedValue({ profile: null });
   mockedCheckSaved.mockResolvedValue({ isSaved: false });
@@ -118,8 +126,8 @@ describe("usePropertyDetail — carga de datos", () => {
 // ─── handleScheduleClick ─────────────────────────────────────────────────────
 
 describe("usePropertyDetail — handleScheduleClick", () => {
-  it("sin access_token abre showAuthModal, no showScheduleModal", async () => {
-    // localStorage.clear() ya fue llamado en beforeEach — no hay access_token
+  it("sin autenticación (isAuthenticated: false) abre showAuthModal, no showScheduleModal", async () => {
+    // Default: mockedUseAuth retorna isAuthenticated: false
     const { result } = renderHook(() => usePropertyDetail(), { wrapper: makeWrapper() });
 
     act(() => result.current.handleScheduleClick());
@@ -128,8 +136,8 @@ describe("usePropertyDetail — handleScheduleClick", () => {
     expect(result.current.showScheduleModal).toBe(false);
   });
 
-  it("con access_token abre showScheduleModal, no showAuthModal", async () => {
-    localStorage.setItem("access_token", "valid-token");
+  it("con autenticación (isAuthenticated: true) abre showScheduleModal, no showAuthModal", async () => {
+    mockedUseAuth.mockReturnValue({ isAuthenticated: true } as ReturnType<typeof useAuth>);
 
     const { result } = renderHook(() => usePropertyDetail(), { wrapper: makeWrapper() });
 
@@ -146,7 +154,7 @@ describe("usePropertyDetail — handleAuthSuccess", () => {
   it("cierra showAuthModal y abre showScheduleModal", () => {
     const { result } = renderHook(() => usePropertyDetail(), { wrapper: makeWrapper() });
 
-    // Abrir authModal primero (sin token)
+    // Abrir authModal primero (sin autenticación)
     act(() => result.current.handleScheduleClick());
     expect(result.current.showAuthModal).toBe(true);
 
@@ -173,7 +181,7 @@ describe("usePropertyDetail — handleCallClick", () => {
 
 describe("usePropertyDetail — showMortgageCalculator", () => {
   it("true cuando autenticado, perfil no null y ya no está cargando", async () => {
-    localStorage.setItem("access_token", "valid-token");
+    mockedUseAuth.mockReturnValue({ isAuthenticated: true } as ReturnType<typeof useAuth>);
     mockedGetFinancial.mockResolvedValueOnce({
       profile: {
         loanType: "hipoteca",
@@ -194,7 +202,7 @@ describe("usePropertyDetail — showMortgageCalculator", () => {
   });
 
   it("false cuando no está autenticado aunque el perfil exista", async () => {
-    // Sin access_token
+    // Default: isAuthenticated: false
     mockedGetFinancial.mockResolvedValueOnce({ profile: null });
 
     const { result } = renderHook(() => usePropertyDetail(), { wrapper: makeWrapper() });

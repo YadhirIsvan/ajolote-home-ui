@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { verifyOtpAction } from "./verify-otp.actions";
 import { authApi } from "@/auth/api/auth.api";
-import type { AuthTokens } from "@/auth/types/auth.types";
+import type { AuthResponse } from "@/auth/types/auth.types";
 
 vi.mock("@/auth/api/auth.api", () => ({
   authApi: { verifyOtp: vi.fn() },
@@ -26,10 +26,11 @@ const MEMBERSHIP = {
   role: "client" as const,
 };
 
-function makeTokens(overrides: Partial<typeof BASE_USER> = {}): AuthTokens {
+function makeAuthResponse(
+  overrides: Partial<typeof BASE_USER> = {}
+): AuthResponse {
   return {
-    access: "access-token-abc",
-    refresh: "refresh-token-xyz",
+    refresh_expires_at: 1700000000000,
     user: { ...BASE_USER, ...overrides },
   };
 }
@@ -40,22 +41,24 @@ beforeEach(() => {
 });
 
 describe("verifyOtpAction", () => {
-  it("respuesta exitosa guarda tokens en localStorage y retorna { success: true, data }", async () => {
-    const tokens = makeTokens();
-    mockedVerifyOtp.mockResolvedValueOnce({ data: tokens } as never);
+  it("respuesta exitosa retorna { success: true, data } — tokens en cookies httpOnly, no en localStorage", async () => {
+    const authResponse = makeAuthResponse();
+    mockedVerifyOtp.mockResolvedValueOnce({ data: authResponse } as never);
 
     const result = await verifyOtpAction("user@example.com", "1234");
 
     expect(result.success).toBe(true);
-    expect(result.data).toEqual(tokens);
-    expect(localStorage.getItem("access_token")).toBe("access-token-abc");
-    expect(localStorage.getItem("refresh_token")).toBe("refresh-token-xyz");
-    expect(localStorage.getItem("user")).toBe(JSON.stringify(tokens.user));
+    expect(result.data).toEqual(authResponse);
+
+    // Tokens NO se guardan en localStorage — los maneja el backend como httpOnly cookies
+    expect(localStorage.getItem("access_token")).toBeNull();
+    expect(localStorage.getItem("refresh_token")).toBeNull();
+    expect(localStorage.getItem("user")).toBeNull();
   });
 
   it("usuario con memberships guarda selected_tenant_id del primero", async () => {
-    const tokens = makeTokens({ memberships: [MEMBERSHIP] });
-    mockedVerifyOtp.mockResolvedValueOnce({ data: tokens } as never);
+    const authResponse = makeAuthResponse({ memberships: [MEMBERSHIP] });
+    mockedVerifyOtp.mockResolvedValueOnce({ data: authResponse } as never);
 
     await verifyOtpAction("user@example.com", "1234");
 
@@ -63,8 +66,8 @@ describe("verifyOtpAction", () => {
   });
 
   it("usuario sin memberships NO guarda selected_tenant_id", async () => {
-    const tokens = makeTokens({ memberships: [] });
-    mockedVerifyOtp.mockResolvedValueOnce({ data: tokens } as never);
+    const authResponse = makeAuthResponse({ memberships: [] });
+    mockedVerifyOtp.mockResolvedValueOnce({ data: authResponse } as never);
 
     await verifyOtpAction("user@example.com", "1234");
 

@@ -3,61 +3,108 @@ import { renderHook, act, waitFor } from "@testing-library/react";
 import { createElement } from "react";
 import { AuthProvider, useAuth } from "./auth.context";
 import { logoutAction } from "@/shared/actions/logout.actions";
+import { meAction } from "@/shared/actions/me.actions";
 
 vi.mock("@/shared/actions/logout.actions");
+vi.mock("@/shared/actions/me.actions");
 
 const mockedLogout = vi.mocked(logoutAction);
+const mockedMeAction = vi.mocked(meAction);
+
+// ── Cookie helpers ────────────────────────────────────────────────────────────
+
+function setSessionCookie() {
+  document.cookie = "session_active=1; path=/";
+}
+
+function clearSessionCookie() {
+  document.cookie = "session_active=; max-age=0; path=/";
+}
+
+// ── Test wrapper ──────────────────────────────────────────────────────────────
 
 function makeWrapper() {
   return ({ children }: { children: React.ReactNode }) =>
     createElement(AuthProvider, null, children);
 }
 
+// ── Fixtures ──────────────────────────────────────────────────────────────────
+
+const MOCK_USER = {
+  id: 1,
+  email: "test@test.com",
+  first_name: "Ana",
+  last_name: "López",
+  phone: null,
+  memberships: [{ id: 1, tenant_id: 10, role: "client" }],
+};
+
+// ── Lifecycle ─────────────────────────────────────────────────────────────────
+
 beforeEach(() => {
   vi.clearAllMocks();
   localStorage.clear();
+  clearSessionCookie();
   mockedLogout.mockResolvedValue(undefined);
+  mockedMeAction.mockResolvedValue(null); // default: no session
 });
 
 afterEach(() => {
-  localStorage.clear();
+  clearSessionCookie();
+  Object.defineProperty(document, "hidden", {
+    value: false,
+    configurable: true,
+    writable: true,
+  });
 });
 
 // ─── Estado inicial ───────────────────────────────────────────────────────────
 
 describe("AuthProvider — estado inicial", () => {
-  it("isAuthenticated: false cuando no hay access_token", () => {
+  it("isAuthenticated: false cuando NO existe la cookie session_active", () => {
     const { result } = renderHook(() => useAuth(), { wrapper: makeWrapper() });
     expect(result.current.isAuthenticated).toBe(false);
   });
 
-  it("isAuthenticated: true cuando existe access_token en localStorage", () => {
-    localStorage.setItem("access_token", "some-token");
+  it("isAuthenticated: true de forma síncrona cuando existe session_active cookie", () => {
+    setSessionCookie();
     const { result } = renderHook(() => useAuth(), { wrapper: makeWrapper() });
+    // Synchronous — read from document.cookie in useState initializer
     expect(result.current.isAuthenticated).toBe(true);
   });
 
-  it("user parseado desde localStorage si existe la clave 'user'", () => {
-    const mockUser = { id: 1, email: "test@test.com", memberships: [] };
-    localStorage.setItem("user", JSON.stringify(mockUser));
-    const { result } = renderHook(() => useAuth(), { wrapper: makeWrapper() });
-    expect(result.current.user).toEqual(mockUser);
-  });
-
-  it("user: null cuando no existe la clave 'user' en localStorage", () => {
+  it("user: null en render inicial antes de que meAction resuelva", () => {
+    setSessionCookie();
+    mockedMeAction.mockResolvedValueOnce({ user: MOCK_USER, refresh_expires_at: 9999 });
     const { result } = renderHook(() => useAuth(), { wrapper: makeWrapper() });
     expect(result.current.user).toBeNull();
   });
 
-  it("role derivado de user.memberships[0].role", () => {
-    const mockUser = {
-      id: 1,
-      email: "test@test.com",
-      memberships: [{ role: "client" }],
-    };
-    localStorage.setItem("user", JSON.stringify(mockUser));
+  it("user se popula de forma asíncrona via meAction tras el mount", async () => {
+    setSessionCookie();
+    mockedMeAction.mockResolvedValueOnce({ user: MOCK_USER, refresh_expires_at: 9999 });
     const { result } = renderHook(() => useAuth(), { wrapper: makeWrapper() });
-    expect(result.current.role).toBe("client");
+    await waitFor(() => expect(result.current.user).not.toBeNull());
+    expect(result.current.user).toEqual(MOCK_USER);
+  });
+
+  it("role derivado de user.memberships[0].role tras el mount", async () => {
+    setSessionCookie();
+    mockedMeAction.mockResolvedValueOnce({ user: MOCK_USER, refresh_expires_at: 9999 });
+    const { result } = renderHook(() => useAuth(), { wrapper: makeWrapper() });
+    await waitFor(() => expect(result.current.role).toBe("client"));
+  });
+
+  it("meAction NO se llama cuando no existe session_active cookie", () => {
+    renderHook(() => useAuth(), { wrapper: makeWrapper() });
+    expect(mockedMeAction).not.toHaveBeenCalled();
+  });
+
+  it("meAction se llama exactamente una vez si la cookie está presente", async () => {
+    setSessionCookie();
+    mockedMeAction.mockResolvedValueOnce({ user: MOCK_USER, refresh_expires_at: 9999 });
+    renderHook(() => useAuth(), { wrapper: makeWrapper() });
+    await waitFor(() => expect(mockedMeAction).toHaveBeenCalledTimes(1));
   });
 });
 
@@ -81,49 +128,57 @@ describe("AuthProvider — modal", () => {
 // ─── syncAuthState ────────────────────────────────────────────────────────────
 
 describe("AuthProvider — syncAuthState", () => {
-  it("actualiza user desde localStorage, isAuthenticated: true y cierra modal", () => {
+  it("llama meAction, actualiza user e isAuthenticated, cierra modal", async () => {
     const { result } = renderHook(() => useAuth(), { wrapper: makeWrapper() });
-
     act(() => result.current.openAuthModal());
 
-    const newUser = { id: 2, email: "new@test.com", memberships: [] };
-    localStorage.setItem("user", JSON.stringify(newUser));
+    mockedMeAction.mockResolvedValueOnce({ user: MOCK_USER, refresh_expires_at: 9999 });
 
-    act(() => result.current.syncAuthState());
+    await act(async () => { await result.current.syncAuthState(); });
 
-    expect(result.current.user).toEqual(newUser);
+    expect(mockedMeAction).toHaveBeenCalledTimes(1);
+    expect(result.current.user).toEqual(MOCK_USER);
     expect(result.current.isAuthenticated).toBe(true);
     expect(result.current.showAuthModal).toBe(false);
+  });
+
+  it("cuando meAction retorna null, isAuthenticated queda false y user es null", async () => {
+    const { result } = renderHook(() => useAuth(), { wrapper: makeWrapper() });
+    mockedMeAction.mockResolvedValueOnce(null);
+
+    await act(async () => { await result.current.syncAuthState(); });
+
+    expect(result.current.isAuthenticated).toBe(false);
+    expect(result.current.user).toBeNull();
   });
 });
 
 // ─── handleLogout ─────────────────────────────────────────────────────────────
 
 describe("AuthProvider — handleLogout", () => {
-  it("llama logoutAction, limpia las 4 claves de localStorage, isAuthenticated: false", async () => {
-    localStorage.setItem("access_token", "tok");
-    localStorage.setItem("refresh_token", "ref");
-    localStorage.setItem("user", '{"id":1}');
-    localStorage.setItem("selected_tenant_id", "1");
+  it("llama logoutAction, limpia estado de auth y elimina selected_tenant_id", async () => {
+    setSessionCookie();
+    mockedMeAction.mockResolvedValueOnce({ user: MOCK_USER, refresh_expires_at: 9999 });
+    localStorage.setItem("selected_tenant_id", "10");
 
     const { result } = renderHook(() => useAuth(), { wrapper: makeWrapper() });
+    await waitFor(() => expect(result.current.user).not.toBeNull());
 
     await act(() => result.current.handleLogout());
 
     expect(mockedLogout).toHaveBeenCalledTimes(1);
-    expect(localStorage.getItem("access_token")).toBeNull();
-    expect(localStorage.getItem("refresh_token")).toBeNull();
-    expect(localStorage.getItem("user")).toBeNull();
-    expect(localStorage.getItem("selected_tenant_id")).toBeNull();
     expect(result.current.isAuthenticated).toBe(false);
     expect(result.current.user).toBeNull();
+    expect(localStorage.getItem("selected_tenant_id")).toBeNull();
+
+    // Los tokens en httpOnly cookies los borra el backend — el frontend no los toca
   });
 });
 
 // ─── handleLoginSuccess ───────────────────────────────────────────────────────
 
 describe("AuthProvider — handleLoginSuccess", () => {
-  it("sincroniza user desde localStorage y llama window.location.reload", () => {
+  it("llama window.location.reload — la recarga iniciará meAction via el efecto de mount", () => {
     const reloadMock = vi.fn();
     Object.defineProperty(window, "location", {
       value: { ...window.location, reload: reloadMock },
@@ -131,14 +186,10 @@ describe("AuthProvider — handleLoginSuccess", () => {
       configurable: true,
     });
 
-    const newUser = { id: 3, email: "login@test.com", memberships: [] };
-    localStorage.setItem("user", JSON.stringify(newUser));
-
     const { result } = renderHook(() => useAuth(), { wrapper: makeWrapper() });
 
     act(() => result.current.handleLoginSuccess());
 
-    expect(result.current.user).toEqual(newUser);
     expect(reloadMock).toHaveBeenCalledTimes(1);
   });
 });
@@ -160,14 +211,15 @@ describe("useAuth", () => {
 // ─── Visibilitychange listener ────────────────────────────────────────────────
 
 describe("AuthProvider — visibilitychange", () => {
-  it("tab se vuelve visible y access_token fue eliminado → llama handleLogout", async () => {
-    localStorage.setItem("access_token", "tok");
+  it("tab se vuelve visible y session_active cookie fue eliminada → llama handleLogout", async () => {
+    setSessionCookie();
+    mockedMeAction.mockResolvedValueOnce({ user: MOCK_USER, refresh_expires_at: 9999 });
 
     const { result } = renderHook(() => useAuth(), { wrapper: makeWrapper() });
     await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
 
-    // Simula que otra pestaña eliminó el token
-    localStorage.removeItem("access_token");
+    // Otra pestaña eliminó la cookie (logout cruzado)
+    clearSessionCookie();
 
     Object.defineProperty(document, "hidden", {
       value: false,
@@ -183,14 +235,17 @@ describe("AuthProvider — visibilitychange", () => {
     expect(mockedLogout).toHaveBeenCalledTimes(1);
   });
 
-  it("tab se oculta (hidden: true) → no cierra sesión aunque falte el token", () => {
-    localStorage.setItem("access_token", "tok");
-    const { result } = renderHook(() => useAuth(), { wrapper: makeWrapper() });
+  it("tab se oculta (hidden: true) → no cierra sesión aunque falte la cookie", async () => {
+    setSessionCookie();
+    mockedMeAction.mockResolvedValueOnce({ user: MOCK_USER, refresh_expires_at: 9999 });
 
-    localStorage.removeItem("access_token");
+    const { result } = renderHook(() => useAuth(), { wrapper: makeWrapper() });
+    await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
+
+    clearSessionCookie();
 
     Object.defineProperty(document, "hidden", {
-      value: true,
+      value: true, // tab hidden → no logout trigger
       configurable: true,
       writable: true,
     });
@@ -200,5 +255,6 @@ describe("AuthProvider — visibilitychange", () => {
     });
 
     expect(result.current.isAuthenticated).toBe(true);
+    expect(mockedLogout).not.toHaveBeenCalled();
   });
 });

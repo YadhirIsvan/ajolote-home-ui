@@ -14,23 +14,27 @@ beforeEach(() => {
 });
 
 describe("logoutAction", () => {
-  it("lee refresh_token de localStorage y lo envía en el body", async () => {
-    localStorage.setItem("refresh_token", "my-refresh-token");
+  it("llama POST /auth/logout sin body (refresh_token en cookie httpOnly automática)", async () => {
     mockedPost.mockResolvedValueOnce({} as never);
 
     await logoutAction();
 
-    expect(mockedPost).toHaveBeenCalledWith("/auth/logout", {
-      refresh: "my-refresh-token",
-    });
+    expect(mockedPost).toHaveBeenCalledWith("/auth/logout");
+    expect(mockedPost).toHaveBeenCalledTimes(1);
   });
 
-  it("refresh_token null → envía null sin lanzar error", async () => {
+  it("NO lee ni envía tokens de localStorage — el browser envía las cookies automáticamente", async () => {
+    localStorage.setItem("refresh_token", "should-be-ignored");
     mockedPost.mockResolvedValueOnce({} as never);
 
-    await expect(logoutAction()).resolves.toBeUndefined();
+    await logoutAction();
 
-    expect(mockedPost).toHaveBeenCalledWith("/auth/logout", { refresh: null });
+    // Se llama solo con la ruta — sin objeto { refresh: ... } en el body
+    expect(mockedPost).toHaveBeenCalledWith("/auth/logout");
+    expect(mockedPost).not.toHaveBeenCalledWith(
+      "/auth/logout",
+      expect.objectContaining({ refresh: expect.anything() })
+    );
   });
 
   it("error del servidor → silenciado, resuelve void sin lanzar", async () => {

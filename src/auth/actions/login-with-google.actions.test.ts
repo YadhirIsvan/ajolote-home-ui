@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { loginWithGoogleAction } from "./login-with-google.actions";
 import { authApi } from "@/auth/api/auth.api";
-import type { AuthTokens } from "@/auth/types/auth.types";
+import type { AuthResponse } from "@/auth/types/auth.types";
 
 vi.mock("@/auth/api/auth.api", () => ({
   authApi: { loginWithGoogle: vi.fn() },
@@ -26,10 +26,11 @@ const MEMBERSHIP = {
   role: "agent" as const,
 };
 
-function makeTokens(overrides: Partial<typeof BASE_USER> = {}): AuthTokens {
+function makeAuthResponse(
+  overrides: Partial<typeof BASE_USER> = {}
+): AuthResponse {
   return {
-    access: "google-access-token",
-    refresh: "google-refresh-token",
+    refresh_expires_at: 1700000000000,
     user: { ...BASE_USER, ...overrides },
   };
 }
@@ -40,22 +41,24 @@ beforeEach(() => {
 });
 
 describe("loginWithGoogleAction", () => {
-  it("login exitoso guarda tokens en localStorage y retorna { success: true, user }", async () => {
-    const tokens = makeTokens();
-    mockedLoginWithGoogle.mockResolvedValueOnce({ data: tokens } as never);
+  it("login exitoso retorna { success: true, user } — tokens en cookies httpOnly, no en localStorage", async () => {
+    const authResponse = makeAuthResponse();
+    mockedLoginWithGoogle.mockResolvedValueOnce({ data: authResponse } as never);
 
     const result = await loginWithGoogleAction("gtoken-abc");
 
     expect(result.success).toBe(true);
-    expect(result.user).toEqual(tokens.user);
-    expect(localStorage.getItem("access_token")).toBe("google-access-token");
-    expect(localStorage.getItem("refresh_token")).toBe("google-refresh-token");
-    expect(localStorage.getItem("user")).toBe(JSON.stringify(tokens.user));
+    expect(result.user).toEqual(authResponse.user);
+
+    // Tokens NO se guardan en localStorage — los maneja el backend como httpOnly cookies
+    expect(localStorage.getItem("access_token")).toBeNull();
+    expect(localStorage.getItem("refresh_token")).toBeNull();
+    expect(localStorage.getItem("user")).toBeNull();
   });
 
   it("usuario con memberships guarda selected_tenant_id del primero", async () => {
-    const tokens = makeTokens({ memberships: [MEMBERSHIP] });
-    mockedLoginWithGoogle.mockResolvedValueOnce({ data: tokens } as never);
+    const authResponse = makeAuthResponse({ memberships: [MEMBERSHIP] });
+    mockedLoginWithGoogle.mockResolvedValueOnce({ data: authResponse } as never);
 
     await loginWithGoogleAction("gtoken-abc");
 
@@ -63,15 +66,15 @@ describe("loginWithGoogleAction", () => {
   });
 
   it("usuario sin memberships NO guarda selected_tenant_id", async () => {
-    const tokens = makeTokens({ memberships: [] });
-    mockedLoginWithGoogle.mockResolvedValueOnce({ data: tokens } as never);
+    const authResponse = makeAuthResponse({ memberships: [] });
+    mockedLoginWithGoogle.mockResolvedValueOnce({ data: authResponse } as never);
 
     await loginWithGoogleAction("gtoken-abc");
 
     expect(localStorage.getItem("selected_tenant_id")).toBeNull();
   });
 
-  it("error de API retorna { success: false, message }", async () => {
+  it("error de API retorna { success: false, message } y no escribe localStorage", async () => {
     mockedLoginWithGoogle.mockRejectedValueOnce(new Error("Unauthorized"));
 
     const result = await loginWithGoogleAction("bad-token");
