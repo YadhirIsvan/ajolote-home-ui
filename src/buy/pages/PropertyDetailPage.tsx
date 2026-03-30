@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useAuth } from "@/shared/hooks/auth.context";
 import { Link } from "react-router-dom";
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
@@ -128,7 +129,7 @@ const PropertyDetailPage = () => {
     showMortgageCalculator,
   } = usePropertyDetail();
 
-  const isAuthenticated = !!localStorage.getItem("access_token");
+  const { isAuthenticated } = useAuth();
 
   if (isLoading) {
     return (

@@ -1,5 +1,5 @@
 import { authApi } from "@/auth/api/auth.api";
-import type { AuthTokens, AuthUser } from "@/auth/types/auth.types";
+import type { AuthResponse, AuthUser } from "@/auth/types/auth.types";
 
 export interface LoginWithGoogleResult {
   success: boolean;
@@ -12,11 +12,10 @@ export const loginWithGoogleAction = async (
 ): Promise<LoginWithGoogleResult> => {
   try {
     const { data } = await authApi.loginWithGoogle(accessToken);
-    const authData = data as AuthTokens;
+    const authData = data as AuthResponse;
 
-    localStorage.setItem("access_token", authData.access);
-    localStorage.setItem("refresh_token", authData.refresh);
-    localStorage.setItem("user", JSON.stringify(authData.user));
+    // Tokens are set as httpOnly cookies by the backend — not stored here.
+    // Only the UI preference (tenant selection) goes to localStorage.
     if (authData.user.memberships?.length) {
       localStorage.setItem(
         "selected_tenant_id",

@@ -7,6 +7,7 @@ import { getAppointmentSlotsAction } from "@/buy/actions/get-appointment-slots.a
 import { getFinancialProfileAction } from "@/buy/actions/get-financial-profile.actions";
 import { checkSavedPropertyAction } from "@/shared/actions/check-saved-property.actions";
 import { toggleSavedPropertyAction } from "@/shared/actions/toggle-saved-property.actions";
+import { useAuth } from "@/shared/hooks/auth.context";
 import type {
   AppointmentResponse,
   AppointmentSlot,
@@ -20,8 +21,7 @@ export const usePropertyDetail = () => {
   const { id } = useParams<{ id: string }>();
   const numId = id ? parseInt(id, 10) : NaN;
 
-  // Verifica auth leyendo localStorage (buy/ no puede importar auth/)
-  const isAuthenticated = !!localStorage.getItem("access_token");
+  const { isAuthenticated } = useAuth();
 
   // ── Modal / UI state ──────────────────────────────────────────────
   const [showFullDescription, setShowFullDescription] = useState(false);

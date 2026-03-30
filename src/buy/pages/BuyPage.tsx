@@ -7,9 +7,11 @@ import MortgageCallToAction from "@/buy/components/MortgageCallToAction";
 import NaturalSearchBar from "@/buy/components/NaturalSearchBar";
 import { useBuyProperties } from "@/buy/hooks/use-buy-properties.buy.hook";
 import { useFinancialModal } from "@/shared/hooks/financial-modal.context";
+import { useAuth } from "@/shared/hooks/auth.context";
 
 const BuyPage = () => {
   const { openFinancialModal } = useFinancialModal();
+  const { isAuthenticated } = useAuth();
   const {
     filteredProperties,
     totalCount,
@@ -81,7 +83,7 @@ const BuyPage = () => {
                   </div>
 
                   {/* Mortgage CTA Sidebar — solo para usuarios autenticados */}
-                  {!!localStorage.getItem("access_token") && (
+                  {isAuthenticated && (
                   <div className="border-t border-border pt-6">
                     <MortgageCallToAction onCalculateCredit={() => openFinancialModal()} />
                   </div>
