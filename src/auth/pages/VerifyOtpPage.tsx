@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Mail, AlertCircle, ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
@@ -8,8 +8,8 @@ import { useVerifyOtp } from "@/auth/hooks/use-verify-otp.auth.hook";
 
 const VerifyOtpPage = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const email = searchParams.get("email") ?? "";
+  const location = useLocation();
+  const email = (location.state as { email?: string } | null)?.email ?? "";
 
   const [token, setToken] = useState("");
   const [error, setError] = useState("");

@@ -1,11 +1,10 @@
 import { axiosInstance } from "@/shared/api/axios.instance";
 
-// Decisión de diseño: los errores se silencian intencionalmente porque el
-// logout local (limpiar tokens) siempre debe proceder sin importar la respuesta del servidor.
 export const logoutAction = async (): Promise<void> => {
   try {
-    const refresh = localStorage.getItem("refresh_token");
-    await axiosInstance.post("/auth/logout", { refresh });
+    // refresh_token is sent automatically as an httpOnly cookie — no body needed.
+    // The backend blacklists the token and deletes all auth cookies.
+    await axiosInstance.post("/auth/logout");
   } catch (error) {
     console.error("[logoutAction] Error al notificar logout al servidor:", error);
   }

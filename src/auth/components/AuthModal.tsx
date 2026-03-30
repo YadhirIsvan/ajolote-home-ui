@@ -219,6 +219,7 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }: AuthModalProps) => {
                         value={firstName}
                         onChange={(e) => setFirstName(e.target.value)}
                         className="h-12 border-border/50 focus:border-champagne-gold focus:ring-champagne-gold/20"
+                        maxLength={100}
                         disabled={isLoading}
                       />
                     </div>
@@ -233,6 +234,7 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }: AuthModalProps) => {
                         value={lastName}
                         onChange={(e) => setLastName(e.target.value)}
                         className="h-12 border-border/50 focus:border-champagne-gold focus:ring-champagne-gold/20"
+                        maxLength={100}
                         disabled={isLoading}
                       />
                     </div>
@@ -248,6 +250,7 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }: AuthModalProps) => {
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       className="h-12 border-border/50 focus:border-champagne-gold focus:ring-champagne-gold/20"
+                      maxLength={20}
                       disabled={isLoading}
                     />
                   </div>

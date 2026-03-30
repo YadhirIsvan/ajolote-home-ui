@@ -11,8 +11,9 @@ const PageTransition = ({ children }: PageTransitionProps) => {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    setVisible(false);
-    // Small delay to let the browser paint the "invisible" state first
+    // Only fade in — never reset to invisible after first mount.
+    // Resetting to 0 on every route change caused a visible flash when the
+    // video background on "/" restarted from frame 0 during the opacity transition.
     const id = requestAnimationFrame(() => setVisible(true));
     return () => cancelAnimationFrame(id);
   }, [pathname]);

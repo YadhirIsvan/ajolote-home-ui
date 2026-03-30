@@ -69,10 +69,14 @@ export interface RegisterResponse {
   email: string;
 }
 
-// ── Auth User / Tokens ─────────────────────────────────────────────────────────
+// ── Auth Response (login / me) ─────────────────────────────────────────────────
+// Tokens are no longer in the response body — they are set as httpOnly cookies
+// by the backend. The body only carries user data and the refresh expiry timestamp.
 
-export interface AuthTokens {
-  access: string;
-  refresh: string;
+export interface AuthResponse {
+  refresh_expires_at: number; // millisecond epoch — used for auto-logout timer
   user: _AuthUser;
 }
+
+// AuthTokens kept as an alias for backward compatibility with existing callers.
+export type AuthTokens = AuthResponse;

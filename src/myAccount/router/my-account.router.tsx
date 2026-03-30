@@ -1,3 +1,4 @@
+import { Navigate } from "react-router-dom";
 import ClientPage from "@/myAccount/client/pages/ClientPage";
 import AgentPage from "@/myAccount/agent/pages/AgentPage";
 import AdminPage from "@/myAccount/admin/pages/AdminPage";
@@ -18,7 +19,7 @@ const MyAccountRouter = ({ role, onLogout, onNavigateConfig }: MyAccountRouterPr
     case "admin":
       return <AdminPage onLogout={onLogout} />;
     default:
-      return null;
+      return <Navigate to="/" replace />;
   }
 };
 

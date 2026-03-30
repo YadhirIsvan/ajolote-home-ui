@@ -1,5 +1,5 @@
 import { authApi } from "@/auth/api/auth.api";
-import type { AuthTokens, AuthUser } from "@/auth/types/auth.types";
+import type { AuthResponse, AuthUser } from "@/auth/types/auth.types";
 
 export interface LoginWithAppleResult {
   success: boolean;
@@ -12,11 +12,9 @@ export const loginWithAppleAction = async (
 ): Promise<LoginWithAppleResult> => {
   try {
     const { data } = await authApi.loginWithApple(identityToken);
-    const authData = data as AuthTokens;
+    const authData = data as AuthResponse;
 
-    localStorage.setItem("access_token", authData.access);
-    localStorage.setItem("refresh_token", authData.refresh);
-    localStorage.setItem("user", JSON.stringify(authData.user));
+    // Tokens are set as httpOnly cookies by the backend — not stored here.
     if (authData.user.memberships?.length) {
       localStorage.setItem(
         "selected_tenant_id",

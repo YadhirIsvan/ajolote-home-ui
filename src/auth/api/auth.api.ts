@@ -21,13 +21,11 @@ export const authApi = {
   loginWithApple: (identityToken: string) =>
     axiosInstance.post("/auth/apple", { identityToken }),
 
-  logout: () => {
-    const refresh = localStorage.getItem("refresh_token");
-    return axiosInstance.post("/auth/logout", { refresh });
-  },
+  me: () => axiosInstance.get("/auth/me"),
 
-  refreshToken: () => {
-    const refresh = localStorage.getItem("refresh_token");
-    return axiosInstance.post("/auth/refresh", { refresh });
-  },
+  // No body needed — refresh_token is sent automatically as an httpOnly cookie
+  logout: () => axiosInstance.post("/auth/logout"),
+
+  // No body needed — refresh_token is sent automatically as an httpOnly cookie
+  refreshToken: () => axiosInstance.post("/auth/refresh"),
 };

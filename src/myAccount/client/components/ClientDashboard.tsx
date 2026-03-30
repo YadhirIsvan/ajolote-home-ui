@@ -49,6 +49,9 @@ const ClientDashboard = ({ onNavigateVentas, onNavigateCompras, onNavigateCitas 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
+    const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
+    if (!ALLOWED_TYPES.includes(file.type) || file.size > MAX_SIZE) return;
     // Preview inmediato
     const previewUrl = URL.createObjectURL(file);
     setAvatarUrl(previewUrl);

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useAuth } from "@/shared/hooks/auth.context";
 import { Link } from "react-router-dom";
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
@@ -128,7 +129,7 @@ const PropertyDetailPage = () => {
     showMortgageCalculator,
   } = usePropertyDetail();
 
-  const isAuthenticated = !!localStorage.getItem("access_token");
+  const { isAuthenticated } = useAuth();
 
   if (isLoading) {
     return (
@@ -147,9 +148,9 @@ const PropertyDetailPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pt-16">
       {/* Mobile Header */}
-      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border lg:hidden">
+      <header className="sticky top-16 z-40 bg-background/95 backdrop-blur-sm border-b border-border lg:hidden">
         <div className="flex items-center justify-between px-4 h-14">
           <Button variant="ghost" size="icon" asChild className="text-primary">
             <Link to="/comprar">
