@@ -4,7 +4,7 @@ import { Card } from "@/shared/components/ui/card";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import ScoreWidget from "@/shared/components/custom/ScoreWidget";
-import { Calculator, Upload, CheckCircle2, Clock } from "lucide-react";
+import { Calculator, Upload, CircleCheckBig, Clock } from "lucide-react";
 
 const CreditFlowPage = () => {
   const [currentView, setCurrentView] = useState("simulacion"); // simulacion, resultado, documentos, seguimiento
@@ -56,7 +56,7 @@ const CreditFlowPage = () => {
             <div className="space-y-8">
               <Card className="p-8 text-center bg-card-gradient">
                 <div className="inline-block p-4 bg-flamingo/20 rounded-full mb-6">
-                  <CheckCircle2 className="w-16 h-16 text-flamingo" />
+                  <CircleCheckBig className="w-16 h-16 text-flamingo" />
                 </div>
                 <h2 className="text-3xl font-bold text-card-foreground mb-4">¡Felicidades!</h2>
                 <p className="text-lg text-muted-foreground mb-8">Has sido pre-aprobado para un crédito</p>
@@ -167,7 +167,7 @@ const CreditFlowPage = () => {
                           : "bg-muted text-muted-foreground"
                       }`}
                     >
-                      {step.status === "completed" ? <CheckCircle2 className="w-6 h-6" /> : index + 1}
+                      {step.status === "completed" ? <CircleCheckBig className="w-6 h-6" /> : index + 1}
                     </div>
                     <div className="flex-1">
                       <h3 className="font-semibold text-card-foreground">{step.label}</h3>

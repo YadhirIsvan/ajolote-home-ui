@@ -29,7 +29,6 @@ export const usePropertyDetail = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
-  const [showCallConfirmModal, setShowCallConfirmModal] = useState(false);
 
   // ── Appointment state ─────────────────────────────────────────────
   const [successData, setSuccessData] = useState<AppointmentResponse | null>(null);
@@ -39,7 +38,6 @@ export const usePropertyDetail = () => {
   const [scheduleError, setScheduleError] = useState<string | null>(null);
   const [availableSlots, setAvailableSlots] = useState<AppointmentSlot[]>([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
-  const [agentPhoneToCall, setAgentPhoneToCall] = useState<string>("");
 
   // ── Saved property state ──────────────────────────────────────────
   const [isSaved, setIsSaved] = useState(false);
@@ -100,18 +98,6 @@ export const usePropertyDetail = () => {
   const handleAuthSuccess = () => {
     setShowAuthModal(false);
     setShowScheduleModal(true);
-  };
-
-  const handleCallClick = (phoneNumber: string) => {
-    setAgentPhoneToCall(phoneNumber);
-    setShowCallConfirmModal(true);
-  };
-
-  const handleConfirmCall = () => {
-    if (agentPhoneToCall) {
-      window.location.href = `tel:${agentPhoneToCall}`;
-      setShowCallConfirmModal(false);
-    }
   };
 
   const handleConfirmAppointment = async () => {
@@ -210,8 +196,6 @@ export const usePropertyDetail = () => {
     setShowSuccessModal,
     showVideoModal,
     setShowVideoModal,
-    showCallConfirmModal,
-    setShowCallConfirmModal,
     // Appointment
     successData,
     selectedDate,
@@ -224,8 +208,6 @@ export const usePropertyDetail = () => {
     handleScheduleClick,
     handleAuthSuccess,
     handleConfirmAppointment,
-    handleCallClick,
-    handleConfirmCall,
     isScheduling,
     scheduleError,
     // Saved property

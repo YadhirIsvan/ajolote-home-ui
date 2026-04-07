@@ -11,27 +11,26 @@ const mockedSendOtp = vi.mocked(authApi.sendEmailOtp);
 beforeEach(() => vi.clearAllMocks());
 
 describe("sendEmailOtpAction", () => {
-  it("respuesta exitosa con is_new_user: false", async () => {
+  it("respuesta exitosa retorna success y message", async () => {
     mockedSendOtp.mockResolvedValueOnce({
-      data: { message: "Código enviado.", is_new_user: false },
+      data: { message: "Código enviado." },
     } as never);
 
     const result = await sendEmailOtpAction("user@example.com");
 
     expect(result.success).toBe(true);
-    expect(result.isNewUser).toBe(false);
     expect(result.message).toBe("Código enviado.");
   });
 
-  it("respuesta exitosa con is_new_user: true", async () => {
+  it("respuesta exitosa sin message usa fallback por defecto", async () => {
     mockedSendOtp.mockResolvedValueOnce({
-      data: { message: "Bienvenido.", is_new_user: true },
+      data: {},
     } as never);
 
     const result = await sendEmailOtpAction("nuevo@example.com");
 
     expect(result.success).toBe(true);
-    expect(result.isNewUser).toBe(true);
+    expect(result.message).toBe("Código enviado correctamente.");
   });
 
   it("error sin response (red) retorna mensaje de conexión fallida", async () => {
@@ -40,7 +39,6 @@ describe("sendEmailOtpAction", () => {
     const result = await sendEmailOtpAction("user@example.com");
 
     expect(result.success).toBe(false);
-    expect(result.isNewUser).toBe(false);
     expect(result.message).toContain("No se pudo conectar");
   });
 

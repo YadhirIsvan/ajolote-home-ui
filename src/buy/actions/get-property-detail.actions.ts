@@ -15,6 +15,9 @@ interface BackendNearbyPlace {
 interface BackendImage {
   id: number;
   image_url: string;
+  thumb?: string;
+  medium?: string;
+  large?: string;
   is_cover: boolean;
   sort_order: number;
 }
@@ -57,7 +60,7 @@ interface BackendPropertyDetail {
   nearby_places: BackendNearbyPlace[];
   video_id?: string;
   video_thumbnail?: string;
-  agent: { name: string; photo: string; phone: string; email: string };
+  agent: { name: string; photo: string } | null;
   coordinates: { lat: number; lng: number };
   similar_properties: BackendSimilarPropertyItem[];
 }
@@ -96,7 +99,7 @@ const mapDetail = (item: BackendPropertyDetail): PropertyDetailData => ({
   status: item.status,
   images: item.images
     .sort((a, b) => a.sort_order - b.sort_order)
-    .map((img) => img.image_url),
+    .map((img) => img.large ?? img.medium ?? img.image_url),
   videoId: item.video_id,
   videoImg: item.video_thumbnail,
   coordinates: item.coordinates || {
@@ -112,8 +115,7 @@ const mapDetail = (item: BackendPropertyDetail): PropertyDetailData => ({
     ? {
         name: item.agent.name,
         photo: item.agent.photo,
-        phone: item.agent.phone,
-        email: item.agent.email,
+        // phone y email eliminados — no se exponen en el endpoint público (C-2: PII)
       }
     : null,
   similarProperties: (item.similar_properties ?? []).map(mapSimilarProperty),
@@ -145,7 +147,7 @@ export const getPropertyDetailAction = async (
         description: "",
         coordinates: { lat: 0, lng: 0 },
         amenities: [],
-        agent: { name: "", photo: "", phone: "", email: "" },
+        agent: { name: "", photo: "" },
         similarProperties: [],
       },
       fromFallback: true,

@@ -8,6 +8,7 @@ export type PropertyStatus = "disponible" | "preventa" | "oportunidad" | "vendid
 interface PropertyCardProps {
   id: number;
   image: string;
+  image_thumb?: string;
   price: string;
   title: string;
   location: string;
@@ -36,7 +37,7 @@ const statusConfig: Record<PropertyStatus, { label: string; className: string }>
   },
 };
 
-const PropertyCard = ({ id, image, price, title, location, beds, baths, area, status = "disponible" }: PropertyCardProps) => {
+const PropertyCard = ({ id, image, image_thumb, price, title, location, beds, baths, area, status = "disponible" }: PropertyCardProps) => {
   const statusStyle = statusConfig[status];
 
   return (
@@ -45,9 +46,10 @@ const PropertyCard = ({ id, image, price, title, location, beds, baths, area, st
         {/* Image with Status Tag */}
         <div className="relative overflow-hidden aspect-[4/3]">
           <img
-            src={image}
+            src={image_thumb ?? image}
             alt={title}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            loading="lazy"
           />
           <div
             className={`absolute top-3 right-3 px-3 py-1.5 rounded-full text-xs font-semibold text-white backdrop-blur-md shadow-lg ${statusStyle.className}`}

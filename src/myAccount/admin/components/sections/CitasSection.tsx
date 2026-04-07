@@ -23,7 +23,7 @@ import {
   Trash2,
   Save,
   Search,
-  AlertCircle,
+  CircleAlert,
   FileText,
   Timer,
   Hash,
@@ -687,7 +687,7 @@ const CitasSection = () => {
           </div>
           {canSelectTime && getUnavailableSlots.size > 0 && (
             <div className="mt-3 p-3 bg-amber-50 rounded-lg border border-amber-200 flex items-start gap-2">
-              <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              <CircleAlert className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
               <p className="text-xs text-amber-700">
                 Algunos horarios están ocupados. Duración considerada: {formData.duration} min.
               </p>

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { UserPlus, AlertCircle, ArrowRight } from "lucide-react";
+import { UserPlus, CircleAlert, ArrowRight } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
@@ -134,7 +134,7 @@ const RegisterPage = () => {
 
               {error && (
                 <div className="flex items-start gap-2 text-destructive text-sm">
-                  <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                  <CircleAlert className="w-4 h-4 mt-0.5 flex-shrink-0" />
                   <span>{error}</span>
                 </div>
               )}

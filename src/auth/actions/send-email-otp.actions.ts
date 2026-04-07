@@ -3,7 +3,6 @@ import { authApi } from "@/auth/api/auth.api";
 export interface SendEmailOtpResponse {
   success: boolean;
   message: string;
-  isNewUser: boolean;
 }
 
 export const sendEmailOtpAction = async (
@@ -14,7 +13,6 @@ export const sendEmailOtpAction = async (
     return {
       success: true,
       message: data.message ?? "Código enviado correctamente.",
-      isNewUser: data.is_new_user ?? false,
     };
   } catch (error: unknown) {
     const axiosError = error as {
@@ -26,7 +24,6 @@ export const sendEmailOtpAction = async (
     if (!axiosError.response) {
       return {
         success: false,
-        isNewUser: false,
         message: "No se pudo conectar con el servidor. Verifica que el backend esté corriendo.",
       };
     }
@@ -38,14 +35,12 @@ export const sendEmailOtpAction = async (
     if (axiosError.response.status === 429) {
       return {
         success: false,
-        isNewUser: false,
         message: serverMsg ?? "Demasiados intentos. Espera un momento e intenta de nuevo.",
       };
     }
 
     return {
       success: false,
-      isNewUser: false,
       message: serverMsg ?? "Error al enviar el código. Intenta de nuevo.",
     };
   }

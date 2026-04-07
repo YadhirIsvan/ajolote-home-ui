@@ -33,13 +33,14 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from "
 import { useIsMobile } from "@/shared/hooks/use-mobile.hook";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { getApiOrigin } from "@/shared/utils/media-url.utils";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
 const getMediaUrl = (url: string | null | undefined): string | null => {
   if (!url) return null;
   if (url.startsWith("http")) return url;
-  if (url.startsWith("/media/")) return `http://localhost:8000${url}`;
+  if (url.startsWith("/media/")) return `${getApiOrigin()}${url}`;
   return null;
 };
 

@@ -1,5 +1,5 @@
 import { Card } from "@/shared/components/ui/card";
-import { CheckCircle2, AlertCircle } from "lucide-react";
+import { CircleCheckBig, CircleAlert } from "lucide-react";
 
 interface ScoreWidgetProps {
   score: number;
@@ -59,9 +59,9 @@ const ScoreWidget = ({ score, title, subtitle, checks }: ScoreWidgetProps) => {
           {checks.map((check, index) => (
             <div key={index} className="flex items-center gap-2">
               {check.status === "ok" ? (
-                <CheckCircle2 className="w-5 h-5 text-ribbon flex-shrink-0" />
+                <CircleCheckBig className="w-5 h-5 text-ribbon flex-shrink-0" />
               ) : (
-                <AlertCircle className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                <CircleAlert className="w-5 h-5 text-muted-foreground flex-shrink-0" />
               )}
               <span className="text-sm text-card-foreground">{check.label}</span>
             </div>

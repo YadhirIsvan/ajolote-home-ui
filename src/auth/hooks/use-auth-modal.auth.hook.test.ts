@@ -54,17 +54,16 @@ describe("useAuthModal — handleEmailSubmit", () => {
     expect(result.current.error).toBeTruthy();
   });
 
-  it("submit exitoso cambia step a 'verify' y actualiza isNewUser", async () => {
-    mockedSendOtp.mockResolvedValueOnce({ success: true, message: "ok", isNewUser: true });
+  it("submit exitoso cambia step a 'verify'", async () => {
+    mockedSendOtp.mockResolvedValueOnce({ success: true, message: "ok" });
     const { result } = renderModal();
     act(() => result.current.setEmail("user@example.com"));
     await act(() => result.current.handleEmailSubmit());
     expect(result.current.step).toBe("verify");
-    expect(result.current.isNewUser).toBe(true);
   });
 
   it("submit fallido popula error con el mensaje de la acción", async () => {
-    mockedSendOtp.mockResolvedValueOnce({ success: false, message: "Demasiados intentos", isNewUser: false });
+    mockedSendOtp.mockResolvedValueOnce({ success: false, message: "Demasiados intentos" });
     const { result } = renderModal();
     act(() => result.current.setEmail("user@example.com"));
     await act(() => result.current.handleEmailSubmit());
@@ -81,19 +80,6 @@ describe("useAuthModal — handleTokenVerify", () => {
     act(() => result.current.setToken("12"));
     await act(() => result.current.handleTokenVerify());
     expect(result.current.error).toBeTruthy();
-  });
-
-  it("nuevo usuario sin firstName popula error sobre nombre obligatorio", async () => {
-    mockedSendOtp.mockResolvedValueOnce({ success: true, message: "ok", isNewUser: true });
-    const { result } = renderModal();
-    act(() => result.current.setEmail("new@example.com"));
-    await act(() => result.current.handleEmailSubmit());
-
-    act(() => result.current.setToken("1234"));
-    // firstName y lastName vacíos (estado inicial)
-    await act(() => result.current.handleTokenVerify());
-
-    expect(result.current.error).toContain("Nombre y apellido");
   });
 
   it("verify exitoso cambia step a 'success' y llama onLoginSuccess", async () => {
@@ -130,18 +116,16 @@ describe("useAuthModal — handleBack", () => {
     expect(result.current.step).toBe("options");
   });
 
-  it("desde 'verify' vuelve a 'email' y limpia token e isNewUser", async () => {
-    mockedSendOtp.mockResolvedValueOnce({ success: true, message: "ok", isNewUser: true });
+  it("desde 'verify' vuelve a 'email' y limpia token", async () => {
+    mockedSendOtp.mockResolvedValueOnce({ success: true, message: "ok" });
     const { result } = renderModal();
     act(() => result.current.setEmail("u@x.com"));
     await act(() => result.current.handleEmailSubmit());
-    // Estamos en 'verify' con isNewUser: true
     act(() => result.current.setToken("1234"));
     act(() => result.current.handleBack());
 
     expect(result.current.step).toBe("email");
     expect(result.current.token).toBe("");
-    expect(result.current.isNewUser).toBe(false);
   });
 });
 
@@ -149,7 +133,7 @@ describe("useAuthModal — handleBack", () => {
 
 describe("useAuthModal — handleOpenChange", () => {
   it("handleOpenChange(false) resetea todo el estado y llama onClose", async () => {
-    mockedSendOtp.mockResolvedValueOnce({ success: true, message: "ok", isNewUser: false });
+    mockedSendOtp.mockResolvedValueOnce({ success: true, message: "ok" });
     const onClose = vi.fn();
     const { result } = renderModal(vi.fn(), onClose);
 

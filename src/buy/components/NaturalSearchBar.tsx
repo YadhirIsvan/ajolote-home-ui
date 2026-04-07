@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Sparkles, Search, X, Loader2, CheckCircle2 } from "lucide-react";
+import { Sparkles, Search, X, Loader2, CircleCheckBig } from "lucide-react";
 
 interface NaturalSearchBarProps {
   onSearch: (query: string) => Promise<void>;
@@ -174,7 +174,7 @@ const NaturalSearchBar = ({
       {/* Applied search banner */}
       {hasAppliedSearch && !error && (
         <div className="mt-2 flex items-center gap-2 text-xs text-champagne bg-champagne/8 border border-champagne/20 rounded-xl px-3 py-2">
-          <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" />
+          <CircleCheckBig className="w-3.5 h-3.5 flex-shrink-0" />
           <span className="flex-1 truncate">
             Filtros aplicados para: <strong>"{appliedQuery}"</strong>
           </span>

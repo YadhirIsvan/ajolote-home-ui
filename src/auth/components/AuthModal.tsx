@@ -3,7 +3,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { Separator } from "@/shared/components/ui/separator";
-import { Mail, ArrowRight, Check, AlertCircle, Loader2 } from "lucide-react";
+import { Mail, ArrowRight, Check, CircleAlert, Loader2 } from "lucide-react";
 import { useAuthModal } from "@/auth/hooks/use-auth-modal.auth.hook";
 
 interface AuthModalProps {
@@ -21,7 +21,6 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }: AuthModalProps) => {
     setToken,
     error,
     isLoading,
-    isNewUser,
     firstName,
     setFirstName,
     lastName,
@@ -37,12 +36,6 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }: AuthModalProps) => {
     handleOpenChange,
   } = useAuthModal({ onLoginSuccess, onClose });
 
-  const verifyTitle = isNewUser ? "Crea tu cuenta" : "Verificar Código";
-  const verifyDesc = isNewUser
-    ? `Ingresa el código enviado a ${email} y completa tu perfil`
-    : `Ingresa el código enviado a ${email}`;
-  const successTitle = isNewUser ? "¡Cuenta creada!" : "¡Bienvenido!";
-
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-md bg-white border-none shadow-2xl">
@@ -50,14 +43,14 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }: AuthModalProps) => {
           <DialogTitle className="text-2xl font-bold text-midnight">
             {step === "options" && "Iniciar Sesión"}
             {step === "email" && "Continuar con Email"}
-            {step === "verify" && verifyTitle}
-            {step === "success" && successTitle}
+            {step === "verify" && "Verificar Código"}
+            {step === "success" && "¡Bienvenido!"}
           </DialogTitle>
           <DialogDescription className="text-foreground/60">
             {step === "options" && "Elige cómo deseas ingresar a tu cuenta"}
             {step === "email" && "Te enviaremos un código de acceso"}
-            {step === "verify" && verifyDesc}
-            {step === "success" && (isNewUser ? "Tu cuenta fue creada exitosamente." : "Ingresando a tu cuenta...")}
+            {step === "verify" && `Ingresa el código enviado a ${email}`}
+            {step === "success" && "Ingresando a tu cuenta..."}
           </DialogDescription>
         </DialogHeader>
 
@@ -92,7 +85,7 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }: AuthModalProps) => {
               {/* Error para Google/Apple */}
               {error && (
                 <div className="flex items-center gap-2 text-destructive text-sm">
-                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <CircleAlert className="w-4 h-4 flex-shrink-0" />
                   {error}
                 </div>
               )}
@@ -140,7 +133,7 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }: AuthModalProps) => {
 
               {error && (
                 <div className="flex items-center gap-2 text-destructive text-sm">
-                  <AlertCircle className="w-4 h-4" />
+                  <CircleAlert className="w-4 h-4" />
                   {error}
                 </div>
               )}
@@ -190,62 +183,60 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }: AuthModalProps) => {
                 />
               </div>
 
-              {/* Campos de registro — solo si is_new_user */}
-              {isNewUser && (
-                <>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-2">
-                      <Label htmlFor="firstName" className="text-foreground font-medium text-sm">
-                        Nombre <span className="text-destructive">*</span>
-                      </Label>
-                      <Input
-                        id="firstName"
-                        type="text"
-                        placeholder="Juan"
-                        value={firstName}
-                        onChange={(e) => setFirstName(e.target.value)}
-                        className="h-12 border-border/50 focus:border-champagne-gold focus:ring-champagne-gold/20"
-                        maxLength={100}
-                        disabled={isLoading}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="lastName" className="text-foreground font-medium text-sm">
-                        Apellido <span className="text-destructive">*</span>
-                      </Label>
-                      <Input
-                        id="lastName"
-                        type="text"
-                        placeholder="García"
-                        value={lastName}
-                        onChange={(e) => setLastName(e.target.value)}
-                        className="h-12 border-border/50 focus:border-champagne-gold focus:ring-champagne-gold/20"
-                        maxLength={100}
-                        disabled={isLoading}
-                      />
-                    </div>
-                  </div>
+              {/* Campos de perfil — siempre visibles, todos opcionales */}
+              <>
+                <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
-                    <Label htmlFor="phone" className="text-foreground font-medium text-sm">
-                      Teléfono <span className="text-muted-foreground text-xs">(opcional)</span>
+                    <Label htmlFor="firstName" className="text-foreground font-medium text-sm">
+                      Nombre <span className="text-muted-foreground text-xs">(opcional)</span>
                     </Label>
                     <Input
-                      id="phone"
-                      type="tel"
-                      placeholder="+52 55 1234 5678"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
+                      id="firstName"
+                      type="text"
+                      placeholder="Juan"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
                       className="h-12 border-border/50 focus:border-champagne-gold focus:ring-champagne-gold/20"
-                      maxLength={20}
+                      maxLength={100}
                       disabled={isLoading}
                     />
                   </div>
-                </>
-              )}
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName" className="text-foreground font-medium text-sm">
+                      Apellido <span className="text-muted-foreground text-xs">(opcional)</span>
+                    </Label>
+                    <Input
+                      id="lastName"
+                      type="text"
+                      placeholder="García"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      className="h-12 border-border/50 focus:border-champagne-gold focus:ring-champagne-gold/20"
+                      maxLength={100}
+                      disabled={isLoading}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone" className="text-foreground font-medium text-sm">
+                    Teléfono <span className="text-muted-foreground text-xs">(opcional)</span>
+                  </Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="+52 55 1234 5678"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="h-12 border-border/50 focus:border-champagne-gold focus:ring-champagne-gold/20"
+                    maxLength={20}
+                    disabled={isLoading}
+                  />
+                </div>
+              </>
 
               {error && (
                 <div className="flex items-center gap-2 text-destructive text-sm">
-                  <AlertCircle className="w-4 h-4" />
+                  <CircleAlert className="w-4 h-4" />
                   {error}
                 </div>
               )}
@@ -257,8 +248,6 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }: AuthModalProps) => {
               >
                 {isLoading ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
-                ) : isNewUser ? (
-                  <>Crear cuenta <ArrowRight className="w-5 h-5 ml-2" /></>
                 ) : (
                   <>Verificar <ArrowRight className="w-5 h-5 ml-2" /></>
                 )}
@@ -282,7 +271,7 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }: AuthModalProps) => {
                 <Check className="w-8 h-8 text-champagne-gold" />
               </div>
               <p className="text-foreground/70 text-center">
-                {isNewUser ? "Tu cuenta fue creada. Accediendo..." : "Redirigiendo a tu cuenta..."}
+                Redirigiendo a tu cuenta...
               </p>
             </div>
           )}

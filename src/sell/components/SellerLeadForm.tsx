@@ -4,7 +4,7 @@ import { Label } from "@/shared/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/shared/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, ArrowLeft, CheckCircle2, Home, Building2, Castle, Warehouse, Loader2 } from "lucide-react";
+import { ArrowRight, ArrowLeft, CircleCheckBig, Home, Building2, Castle, Warehouse, Loader2 } from "lucide-react";
 import { useSellerLeadForm } from "@/sell/hooks/use-seller-lead-form.sell.hook";
 import { getCitiesAction, type CityItem } from "@/shared/actions/get-cities.actions";
 import { useAuth } from "@/shared/hooks/use-auth.hook";
@@ -75,7 +75,7 @@ const SellerLeadForm = ({ open, onOpenChange, mode = "default", onPropertyAdded 
           /* Success State */
           <div className="p-8 md:p-12 text-center">
             <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-[hsl(var(--champagne-gold))]/10 flex items-center justify-center">
-              <CheckCircle2 className="w-10 h-10 text-[hsl(var(--champagne-gold))]" />
+              <CircleCheckBig className="w-10 h-10 text-[hsl(var(--champagne-gold))]" />
             </div>
             <h2 className="text-2xl md:text-3xl font-bold text-primary mb-4">
               ¡Recibido, Champ!

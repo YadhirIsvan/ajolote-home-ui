@@ -1,5 +1,5 @@
 import { Card } from "@/shared/components/ui/card";
-import { AlertCircle, CheckCircle, Clock, FileText, MessageCircle, Shield } from "lucide-react";
+import { CircleAlert, CheckCircle, Clock, FileText, MessageCircle, Shield } from "lucide-react";
 
 const ServiciosPage = () => {
   return (
@@ -26,7 +26,7 @@ const ServiciosPage = () => {
 
           <div className="space-y-6 mb-12">
             <div className="flex items-start gap-4">
-              <AlertCircle className="w-6 h-6 text-flamingo flex-shrink-0 mt-1" />
+              <CircleAlert className="w-6 h-6 text-flamingo flex-shrink-0 mt-1" />
               <div>
                 <h3 className="font-semibold text-lg mb-2">El comprador no terminó la operación.</h3>
                 <p className="text-muted-foreground">

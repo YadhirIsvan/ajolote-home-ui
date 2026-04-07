@@ -1,73 +1,94 @@
-# Welcome to your Lovable project
+# Avakanta — Frontend
 
-## Project info
+SPA React para la plataforma inmobiliaria Avakanta.
 
-**URL**: https://lovable.dev/projects/8f154128-082e-4e34-9ecd-b3f0fb458025
+## Stack
 
-## How can I edit this code?
+- React 18 · TypeScript 5 · Vite 5
+- Tailwind CSS 3 · shadcn/ui (Radix UI)
+- TanStack Query v5 · React Hook Form · Zod
+- React Router DOM v7
+- Axios para peticiones HTTP
 
-There are several ways of editing your application.
+## Requisitos previos
 
-**Use Lovable**
+- Node.js 20+
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/8f154128-082e-4e34-9ecd-b3f0fb458025) and start prompting.
+## Setup local
 
-Changes made via Lovable will be committed automatically to this repo.
+```bash
+# 1. Variables de entorno
+cp .env.example .env
+# Editar VITE_API_BASE_URL con la URL del backend local
 
-**Use your preferred IDE**
+# 2. Instalar dependencias
+npm ci
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# 3. Servidor de desarrollo
 npm run dev
+# App en http://localhost:8080
 ```
 
-**Edit a file directly in GitHub**
+## Variables de entorno
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+| Variable | Descripción |
+|----------|-------------|
+| `VITE_API_BASE_URL` | URL base del backend (e.g. `http://localhost:8000/api/v1`) |
+| `VITE_GOOGLE_CLIENT_ID` | Client ID de Google OAuth |
+| `VITE_SUPABASE_URL` | URL del proyecto Supabase |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Anon key de Supabase (pública) |
+| `VITE_SUPABASE_PROJECT_ID` | ID del proyecto Supabase |
 
-**Use GitHub Codespaces**
+## Scripts disponibles
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+| Script | Descripción |
+|--------|-------------|
+| `npm run dev` | Servidor de desarrollo |
+| `npm run build` | Build de producción |
+| `npm run typecheck` | Verificación de tipos TypeScript |
+| `npm run lint` | Linting con ESLint |
+| `npm run test` | Tests en modo watch |
+| `npm run test:coverage` | Tests con reporte de cobertura |
+| `npm run preview` | Preview del build de producción |
 
-## What technologies are used for this project?
+## Tests
 
-This project is built with:
+```bash
+npm run test             # modo watch (desarrollo)
+npm run test:coverage    # cobertura mínima: lines 80%, functions 80%, branches 75%
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Build de producción
 
-## How can I deploy this project?
+```bash
+npm run typecheck   # verificar tipos sin errores
+npm run build       # genera dist/
+```
 
-Simply open [Lovable](https://lovable.dev/projects/8f154128-082e-4e34-9ecd-b3f0fb458025) and click on Share -> Publish.
+El build aplica automáticamente:
+- Eliminación de `console.*` y `debugger`
+- Code splitting por ruta (lazy loading)
+- Minificación con esbuild
 
-## Can I connect a custom domain to my Lovable project?
+## Deploy
 
-Yes, you can!
+El frontend se despliega en **Vercel**. La configuración está en `vercel.json`:
+- Rewrite de SPA (todas las rutas a `index.html`)
+- Headers de seguridad: CSP, X-Frame-Options, Referrer-Policy
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## Estructura
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+```
+src/
+├── auth/           # OTP, Google OAuth, modal de autenticación
+├── buy/            # búsqueda, filtros, detalle de propiedad
+├── home/           # landing page, servicios
+├── sell/           # formulario de vendedor
+├── myAccount/      # panel admin, agente y cliente
+├── notifications/  # sistema de notificaciones
+├── shared/
+│   ├── api/        # cliente Axios configurado
+│   ├── components/ # componentes reutilizables y UI (shadcn)
+│   └── hooks/      # AuthProvider, contextos globales
+└── router/         # rutas de la app con lazy loading
+```

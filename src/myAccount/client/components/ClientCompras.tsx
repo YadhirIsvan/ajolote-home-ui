@@ -1,4 +1,4 @@
-import { ArrowLeft, MapPin, CheckCircle2, Clock, AlertCircle, Upload, FileText } from "lucide-react";
+import { ArrowLeft, MapPin, CircleCheckBig, Clock, CircleAlert, Upload, FileText } from "lucide-react";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import { Badge } from "@/shared/components/ui/badge";
@@ -122,7 +122,7 @@ const PropertyDetailCard = ({
                   )}
                   <div className="mt-0.5 flex-shrink-0">
                     {step.done ? (
-                      <CheckCircle2 className="w-[22px] h-[22px] text-champagne-gold" />
+                      <CircleCheckBig className="w-[22px] h-[22px] text-champagne-gold" />
                     ) : step.current ? (
                       <Clock className="w-[22px] h-[22px] text-amber-500 animate-pulse" />
                     ) : (
@@ -178,7 +178,7 @@ const PropertyDetailCard = ({
         {showUploadAction && (
           <div className="px-6 py-4 bg-champagne-gold/5 border-t border-champagne-gold/10 flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-2 text-sm">
-              <AlertCircle className="w-4 h-4 text-champagne-gold" />
+              <CircleAlert className="w-4 h-4 text-champagne-gold" />
               <span className="text-foreground/70">Siguiente paso:</span>
               <span className="font-semibold text-midnight">Subir documentos</span>
             </div>

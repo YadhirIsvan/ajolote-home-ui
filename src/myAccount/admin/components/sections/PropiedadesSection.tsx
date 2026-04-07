@@ -37,6 +37,7 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from "
 import { useIsMobile } from "@/shared/hooks/use-mobile.hook";
 import { toast } from "sonner";
 import { formatMoney, formatSqm, parseRawNumber, parseRawDecimal } from "@/shared/utils/format-input";
+import { getApiOrigin } from "@/shared/utils/media-url.utils";
 import {
   getAdminPropertiesAction,
   deleteAdminPropertyAction,
@@ -108,18 +109,11 @@ interface PropertyFormData {
 // ─── Mappers ──────────────────────────────────────────────────────────────────
 
 // ─── Media URL helper ─────────────────────────────────────────────────────────
-const BACKEND_ORIGIN = (() => {
-  try {
-    return new URL(import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1").origin;
-  } catch {
-    return "http://localhost:8000";
-  }
-})();
 
 const getMediaUrl = (url: string | null | undefined): string => {
   if (!url) return "";
   if (url.startsWith("http")) return url;
-  return `${BACKEND_ORIGIN}${url}`;
+  return `${getApiOrigin()}${url}`;
 };
 
 const mapPropertyType = (type: string): PropertyType => {

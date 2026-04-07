@@ -50,6 +50,9 @@ export interface AdminProperty {
 export interface AdminPropertyImage {
   id: number;
   imageUrl: string;
+  thumb?: string;
+  medium?: string;
+  large?: string;
   isCover: boolean;
   sortOrder: number;
 }
@@ -372,6 +375,9 @@ export interface BackendAdminProperty {
 export interface BackendAdminPropertyImage {
   id: number;
   image_url: string;
+  thumb?: string;
+  medium?: string;
+  large?: string;
   is_cover: boolean;
   sort_order: number;
 }

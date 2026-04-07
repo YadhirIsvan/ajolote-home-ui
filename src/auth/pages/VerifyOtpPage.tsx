@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Mail, AlertCircle, ArrowLeft, ArrowRight, Check } from "lucide-react";
+import { Mail, CircleAlert, ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
@@ -83,7 +83,7 @@ const VerifyOtpPage = () => {
 
                 {error && (
                   <div className="flex items-center gap-2 text-destructive text-sm">
-                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                    <CircleAlert className="w-4 h-4 flex-shrink-0" />
                     <span>{error}</span>
                   </div>
                 )}

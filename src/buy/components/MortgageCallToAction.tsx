@@ -1,5 +1,5 @@
 import { Button } from "@/shared/components/ui/button";
-import { AlertCircle } from "lucide-react";
+import { CircleAlert } from "lucide-react";
 
 interface MortgageCallToActionProps {
   onCalculateCredit: () => void;

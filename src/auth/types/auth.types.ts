@@ -43,16 +43,16 @@ export interface SendOtpRequest {
 export interface SendOtpResponse {
   message: string;
   email: string;
-  is_new_user: boolean;
+  // is_new_user eliminado — el backend ya no lo devuelve (C-1: prevenir user enumeration)
 }
 
 /** Body de POST /auth/email/verify */
 export interface VerifyOtpRequest {
   email: string;
   token: string;
-  first_name?: string; // solo si is_new_user fue true
-  last_name?: string;  // solo si is_new_user fue true
-  phone?: string;      // solo si is_new_user fue true
+  first_name?: string; // siempre opcional — backend guarda si tiene valor
+  last_name?: string;
+  phone?: string;
 }
 
 // ── Register ───────────────────────────────────────────────────────────────────

@@ -8,9 +8,9 @@ import { Calendar } from "@/shared/components/ui/calendar";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/shared/components/ui/carousel";
 import {
   ArrowLeft, Share2, MapPin, BedDouble, Bath, Maximize,
-  CheckCircle2, Play, Phone, ChevronDown, ChevronUp,
+  CircleCheckBig, Play, ChevronDown, ChevronUp,
   GraduationCap, ShoppingBag, Hospital, Train, Loader2,
-  MessageCircle, Waves, Dumbbell, Shield, ArrowUpDown,
+  Waves, Dumbbell, Shield, ArrowUpDown,
   Car, Leaf, Sun, Bookmark,
 } from "lucide-react";
 import { usePropertyDetail } from "@/buy/hooks/use-property-detail.buy.hook";
@@ -101,8 +101,6 @@ const PropertyDetailPage = () => {
     setShowSuccessModal,
     showVideoModal,
     setShowVideoModal,
-    showCallConfirmModal,
-    setShowCallConfirmModal,
     successData,
     selectedDate,
     handleDateSelect,
@@ -117,8 +115,6 @@ const PropertyDetailPage = () => {
     handleScheduleClick,
     handleAuthSuccess,
     handleConfirmAppointment,
-    handleCallClick,
-    handleConfirmCall,
     isScheduling,
     scheduleError,
     isSaved,
@@ -194,7 +190,7 @@ const PropertyDetailPage = () => {
               <h1 className="text-xl font-bold text-primary leading-tight flex-1">{property.title}</h1>
               {property.verified && (
                 <div className="flex items-center gap-1 bg-champagne/10 text-champagne px-2 py-1 rounded-full text-xs font-medium shrink-0">
-                  <CheckCircle2 className="w-3 h-3" />
+                  <CircleCheckBig className="w-3 h-3" />
                   Verificado
                 </div>
               )}
@@ -369,28 +365,13 @@ const PropertyDetailPage = () => {
                   <p className="text-sm text-muted-foreground">Agente Certificado</p>
                 </div>
               </div>
-              <div className="flex gap-3">
-                <Button
-                  variant="outline"
-                  className="flex-1 border-primary text-primary hover:bg-primary hover:text-white"
-                  onClick={() => {
-                    const phone = property.agent!.phone.replace(/\D/g, '');
-                    const message = `Hola, me interesa la propiedad:\n\n📍 ${property.title}\n💰 ${property.price} MXN\n📌 ${property.address}\n\n🛏️ ${property.beds} Recámaras | 🚿 ${property.baths} Baños | 📐 ${property.sqm}m²\n\n¿Puedes brindarme más información?`;
-                    const encodedMessage = encodeURIComponent(message);
-                    window.open(`https://wa.me/${phone}?text=${encodedMessage}`, '_blank');
-                  }}
-                >
-                  <MessageCircle className="w-4 h-4 mr-2" />
-                  WhatsApp
-                </Button>
-                <Button
-                  className="flex-1 bg-[#25D366] hover:bg-[#20BD5A] text-white"
-                  onClick={() => handleCallClick(property.agent!.phone)}
-                >
-                  <Phone className="w-4 h-4 mr-2" />
-                  Llamar
-                </Button>
-              </div>
+              <Button
+                variant="gold"
+                className="w-full"
+                onClick={handleScheduleClick}
+              >
+                Agendar Visita
+              </Button>
             </Card>
           </div>
           )}
@@ -431,7 +412,7 @@ const PropertyDetailPage = () => {
                     </Button>
                     {property.verified && (
                       <div className="flex items-center gap-1 bg-champagne/10 text-champagne px-3 py-1.5 rounded-full text-sm font-medium shrink-0">
-                        <CheckCircle2 className="w-4 h-4" />
+                        <CircleCheckBig className="w-4 h-4" />
                         Verificado
                       </div>
                     )}
@@ -581,28 +562,14 @@ const PropertyDetailPage = () => {
                           <p className="text-sm text-muted-foreground">Agente Certificado</p>
                         </div>
                       </div>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex-1 border-primary text-primary hover:bg-primary hover:text-white"
-                          onClick={() => {
-                            const phone = property.agent!.phone.replace(/\D/g, '');
-                            const message = `Hola, me interesa la propiedad:\n\n📍 ${property.title}\n💰 ${property.price} MXN\n📌 ${property.address}\n\n🛏️ ${property.beds} Recámaras | 🚿 ${property.baths} Baños | 📐 ${property.sqm}m²\n\n¿Puedes brindarme más información?`;
-                            const encodedMessage = encodeURIComponent(message);
-                            window.open(`https://wa.me/${phone}?text=${encodedMessage}`, '_blank');
-                          }}
-                        >
-                          <MessageCircle className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          className="flex-1 bg-[#25D366] hover:bg-[#20BD5A] text-white"
-                          onClick={() => handleCallClick(property.agent!.phone)}
-                        >
-                          <Phone className="w-4 h-4" />
-                        </Button>
-                      </div>
+                      <Button
+                        variant="gold"
+                        size="sm"
+                        className="w-full"
+                        onClick={handleScheduleClick}
+                      >
+                        Agendar Visita
+                      </Button>
                     </div>
                     )}
                   </Card>
@@ -647,7 +614,7 @@ const PropertyDetailPage = () => {
         <DialogContent className="sm:max-w-sm rounded-2xl bg-background text-center">
           <DialogHeader>
             <div className="flex justify-center mb-3">
-              <CheckCircle2 className="w-16 h-16 text-champagne" />
+              <CircleCheckBig className="w-16 h-16 text-champagne" />
             </div>
             <DialogTitle className="text-xl font-bold text-primary">
               ¡Cita Registrada!
@@ -781,39 +748,6 @@ const PropertyDetailPage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Call Confirmation Modal */}
-      <Dialog open={showCallConfirmModal} onOpenChange={setShowCallConfirmModal}>
-        <DialogContent className="sm:max-w-sm rounded-2xl bg-background text-center">
-          <DialogHeader>
-            <div className="flex justify-center mb-3">
-              <Phone className="w-12 h-12 text-champagne" />
-            </div>
-            <DialogTitle className="text-xl font-bold text-primary">
-              Llamar al Agente
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 pt-2 pb-2">
-            <p className="text-sm text-muted-foreground">
-              ¿Deseas llamar al agente al número {property.agent?.phone}?
-            </p>
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                className="flex-1"
-                onClick={() => setShowCallConfirmModal(false)}
-              >
-                Cancelar
-              </Button>
-              <Button
-                className="flex-1 bg-[#25D366] hover:bg-[#20BD5A] text-white"
-                onClick={handleConfirmCall}
-              >
-                Llamar
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

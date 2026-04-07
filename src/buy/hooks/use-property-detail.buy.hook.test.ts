@@ -165,18 +165,6 @@ describe("usePropertyDetail — handleAuthSuccess", () => {
   });
 });
 
-// ─── handleCallClick ──────────────────────────────────────────────────────────
-
-describe("usePropertyDetail — handleCallClick", () => {
-  it("setea agentPhoneToCall y abre showCallConfirmModal", () => {
-    const { result } = renderHook(() => usePropertyDetail(), { wrapper: makeWrapper() });
-
-    act(() => result.current.handleCallClick("555-9876"));
-
-    expect(result.current.showCallConfirmModal).toBe(true);
-  });
-});
-
 // ─── showMortgageCalculator ───────────────────────────────────────────────────
 
 describe("usePropertyDetail — showMortgageCalculator", () => {

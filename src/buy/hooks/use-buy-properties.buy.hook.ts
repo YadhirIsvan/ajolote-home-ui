@@ -4,6 +4,7 @@ import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { getPropertiesAction } from "@/buy/actions/get-properties.actions";
 import { getCitiesAction, type CityItem } from "@/shared/actions/get-cities.actions";
 import { naturalSearchAction } from "@/buy/actions/natural-search.actions";
+import { useAuth } from "@/shared/hooks/auth.context";
 import {
   DEFAULT_BUY_FILTERS,
   PRICE_RANGE_LIMITS,
@@ -30,6 +31,7 @@ export const formatPrice = (value: number): string =>
 
 export const useBuyProperties = () => {
   const [searchParams] = useSearchParams();
+  const { isAuthenticated } = useAuth();
   const [filters, setFilters] = useState<BuyFilters>(DEFAULT_BUY_FILTERS);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isNaturalSearching, setIsNaturalSearching] = useState(false);
@@ -185,6 +187,11 @@ export const useBuyProperties = () => {
     const trimmed = query.trim();
     if (!trimmed) return;
 
+    if (!isAuthenticated) {
+      setNaturalSearchError("Inicia sesión para usar la búsqueda inteligente.");
+      return;
+    }
+
     setIsNaturalSearching(true);
     setNaturalSearchError(null);
 
@@ -212,7 +219,7 @@ export const useBuyProperties = () => {
     } finally {
       setIsNaturalSearching(false);
     }
-  }, []);
+  }, [isAuthenticated]);
 
   const clearNaturalSearch = useCallback(() => {
     setNaturalSearchQuery("");

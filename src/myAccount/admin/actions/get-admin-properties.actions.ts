@@ -56,6 +56,9 @@ export interface PropertyFormPayload {
 const mapAdminPropertyImage = (b: BackendAdminPropertyImage): AdminPropertyImage => ({
   id: b.id,
   imageUrl: b.image_url,
+  thumb: b.thumb,
+  medium: b.medium,
+  large: b.large,
   isCover: b.is_cover,
   sortOrder: b.sort_order,
 });

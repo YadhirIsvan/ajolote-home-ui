@@ -17,8 +17,7 @@ export const useAuthModal = ({ onLoginSuccess, onClose }: UseAuthModalOptions) =
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // Estado del flujo is_new_user
-  const [isNewUser, setIsNewUser] = useState(false);
+  // Campos opcionales del perfil — siempre visibles en el paso verify (C-1: sin is_new_user)
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
@@ -98,7 +97,6 @@ export const useAuthModal = ({ onLoginSuccess, onClose }: UseAuthModalOptions) =
     const result = await sendEmailOtpAction(email);
     setIsLoading(false);
     if (result.success) {
-      setIsNewUser(result.isNewUser);
       setStep("verify");
     } else {
       setError(result.message);
@@ -110,17 +108,14 @@ export const useAuthModal = ({ onLoginSuccess, onClose }: UseAuthModalOptions) =
       setError("El código debe tener al menos 4 dígitos");
       return;
     }
-    if (isNewUser && (!firstName.trim() || !lastName.trim())) {
-      setError("Nombre y apellido son obligatorios");
-      return;
-    }
     setIsLoading(true);
     setError("");
 
-    const extra = isNewUser
+    // Enviar campos de perfil solo si el usuario los llenó (todos opcionales)
+    const extra = (firstName.trim() || lastName.trim() || phone.trim())
       ? {
-          first_name: firstName.trim(),
-          last_name: lastName.trim(),
+          ...(firstName.trim() ? { first_name: firstName.trim() } : {}),
+          ...(lastName.trim() ? { last_name: lastName.trim() } : {}),
           ...(phone.trim() ? { phone: phone.trim() } : {}),
         }
       : undefined;
@@ -140,7 +135,6 @@ export const useAuthModal = ({ onLoginSuccess, onClose }: UseAuthModalOptions) =
     if (step === "email") setStep("options");
     if (step === "verify") {
       setToken("");
-      setIsNewUser(false);
       setFirstName("");
       setLastName("");
       setPhone("");
@@ -153,7 +147,6 @@ export const useAuthModal = ({ onLoginSuccess, onClose }: UseAuthModalOptions) =
     setEmail("");
     setToken("");
     setError("");
-    setIsNewUser(false);
     setFirstName("");
     setLastName("");
     setPhone("");
@@ -176,7 +169,6 @@ export const useAuthModal = ({ onLoginSuccess, onClose }: UseAuthModalOptions) =
     setToken,
     error,
     isLoading,
-    isNewUser,
     firstName,
     setFirstName,
     lastName,
