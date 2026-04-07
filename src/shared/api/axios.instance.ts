@@ -26,7 +26,10 @@ axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Only try to refresh if there's an existing session (session_active cookie present).
+    // During login/auth flows there's no session yet — let the error propagate normally.
+    const hasSession = document.cookie.split(';').some((c) => c.trim().startsWith('session_active=1'));
+    if (error.response?.status === 401 && !originalRequest._retry && hasSession) {
       if (isRefreshing) {
         return new Promise<void>((resolve, reject) => {
           failedQueue.push({ resolve, reject });

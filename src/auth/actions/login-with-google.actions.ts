@@ -24,8 +24,10 @@ export const loginWithGoogleAction = async (
     }
 
     return { success: true, user: authData.user };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("[loginWithGoogleAction] Error al iniciar sesión con Google:", error);
-    return { success: false, message: "Error al iniciar sesión con Google" };
+    const axiosError = error as { response?: { data?: { error?: string } } };
+    const message = axiosError.response?.data?.error ?? "Error al iniciar sesión con Google";
+    return { success: false, message };
   }
 };
