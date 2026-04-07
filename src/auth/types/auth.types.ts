@@ -31,7 +31,7 @@ declare global {
   }
 }
 
-export type AuthStep = "options" | "email" | "verify" | "success";
+export type AuthStep = "options" | "email" | "verify" | "profile" | "success";
 
 // ── OTP ────────────────────────────────────────────────────────────────────────
 

@@ -32,6 +32,7 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }: AuthModalProps) => {
     handleAppleLogin,
     handleEmailSubmit,
     handleTokenVerify,
+    handleProfileSubmit,
     handleBack,
     handleOpenChange,
   } = useAuthModal({ onLoginSuccess, onClose });
@@ -44,12 +45,14 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }: AuthModalProps) => {
             {step === "options" && "Iniciar Sesión"}
             {step === "email" && "Continuar con Email"}
             {step === "verify" && "Verificar Código"}
+            {step === "profile" && "Completa tu perfil"}
             {step === "success" && "¡Bienvenido!"}
           </DialogTitle>
           <DialogDescription className="text-foreground/60">
             {step === "options" && "Elige cómo deseas ingresar a tu cuenta"}
             {step === "email" && "Te enviaremos un código de acceso"}
             {step === "verify" && `Ingresa el código enviado a ${email}`}
+            {step === "profile" && "Puedes completarlo ahora o más tarde en tu cuenta"}
             {step === "success" && "Ingresando a tu cuenta..."}
           </DialogDescription>
         </DialogHeader>
@@ -164,7 +167,6 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }: AuthModalProps) => {
           {/* ── VERIFY ── */}
           {step === "verify" && (
             <div className="space-y-4">
-              {/* Código OTP — siempre visible */}
               <div className="space-y-2">
                 <Label htmlFor="token" className="text-foreground font-medium">
                   Código de verificación
@@ -176,63 +178,13 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }: AuthModalProps) => {
                   placeholder="123456"
                   value={token}
                   onChange={(e) => setToken(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleTokenVerify()}
                   className="h-14 border-border/50 focus:border-champagne-gold focus:ring-champagne-gold/20 text-center text-2xl tracking-widest"
                   maxLength={6}
                   disabled={isLoading}
                   autoFocus
                 />
               </div>
-
-              {/* Campos de perfil — siempre visibles, todos opcionales */}
-              <>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName" className="text-foreground font-medium text-sm">
-                      Nombre <span className="text-muted-foreground text-xs">(opcional)</span>
-                    </Label>
-                    <Input
-                      id="firstName"
-                      type="text"
-                      placeholder="Juan"
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                      className="h-12 border-border/50 focus:border-champagne-gold focus:ring-champagne-gold/20"
-                      maxLength={100}
-                      disabled={isLoading}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName" className="text-foreground font-medium text-sm">
-                      Apellido <span className="text-muted-foreground text-xs">(opcional)</span>
-                    </Label>
-                    <Input
-                      id="lastName"
-                      type="text"
-                      placeholder="García"
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                      className="h-12 border-border/50 focus:border-champagne-gold focus:ring-champagne-gold/20"
-                      maxLength={100}
-                      disabled={isLoading}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-foreground font-medium text-sm">
-                    Teléfono <span className="text-muted-foreground text-xs">(opcional)</span>
-                  </Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="+52 55 1234 5678"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="h-12 border-border/50 focus:border-champagne-gold focus:ring-champagne-gold/20"
-                    maxLength={20}
-                    disabled={isLoading}
-                  />
-                </div>
-              </>
 
               {error && (
                 <div className="flex items-center gap-2 text-destructive text-sm">
@@ -260,6 +212,88 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }: AuthModalProps) => {
                 className="w-full text-muted-foreground hover:text-foreground"
               >
                 Volver
+              </Button>
+            </div>
+          )}
+
+          {/* ── PROFILE (solo usuarios nuevos sin nombre) ── */}
+          {step === "profile" && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label htmlFor="firstName" className="text-foreground font-medium text-sm">
+                    Nombre <span className="text-muted-foreground text-xs">(opcional)</span>
+                  </Label>
+                  <Input
+                    id="firstName"
+                    type="text"
+                    placeholder="Juan"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    className="h-12 border-border/50 focus:border-champagne-gold focus:ring-champagne-gold/20"
+                    maxLength={100}
+                    disabled={isLoading}
+                    autoFocus
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lastName" className="text-foreground font-medium text-sm">
+                    Apellido <span className="text-muted-foreground text-xs">(opcional)</span>
+                  </Label>
+                  <Input
+                    id="lastName"
+                    type="text"
+                    placeholder="García"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    className="h-12 border-border/50 focus:border-champagne-gold focus:ring-champagne-gold/20"
+                    maxLength={100}
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone" className="text-foreground font-medium text-sm">
+                  Teléfono <span className="text-muted-foreground text-xs">(opcional)</span>
+                </Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="+52 55 1234 5678"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="h-12 border-border/50 focus:border-champagne-gold focus:ring-champagne-gold/20"
+                  maxLength={20}
+                  disabled={isLoading}
+                />
+              </div>
+
+              {error && (
+                <div className="flex items-center gap-2 text-destructive text-sm">
+                  <CircleAlert className="w-4 h-4" />
+                  {error}
+                </div>
+              )}
+
+              <Button
+                onClick={handleProfileSubmit}
+                disabled={isLoading}
+                className="w-full h-14 bg-champagne-gold hover:bg-champagne-gold-dark text-white font-semibold"
+              >
+                {isLoading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <>Guardar y continuar <ArrowRight className="w-5 h-5 ml-2" /></>
+                )}
+              </Button>
+
+              <Button
+                variant="ghost"
+                onClick={handleProfileSubmit}
+                disabled={isLoading}
+                className="w-full text-muted-foreground hover:text-foreground"
+              >
+                Saltar por ahora
               </Button>
             </div>
           )}

@@ -111,7 +111,29 @@ export const useAuthModal = ({ onLoginSuccess, onClose }: UseAuthModalOptions) =
     setIsLoading(true);
     setError("");
 
-    // Enviar campos de perfil solo si el usuario los llenó (todos opcionales)
+    const result = await verifyOtpAction(email, token);
+    setIsLoading(false);
+
+    if (result.success) {
+      // Si el usuario ya tiene nombre guardado, ir directo al éxito.
+      // Si es nuevo (sin nombre), mostrar paso de perfil opcional.
+      const hasProfile = !!result.data?.user?.first_name?.trim();
+      if (hasProfile) {
+        setStep("success");
+        setTimeout(onLoginSuccess, 1500);
+      } else {
+        setStep("profile");
+      }
+    } else {
+      setError(result.message);
+    }
+  };
+
+  const handleProfileSubmit = async () => {
+    setIsLoading(true);
+    setError("");
+
+    // Actualizar perfil si el usuario llenó algún campo
     const extra = (firstName.trim() || lastName.trim() || phone.trim())
       ? {
           ...(firstName.trim() ? { first_name: firstName.trim() } : {}),
@@ -120,14 +142,14 @@ export const useAuthModal = ({ onLoginSuccess, onClose }: UseAuthModalOptions) =
         }
       : undefined;
 
-    const result = await verifyOtpAction(email, token, extra);
-    setIsLoading(false);
-    if (result.success) {
-      setStep("success");
-      setTimeout(onLoginSuccess, 1500);
-    } else {
-      setError(result.message);
+    if (extra) {
+      // Re-verificar OTP con los datos de perfil para actualizarlos en el backend
+      await verifyOtpAction(email, token, extra);
     }
+
+    setIsLoading(false);
+    setStep("success");
+    setTimeout(onLoginSuccess, 1500);
   };
 
   const handleBack = () => {
@@ -135,10 +157,13 @@ export const useAuthModal = ({ onLoginSuccess, onClose }: UseAuthModalOptions) =
     if (step === "email") setStep("options");
     if (step === "verify") {
       setToken("");
+      setStep("email");
+    }
+    if (step === "profile") {
       setFirstName("");
       setLastName("");
       setPhone("");
-      setStep("email");
+      setStep("verify");
     }
   };
 
@@ -180,6 +205,7 @@ export const useAuthModal = ({ onLoginSuccess, onClose }: UseAuthModalOptions) =
     handleAppleLogin,
     handleEmailSubmit,
     handleTokenVerify,
+    handleProfileSubmit,
     handleBack,
     handleOpenChange,
   };
