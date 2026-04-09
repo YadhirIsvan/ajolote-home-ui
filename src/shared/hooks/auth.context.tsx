@@ -6,6 +6,7 @@ import {
   useRef,
   type ReactNode,
 } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import type { AuthUser, UserRole } from "@/shared/types/user.types";
 import { logoutAction } from "@/shared/actions/logout.actions";
 import { meAction } from "@/shared/actions/me.actions";
@@ -45,6 +46,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Initialise synchronously from the session_active cookie so there is no
   // flash of the login screen when the user is already authenticated.
+  const queryClient = useQueryClient();
   const [isAuthenticated, setIsAuthenticated] = useState(
     () => getSessionActiveCookie()
   );
@@ -83,6 +85,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const handleLogout = async () => {
     await logoutAction(); // backend blacklists token + deletes cookies
+    queryClient.clear();  // limpia el cache de queries del usuario anterior
     setIsAuthenticated(false);
     setUser(null);
     setRefreshExpiresAt(null);
@@ -93,6 +96,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsLoggingOut(true);
     await new Promise<void>((resolve) => setTimeout(resolve, 1500));
     await logoutAction();
+    queryClient.clear();  // limpia el cache de queries del usuario anterior
     localStorage.removeItem("selected_tenant_id");
     setIsLoggingOut(false);
     setIsAuthenticated(false);

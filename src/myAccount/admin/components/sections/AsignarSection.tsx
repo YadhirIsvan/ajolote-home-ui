@@ -70,8 +70,33 @@ interface PropertyRow {
 interface AgentRow {
   membershipId: number;
   name: string;
-  avatar: string;
+  avatarUrl: string | null;
+  initials: string;
 }
+
+// ─── Avatar helper ────────────────────────────────────────────────────────────
+const AgentAvatarEl = ({
+  url,
+  initials,
+  cls,
+}: {
+  url: string | null;
+  initials: string;
+  cls: string;
+}) =>
+  url ? (
+    <img
+      src={url}
+      alt={initials}
+      className={`${cls} rounded-full object-cover flex-shrink-0`}
+    />
+  ) : (
+    <div
+      className={`${cls} rounded-full bg-champagne-gold text-white flex items-center justify-center font-semibold flex-shrink-0`}
+    >
+      {initials}
+    </div>
+  );
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -160,7 +185,8 @@ const AsignarSection = () => {
   const agents: AgentRow[] = (agentsQuery.data?.results ?? []).map((a) => ({
     membershipId: a.membershipId,
     name: a.name,
-    avatar: a.avatar ?? a.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2),
+    avatarUrl: a.avatar || null,
+    initials: a.name.split(" ").map((n: string) => n[0] ?? "").join("").toUpperCase().slice(0, 2) || "?",
   }));
 
   const rows: PropertyRow[] = (() => {
@@ -194,7 +220,7 @@ const AsignarSection = () => {
         price: detail?.price ?? "",
         address: detail?.address ?? "",
         agentName: primaryAgent?.name ?? null,
-        agentAvatar: agentRow?.avatar ?? null,
+        agentAvatar: agentRow?.avatarUrl ?? null,
         agentMembershipId: primaryAgent?.membershipId ?? null,
         // Store ALL assignment IDs so we can delete all at once
         allAssignmentIds: (a.agents ?? []).map((ag) => ag.id),
@@ -277,9 +303,7 @@ const AsignarSection = () => {
                 {agents.map((agent) => (
                   <SelectItem key={agent.membershipId} value={String(agent.membershipId)}>
                     <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-champagne-gold text-white flex items-center justify-center text-xs">
-                        {agent.avatar}
-                      </div>
+                      <AgentAvatarEl url={agent.avatarUrl} initials={agent.initials} cls="w-6 h-6 text-xs" />
                       <span>{agent.name}</span>
                     </div>
                   </SelectItem>
@@ -289,9 +313,11 @@ const AsignarSection = () => {
           ) : (
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 min-w-0">
-                <div className="w-6 h-6 rounded-full bg-champagne-gold text-white flex items-center justify-center text-xs flex-shrink-0">
-                  {property.agentAvatar ?? "?"}
-                </div>
+                <AgentAvatarEl
+                  url={property.agentAvatar}
+                  initials={(property.agentName ?? "?").split(" ").map((n) => n[0] ?? "").join("").toUpperCase().slice(0, 2) || "?"}
+                  cls="w-6 h-6 text-xs"
+                />
                 <span className="text-xs text-midnight truncate">{property.agentName}</span>
               </div>
               <div className="flex gap-1 flex-shrink-0">
@@ -365,9 +391,7 @@ const AsignarSection = () => {
                 className="w-full flex items-center justify-between p-3 bg-muted/20 rounded-xl hover:bg-champagne-gold/10 border border-transparent hover:border-champagne-gold/50 transition-all disabled:opacity-50"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-champagne-gold text-white flex items-center justify-center font-semibold text-sm">
-                    {agent.avatar}
-                  </div>
+                  <AgentAvatarEl url={agent.avatarUrl} initials={agent.initials} cls="w-9 h-9 text-sm" />
                   <p className="font-medium text-midnight text-sm">{agent.name}</p>
                 </div>
                 <ArrowRight className="w-4 h-4 text-champagne-gold" />
@@ -471,9 +495,7 @@ const AsignarSection = () => {
                   key={agent.membershipId}
                   className="flex items-center gap-3 p-3 rounded-xl border border-border/30 bg-muted/20 hover:border-champagne-gold/50 transition-all"
                 >
-                  <div className="w-10 h-10 rounded-full bg-champagne-gold text-white flex items-center justify-center font-semibold text-sm flex-shrink-0">
-                    {agent.avatar}
-                  </div>
+                  <AgentAvatarEl url={agent.avatarUrl} initials={agent.initials} cls="w-10 h-10 text-sm" />
                   <div className="min-w-0">
                     <p className="font-medium text-midnight text-sm truncate">{agent.name}</p>
                     <p className="text-xs text-foreground/60">{count} propiedad{count !== 1 ? "es" : ""}</p>

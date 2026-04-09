@@ -7,11 +7,11 @@ import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useClientDashboard } from "@/myAccount/client/hooks/use-client-dashboard.client.hook";
 import { useFinancialModal } from "@/shared/hooks/financial-modal.context";
+import { useAuth } from "@/shared/hooks/use-auth.hook";
 import { getLoanTypeLabel } from "@/myAccount/client/actions/get-client-financial-profile.actions";
 import { updateClientProfileFieldAction } from "@/myAccount/client/actions/get-client-profile-detail.actions";
 import { clientApi } from "@/myAccount/client/api/client.api";
 import ProfileFieldModal from "./ProfileFieldModal";
-import type { AuthUser } from "@/shared/types/user.types";
 import type { PropertySaleItem, PropertyBuySummary, ClientProfileDetail, ClientAppointment } from "@/myAccount/client/types/client.types";
 
 const formatPrice = (price: string | number | undefined): string => {
@@ -32,14 +32,11 @@ interface ClientDashboardProps {
   onNavigateCitas?: () => void;
 }
 
-const getUser = (): AuthUser | null => {
-  try { return JSON.parse(localStorage.getItem("user") ?? "null"); } catch { return null; }
-};
-
 const ClientDashboard = ({ onNavigateVentas, onNavigateCompras, onNavigateCitas }: ClientDashboardProps) => {
   const navigate = useNavigate();
   const { openFinancialModal } = useFinancialModal();
-  const [user, setUser] = useState(getUser);
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
@@ -52,13 +49,16 @@ const ClientDashboard = ({ onNavigateVentas, onNavigateCompras, onNavigateCitas 
     const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
     const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
     if (!ALLOWED_TYPES.includes(file.type) || file.size > MAX_SIZE) return;
-    // Preview inmediato
+    // Preview inmediato con blob local
     const previewUrl = URL.createObjectURL(file);
     setAvatarUrl(previewUrl);
     try {
       const { data } = await clientApi.uploadAvatar(file);
-      setAvatarUrl(data.avatar);
+      URL.revokeObjectURL(previewUrl);
+      setAvatarUrl(data.avatar_medium ?? data.avatar);
+      queryClient.invalidateQueries({ queryKey: ["client-user-profile"] });
     } catch {
+      URL.revokeObjectURL(previewUrl);
       setAvatarUrl(null);
     }
   };
@@ -80,8 +80,6 @@ const ClientDashboard = ({ onNavigateVentas, onNavigateCompras, onNavigateCitas 
   } = useClientDashboard();
 
   const displayAvatar = avatarUrl || userAvatar;
-
-  const queryClient = useQueryClient();
 
   const [modalField, setModalField] = useState<{
     key: keyof ClientProfileDetail;
