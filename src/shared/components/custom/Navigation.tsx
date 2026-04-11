@@ -30,7 +30,7 @@ const getDisplayName = (user?: UserInfo | null): string => {
 
 const Navigation = () => {
   const { openFinancialModal } = useFinancialModal();
-  const { isAuthenticated, user, handleLogout } = useAuth();
+  const { isAuthenticated, isLoadingUser, user, handleLogout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const location = useLocation();
@@ -83,7 +83,9 @@ const Navigation = () => {
             <Popover open={profileOpen} onOpenChange={setProfileOpen}>
               <PopoverTrigger asChild>
                 <Button variant="ghost" className="hidden md:flex items-center gap-2.5 px-2 py-1.5 h-auto rounded-full hover:bg-champagne-gold/5 transition-all">
-                  {user?.avatar_url ? (
+                  {isLoadingUser ? (
+                    <div className="w-8 h-8 rounded-full bg-muted animate-pulse" />
+                  ) : user?.avatar_url ? (
                     <img
                       src={user.avatar_url}
                       alt=""
@@ -94,7 +96,11 @@ const Navigation = () => {
                       {getInitial(user)}
                     </div>
                   )}
-                  <span className="font-medium text-sm text-midnight">{getDisplayName(user)}</span>
+                  {isLoadingUser ? (
+                    <div className="h-3.5 w-16 rounded bg-muted animate-pulse" />
+                  ) : (
+                    <span className="font-medium text-sm text-midnight">{getDisplayName(user)}</span>
+                  )}
                   <ChevronDown className={`w-3.5 h-3.5 text-foreground/40 transition-transform ${profileOpen ? "rotate-180" : ""}`} />
                 </Button>
               </PopoverTrigger>
@@ -181,25 +187,34 @@ const Navigation = () => {
                 <div className="p-4 border-t border-border space-y-2">
                   {showProfileButton ? (
                     <>
-                      {user && (
-                        <div className="flex items-center gap-3 px-1 pb-3 mb-1 border-b border-border/30">
-                          {user.avatar_url ? (
-                            <img src={user.avatar_url} alt="" className="w-9 h-9 rounded-full object-cover ring-2 ring-champagne-gold/30" />
-                          ) : (
-                            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-champagne-gold to-champagne-gold-dark flex items-center justify-center text-white text-sm font-semibold">
-                              {getInitial(user)}
-                            </div>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-midnight truncate">
-                              {user.first_name ? `${user.first_name} ${user.last_name}`.trim() : user.email}
-                            </p>
-                            {user.first_name && (
-                              <p className="text-xs text-foreground/50 truncate">{user.email}</p>
-                            )}
+                      <div className="flex items-center gap-3 px-1 pb-3 mb-1 border-b border-border/30">
+                        {isLoadingUser ? (
+                          <div className="w-9 h-9 rounded-full bg-muted animate-pulse shrink-0" />
+                        ) : user?.avatar_url ? (
+                          <img src={user.avatar_url} alt="" className="w-9 h-9 rounded-full object-cover ring-2 ring-champagne-gold/30 shrink-0" />
+                        ) : (
+                          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-champagne-gold to-champagne-gold-dark flex items-center justify-center text-white text-sm font-semibold shrink-0">
+                            {getInitial(user)}
                           </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          {isLoadingUser ? (
+                            <>
+                              <div className="h-3.5 w-24 rounded bg-muted animate-pulse mb-1.5" />
+                              <div className="h-3 w-32 rounded bg-muted animate-pulse" />
+                            </>
+                          ) : user ? (
+                            <>
+                              <p className="text-sm font-semibold text-midnight truncate">
+                                {user.first_name ? `${user.first_name} ${user.last_name}`.trim() : user.email}
+                              </p>
+                              {user.first_name && (
+                                <p className="text-xs text-foreground/50 truncate">{user.email}</p>
+                              )}
+                            </>
+                          ) : null}
                         </div>
-                      )}
+                      </div>
                       <Button
                         variant="outline"
                         className="w-full justify-start gap-3 border-champagne-gold/30"

@@ -27,6 +27,8 @@ function getSessionActiveCookie(): boolean {
 interface AuthContextValue {
   isAuthenticated: boolean;
   isLoggingOut: boolean;
+  /** True while the initial /auth/me call is in flight after mount. */
+  isLoadingUser: boolean;
   showAuthModal: boolean;
   user: AuthUser | null;
   role: UserRole | null;
@@ -52,6 +54,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   );
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  // True only during the initial /auth/me call so components can show a
+  // skeleton instead of "?" while user data is still in-flight.
+  const [isLoadingUser, setIsLoadingUser] = useState(
+    () => getSessionActiveCookie()
+  );
   const [user, setUser] = useState<AuthUser | null>(null);
   const [refreshExpiresAt, setRefreshExpiresAt] = useState<number | null>(null);
 
@@ -71,6 +78,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setRefreshExpiresAt(null);
       setIsAuthenticated(false);
     }
+    setIsLoadingUser(false);
   };
 
   // ── Login ──────────────────────────────────────────────────────────────────
@@ -90,6 +98,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
     setRefreshExpiresAt(null);
     localStorage.removeItem("selected_tenant_id");
+    // Full navigation reset so no stale component state (name, avatar) bleeds
+    // into the next login session. Mirrors handleLoginSuccess().
+    window.location.href = "/";
   };
 
   const handleAutoLogout = async () => {
@@ -163,6 +174,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       value={{
         isAuthenticated,
         isLoggingOut,
+        isLoadingUser,
         showAuthModal,
         user,
         role,
