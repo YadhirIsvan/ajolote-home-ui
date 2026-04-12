@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { Camera, Bookmark, Home, ShoppingCart, ChevronRight, Calculator, TrendingUp, BedDouble, Bath, Maximize, Phone, RefreshCw, Briefcase, MapPin, CreditCard, CalendarCheck, Calendar, Clock } from "lucide-react";
+import { getMediaUrl } from "@/shared/utils/media-url.utils";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import { Separator } from "@/shared/components/ui/separator";
@@ -55,7 +56,7 @@ const ClientDashboard = ({ onNavigateVentas, onNavigateCompras, onNavigateCitas 
     try {
       const { data } = await clientApi.uploadAvatar(file);
       URL.revokeObjectURL(previewUrl);
-      setAvatarUrl(data.avatar_medium ?? data.avatar);
+      setAvatarUrl(getMediaUrl(data.avatar_medium ?? data.avatar));
       queryClient.invalidateQueries({ queryKey: ["client-user-profile"] });
     } catch {
       URL.revokeObjectURL(previewUrl);

@@ -252,8 +252,8 @@ const PropiedadesSection = () => {
 
   const deleteMutation = useMutation({
     mutationFn: (rawId: number) => deleteAdminPropertyAction(rawId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-properties"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["admin-properties"] });
       toast.success("Propiedad eliminada");
       setIsDetailOpen(false);
     },
@@ -465,7 +465,10 @@ const PropiedadesSection = () => {
         }
       }
 
-      queryClient.invalidateQueries({ queryKey: ["admin-properties"] });
+      // Await the refetch so the list is already updated when the dialog closes.
+      // Without await, production network latency means the user sees the stale
+      // list for a moment before the background refetch completes.
+      await queryClient.invalidateQueries({ queryKey: ["admin-properties"] });
       toast.success(editingId !== null ? "Propiedad actualizada" : "Propiedad creada");
       setIsFormOpen(false);
     } catch {
