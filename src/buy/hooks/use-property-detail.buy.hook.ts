@@ -5,13 +5,13 @@ import { getPropertyDetailAction } from "@/buy/actions/get-property-detail.actio
 import { scheduleAppointmentAction } from "@/buy/actions/schedule-appointment.actions";
 import { getAppointmentSlotsAction } from "@/buy/actions/get-appointment-slots.actions";
 import { getFinancialProfileAction } from "@/buy/actions/get-financial-profile.actions";
+import { FINANCIAL_PROFILE_QUERY_KEY } from "@/shared/actions/save-financial-profile.actions";
 import { checkSavedPropertyAction } from "@/shared/actions/check-saved-property.actions";
 import { toggleSavedPropertyAction } from "@/shared/actions/toggle-saved-property.actions";
 import { useAuth } from "@/shared/hooks/auth.context";
 import type {
   AppointmentResponse,
   AppointmentSlot,
-  FinancialProfile,
 } from "@/buy/types/property.types";
 
 export const PROPERTY_DETAIL_QUERY_KEY = "buy-property-detail";
@@ -44,9 +44,15 @@ export const usePropertyDetail = () => {
   const [savingInProgress, setSavingInProgress] = useState(false);
   const [showSaveAuthModal, setShowSaveAuthModal] = useState(false);
 
-  // ── Financial profile state ───────────────────────────────────────
-  const [financialProfile, setFinancialProfile] = useState<FinancialProfile | null>(null);
-  const [loadingProfile, setLoadingProfile] = useState(true);
+  // ── Financial profile query ───────────────────────────────────────
+  const { data: financialProfileData, isLoading: loadingProfile } = useQuery({
+    queryKey: [FINANCIAL_PROFILE_QUERY_KEY],
+    queryFn: getFinancialProfileAction,
+    enabled: isAuthenticated,
+    select: (result) => result.profile,
+    staleTime: 0,
+  });
+  const financialProfile = financialProfileData ?? null;
 
   // ── Property detail query ─────────────────────────────────────────
   const { data, isLoading, isError } = useQuery({
@@ -164,17 +170,6 @@ export const usePropertyDetail = () => {
     }
   }, [property?.id, isAuthenticated]);
 
-  // ── Financial profile fetch ───────────────────────────────────────
-  useEffect(() => {
-    if (!isAuthenticated) {
-      setLoadingProfile(false);
-      return;
-    }
-    getFinancialProfileAction().then(({ profile }) => {
-      setFinancialProfile(profile);
-      setLoadingProfile(false);
-    });
-  }, [isAuthenticated]);
 
   return {
     property,

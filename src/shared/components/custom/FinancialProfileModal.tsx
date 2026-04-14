@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/shared/components/ui/dialog";
 import { Button } from "@/shared/components/ui/button";
@@ -15,6 +16,7 @@ import { formatMoney, parseRawNumber } from "@/shared/utils/format-input";
 import {
   getFinancialProfileAction,
   saveFinancialProfileAction,
+  FINANCIAL_PROFILE_QUERY_KEY,
 } from "@/shared/actions/save-financial-profile.actions";
 
 interface FormData {
@@ -38,6 +40,7 @@ const emptyForm: FormData = {
 const FinancialProfileModal = () => {
   const { isOpen, showAuthFirst, closeFinancialModal, closeAuthModal, onAuthSuccess } =
     useFinancialModal();
+  const queryClient = useQueryClient();
 
   const [formData, setFormData] = useState<FormData>({ ...emptyForm });
   const [loading, setLoading] = useState(false);
@@ -173,6 +176,7 @@ const FinancialProfileModal = () => {
       });
       setCalculatedBudget(result.calculatedBudget);
       setShowResult(true);
+      await queryClient.invalidateQueries({ queryKey: [FINANCIAL_PROFILE_QUERY_KEY] });
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const detail: string =

@@ -1,6 +1,8 @@
 import axios from "axios";
 import { axiosInstance } from "@/shared/api/axios.instance";
 
+export const FINANCIAL_PROFILE_QUERY_KEY = "client-financial-profile";
+
 export interface FinancialProfilePayload {
   loan_type: string;
   monthly_income: number;
