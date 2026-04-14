@@ -121,6 +121,7 @@ const PropertyDetailPage = () => {
     showSaveAuthModal,
     setShowSaveAuthModal,
     handleToggleSave,
+    handleSaveAuthSuccess,
     financialProfile,
     showMortgageCalculator,
   } = usePropertyDetail();
@@ -603,10 +604,7 @@ const PropertyDetailPage = () => {
       <AuthModal
         isOpen={showSaveAuthModal}
         onClose={() => setShowSaveAuthModal(false)}
-        onLoginSuccess={() => {
-          setShowSaveAuthModal(false);
-          handleToggleSave();
-        }}
+        onLoginSuccess={handleSaveAuthSuccess}
       />
 
       {/* Diálogo de éxito después de agendar */}

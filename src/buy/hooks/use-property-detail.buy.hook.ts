@@ -21,7 +21,7 @@ export const usePropertyDetail = () => {
   const { id } = useParams<{ id: string }>();
   const numId = id ? parseInt(id, 10) : NaN;
 
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, syncAuthState } = useAuth();
 
   // ── Modal / UI state ──────────────────────────────────────────────
   const [showFullDescription, setShowFullDescription] = useState(false);
@@ -101,9 +101,16 @@ export const usePropertyDetail = () => {
     }
   };
 
-  const handleAuthSuccess = () => {
+  const handleAuthSuccess = async () => {
+    await syncAuthState();
     setShowAuthModal(false);
     setShowScheduleModal(true);
+  };
+
+  const handleSaveAuthSuccess = async () => {
+    await syncAuthState();
+    setShowSaveAuthModal(false);
+    await performToggleSave();
   };
 
   const handleConfirmAppointment = async () => {
@@ -149,17 +156,20 @@ export const usePropertyDetail = () => {
   };
 
   // ── Saved property handlers ───────────────────────────────────────
-  const handleToggleSave = async () => {
-    if (!property?.id) return;
-    if (!isAuthenticated) {
-      setShowSaveAuthModal(true);
-      return;
-    }
-    if (savingInProgress) return;
+  const performToggleSave = async () => {
+    if (!property?.id || savingInProgress) return;
     setSavingInProgress(true);
     const result = await toggleSavedPropertyAction(property.id, isSaved);
     setIsSaved(result.isSaved);
     setSavingInProgress(false);
+  };
+
+  const handleToggleSave = async () => {
+    if (!isAuthenticated) {
+      setShowSaveAuthModal(true);
+      return;
+    }
+    await performToggleSave();
   };
 
   useEffect(() => {
@@ -211,6 +221,7 @@ export const usePropertyDetail = () => {
     showSaveAuthModal,
     setShowSaveAuthModal,
     handleToggleSave,
+    handleSaveAuthSuccess,
     // Financial profile
     financialProfile,
     loadingProfile,
