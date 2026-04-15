@@ -11,7 +11,7 @@ import {
   CircleCheckBig, Play, ChevronDown, ChevronUp,
   GraduationCap, ShoppingBag, Hospital, Train, Loader2,
   Waves, Dumbbell, Shield, ArrowUpDown,
-  Car, Leaf, Sun, Bookmark,
+  Car, Leaf, Sun, Bookmark, MessageCircle, Phone,
 } from "lucide-react";
 import { usePropertyDetail } from "@/buy/hooks/use-property-detail.buy.hook";
 import { TIME_SLOTS } from "@/buy/types/property.types";
@@ -122,6 +122,10 @@ const PropertyDetailPage = () => {
     setShowSaveAuthModal,
     handleToggleSave,
     handleSaveAuthSuccess,
+    showCallConfirmModal,
+    setShowCallConfirmModal,
+    handleCallClick,
+    handleConfirmCall,
     financialProfile,
     showMortgageCalculator,
   } = usePropertyDetail();
@@ -366,13 +370,27 @@ const PropertyDetailPage = () => {
                   <p className="text-sm text-muted-foreground">Agente Certificado</p>
                 </div>
               </div>
-              <Button
-                variant="gold"
-                className="w-full"
-                onClick={handleScheduleClick}
-              >
-                Agendar Visita
-              </Button>
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  className="flex-1 border-primary text-primary hover:bg-primary hover:text-white"
+                  onClick={() => {
+                    const phone = property.agent!.phone.replace(/\D/g, '');
+                    const message = `Hola, me interesa la propiedad:\n\n📍 ${property.title}\n💰 ${property.price} MXN\n📌 ${property.address}\n\n🛏️ ${property.beds} Recámaras | 🚿 ${property.baths} Baños | 📐 ${property.sqm}m²\n\n¿Puedes brindarme más información?`;
+                    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
+                  }}
+                >
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  WhatsApp
+                </Button>
+                <Button
+                  className="flex-1 bg-[#25D366] hover:bg-[#20BD5A] text-white"
+                  onClick={() => handleCallClick(property.agent!.phone)}
+                >
+                  <Phone className="w-4 h-4 mr-2" />
+                  Llamar
+                </Button>
+              </div>
             </Card>
           </div>
           )}
@@ -563,14 +581,27 @@ const PropertyDetailPage = () => {
                           <p className="text-sm text-muted-foreground">Agente Certificado</p>
                         </div>
                       </div>
-                      <Button
-                        variant="gold"
-                        size="sm"
-                        className="w-full"
-                        onClick={handleScheduleClick}
-                      >
-                        Agendar Visita
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1 border-primary text-primary hover:bg-primary hover:text-white"
+                          onClick={() => {
+                            const phone = property.agent!.phone.replace(/\D/g, '');
+                            const message = `Hola, me interesa la propiedad:\n\n📍 ${property.title}\n💰 ${property.price} MXN\n📌 ${property.address}\n\n🛏️ ${property.beds} Recámaras | 🚿 ${property.baths} Baños | 📐 ${property.sqm}m²\n\n¿Puedes brindarme más información?`;
+                            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
+                          }}
+                        >
+                          <MessageCircle className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          className="flex-1 bg-[#25D366] hover:bg-[#20BD5A] text-white"
+                          onClick={() => handleCallClick(property.agent!.phone)}
+                        >
+                          <Phone className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
                     )}
                   </Card>
@@ -592,6 +623,31 @@ const PropertyDetailPage = () => {
           Agendar Visita
         </Button>
       </div>
+
+      {/* Confirm call modal */}
+      <Dialog open={showCallConfirmModal} onOpenChange={setShowCallConfirmModal}>
+        <DialogContent className="sm:max-w-xs rounded-2xl bg-background text-center">
+          <DialogHeader>
+            <div className="flex justify-center mb-3">
+              <Phone className="w-12 h-12 text-champagne" />
+            </div>
+            <DialogTitle className="text-xl font-bold text-primary">
+              Llamar al Agente
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground py-2">
+            Se abrirá la aplicación de llamadas con el número del agente.
+          </p>
+          <div className="flex gap-3 pt-2">
+            <Button variant="outline" className="flex-1" onClick={() => setShowCallConfirmModal(false)}>
+              Cancelar
+            </Button>
+            <Button variant="gold" className="flex-1" onClick={handleConfirmCall}>
+              Llamar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Auth Modal — se abre si el usuario no está logueado (agendar visita) */}
       <AuthModal

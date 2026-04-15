@@ -44,6 +44,10 @@ export const usePropertyDetail = () => {
   const [savingInProgress, setSavingInProgress] = useState(false);
   const [showSaveAuthModal, setShowSaveAuthModal] = useState(false);
 
+  // ── Agent call state ──────────────────────────────────────────────
+  const [showCallConfirmModal, setShowCallConfirmModal] = useState(false);
+  const [agentPhoneToCall, setAgentPhoneToCall] = useState<string>("");
+
   // ── Financial profile query ───────────────────────────────────────
   const { data: financialProfileData, isLoading: loadingProfile } = useQuery({
     queryKey: [FINANCIAL_PROFILE_QUERY_KEY],
@@ -111,6 +115,19 @@ export const usePropertyDetail = () => {
     await syncAuthState();
     setShowSaveAuthModal(false);
     await performToggleSave();
+  };
+
+  // ── Agent contact handlers ────────────────────────────────────────
+  const handleCallClick = (phoneNumber: string) => {
+    setAgentPhoneToCall(phoneNumber);
+    setShowCallConfirmModal(true);
+  };
+
+  const handleConfirmCall = () => {
+    if (agentPhoneToCall) {
+      window.location.href = `tel:${agentPhoneToCall}`;
+    }
+    setShowCallConfirmModal(false);
   };
 
   const handleConfirmAppointment = async () => {
@@ -222,6 +239,12 @@ export const usePropertyDetail = () => {
     setShowSaveAuthModal,
     handleToggleSave,
     handleSaveAuthSuccess,
+    // Agent contact
+    showCallConfirmModal,
+    setShowCallConfirmModal,
+    agentPhoneToCall,
+    handleCallClick,
+    handleConfirmCall,
     // Financial profile
     financialProfile,
     loadingProfile,

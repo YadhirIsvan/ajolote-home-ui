@@ -46,7 +46,7 @@ export interface PropertyDetailData {
   coordinates: { lat: number; lng: number };
   nearbyPlaces?: { icon: string; label: string }[];
   amenities?: { id: number; name: string; icon: string }[];
-  agent: { name: string; photo: string } | null;
+  agent: { name: string; photo: string; phone: string } | null;
   similarProperties: SimilarProperty[];
 }
 

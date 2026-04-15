@@ -60,7 +60,7 @@ interface BackendPropertyDetail {
   nearby_places: BackendNearbyPlace[];
   video_id?: string;
   video_thumbnail?: string;
-  agent: { name: string; photo: string } | null;
+  agent: { name: string; photo: string; phone: string } | null;
   coordinates: { lat: number; lng: number };
   similar_properties: BackendSimilarPropertyItem[];
 }
@@ -115,7 +115,7 @@ const mapDetail = (item: BackendPropertyDetail): PropertyDetailData => ({
     ? {
         name: item.agent.name,
         photo: item.agent.photo,
-        // phone y email eliminados — no se exponen en el endpoint público (C-2: PII)
+        phone: item.agent.phone ?? '',
       }
     : null,
   similarProperties: (item.similar_properties ?? []).map(mapSimilarProperty),
@@ -147,7 +147,7 @@ export const getPropertyDetailAction = async (
         description: "",
         coordinates: { lat: 0, lng: 0 },
         amenities: [],
-        agent: { name: "", photo: "" },
+        agent: { name: "", photo: "", phone: "" },
         similarProperties: [],
       },
       fromFallback: true,
