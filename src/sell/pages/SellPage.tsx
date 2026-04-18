@@ -430,7 +430,7 @@ const SellPage = () => {
           </button>
           <AspectRatio ratio={16 / 9}>
             <iframe
-              src="https://www.youtube.com/embed/MKG_6BqnhpI?autoplay=1&rel=0"
+              src="https://www.youtube.com/embed/OV0IWFMCJL8?autoplay=1&rel=0"
               title="Video de presentación"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen

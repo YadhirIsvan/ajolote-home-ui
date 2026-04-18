@@ -64,6 +64,19 @@ export const createAdminAppointmentAction = async (
   }
 };
 
+export const getAdminAppointmentAvailabilityAction = async (
+  agentMembershipId: number,
+  date: string
+): Promise<string[]> => {
+  try {
+    const { data } = await adminApi.getAppointmentAvailability(agentMembershipId, date);
+    return data.available_slots ?? [];
+  } catch (error) {
+    console.error("[getAdminAppointmentAvailabilityAction] Error al obtener disponibilidad:", error);
+    return [];
+  }
+};
+
 export const updateAdminAppointmentStatusAction = async (
   id: number,
   payload: { status: string; notes?: string }
