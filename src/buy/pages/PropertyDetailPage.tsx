@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/shared/hooks/auth.context";
 import { useScrollDirection } from "@/shared/hooks/use-scroll-direction.hook";
@@ -15,6 +15,7 @@ import {
   GraduationCap, ShoppingBag, Hospital, Train, Loader2,
   Waves, Dumbbell, Shield, ArrowUpDown,
   Car, Leaf, Sun, Bookmark, MessageCircle, Phone, Copy, Mail,
+  ChevronLeft, ChevronRight, X,
 } from "lucide-react";
 import { usePropertyDetail } from "@/buy/hooks/use-property-detail.buy.hook";
 import { TIME_SLOTS } from "@/buy/types/property.types";
@@ -90,6 +91,7 @@ const PropertyDetailPage = () => {
 
   const [expandMortgage, setExpandMortgage] = useState(false);
   const [showShareSheet, setShowShareSheet] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const {
     property,
@@ -135,6 +137,27 @@ const PropertyDetailPage = () => {
   } = usePropertyDetail();
 
   const { isAuthenticated } = useAuth();
+
+  const lightboxPrev = useCallback(() => {
+    if (lightboxIndex === null) return;
+    setLightboxIndex((lightboxIndex - 1 + displayImages.length) % displayImages.length);
+  }, [lightboxIndex, displayImages.length]);
+
+  const lightboxNext = useCallback(() => {
+    if (lightboxIndex === null) return;
+    setLightboxIndex((lightboxIndex + 1) % displayImages.length);
+  }, [lightboxIndex, displayImages.length]);
+
+  useEffect(() => {
+    if (lightboxIndex === null) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft") lightboxPrev();
+      else if (e.key === "ArrowRight") lightboxNext();
+      else if (e.key === "Escape") setLightboxIndex(null);
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [lightboxIndex, lightboxPrev, lightboxNext]);
 
   if (isLoading) {
     return (
@@ -285,7 +308,10 @@ const PropertyDetailPage = () => {
               <CarouselContent>
                 {displayImages.map((image, index) => (
                   <CarouselItem key={index}>
-                    <div className="aspect-[4/3] rounded-2xl overflow-hidden shadow-medium">
+                    <div
+                      className="aspect-[4/3] rounded-2xl overflow-hidden shadow-medium cursor-pointer"
+                      onClick={() => setLightboxIndex(index)}
+                    >
                       <img src={image} alt={`${property.title} - Vista ${index + 1}`} className="w-full h-full object-cover" />
                     </div>
                   </CarouselItem>
@@ -474,11 +500,18 @@ const PropertyDetailPage = () => {
           <div className="container mx-auto px-6 pt-8">
             {/* Bento Box Gallery */}
             <div className="grid grid-cols-4 grid-rows-2 gap-3 h-[500px] mb-8">
-              <div className="col-span-2 row-span-2 rounded-2xl overflow-hidden shadow-medium">
+              <div
+                className="col-span-2 row-span-2 rounded-2xl overflow-hidden shadow-medium cursor-pointer"
+                onClick={() => setLightboxIndex(0)}
+              >
                 <img src={displayImages[0]} alt={property.title} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
               </div>
               {displayImages.slice(1, 5).map((image, index) => (
-                <div key={index} className="rounded-2xl overflow-hidden shadow-soft">
+                <div
+                  key={index}
+                  className="rounded-2xl overflow-hidden shadow-soft cursor-pointer"
+                  onClick={() => setLightboxIndex(index + 1)}
+                >
                   <img src={image} alt={`Vista ${index + 2}`} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
                 </div>
               ))}
@@ -874,6 +907,71 @@ const PropertyDetailPage = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Lightbox */}
+      {lightboxIndex !== null && (
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/45 backdrop-blur-sm"
+          onClick={() => setLightboxIndex(null)}
+        >
+          {/* Counter */}
+          <div className="absolute top-5 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full bg-white/10 text-white text-sm font-medium select-none">
+            {lightboxIndex + 1} / {displayImages.length}
+          </div>
+
+          {/* Close */}
+          <button
+            onClick={() => setLightboxIndex(null)}
+            className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+
+          {/* Prev */}
+          <button
+            onClick={(e) => { e.stopPropagation(); lightboxPrev(); }}
+            className="absolute left-4 w-12 h-12 flex items-center justify-center rounded-full bg-white/10 hover:bg-champagne text-white transition-all hover:scale-110 shadow-lg"
+          >
+            <ChevronLeft className="w-6 h-6" />
+          </button>
+
+          {/* Image */}
+          <img
+            src={displayImages[lightboxIndex]}
+            alt={`${property.title} - Vista ${lightboxIndex + 1}`}
+            className="max-h-[75vh] max-w-[75vw] object-contain rounded-2xl shadow-2xl select-none"
+            onClick={(e) => e.stopPropagation()}
+          />
+
+          {/* Next */}
+          <button
+            onClick={(e) => { e.stopPropagation(); lightboxNext(); }}
+            className="absolute right-4 w-12 h-12 flex items-center justify-center rounded-full bg-white/10 hover:bg-champagne text-white transition-all hover:scale-110 shadow-lg"
+          >
+            <ChevronRight className="w-6 h-6" />
+          </button>
+
+          {/* Thumbnail strip */}
+          <div
+            className="absolute bottom-5 left-1/2 -translate-x-1/2 flex gap-2 px-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {displayImages.map((img, i) => (
+              <button
+                key={i}
+                onClick={() => setLightboxIndex(i)}
+                className={`w-12 h-8 rounded-lg overflow-hidden transition-all border-2 ${
+                  i === lightboxIndex
+                    ? "border-champagne scale-110 shadow-gold"
+                    : "border-white/20 opacity-60 hover:opacity-100"
+                }`}
+              >
+                <img src={img} alt="" className="w-full h-full object-cover" />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Share Bottom Sheet */}
       <Sheet open={showShareSheet} onOpenChange={setShowShareSheet}>
