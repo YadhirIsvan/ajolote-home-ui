@@ -33,4 +33,8 @@ export const authApi = {
   // El endpoint vive en /client/profile porque el backend ya lo expone ahí.
   updateAuthPhone: (phone: string) =>
     axiosInstance.patch("/client/profile", { phone }),
+
+  // Usado tras verificación OTP para guardar teléfono + nombre/apellido opcionales.
+  updateAuthProfile: (data: { phone: string; first_name?: string; last_name?: string }) =>
+    axiosInstance.patch("/client/profile", data),
 };

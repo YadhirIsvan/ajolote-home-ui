@@ -6,13 +6,10 @@ import type {
   ProfileVariant,
 } from "@/auth/types/auth.types";
 import { sendEmailOtpAction } from "@/auth/actions/send-email-otp.actions";
-import {
-  verifyOtpAction,
-  type VerifyOtpExtra,
-} from "@/auth/actions/verify-otp.actions";
+import { verifyOtpAction } from "@/auth/actions/verify-otp.actions";
 import { loginWithGoogleAction } from "@/auth/actions/login-with-google.actions";
 import { loginWithAppleAction } from "@/auth/actions/login-with-apple.actions";
-import { updateAuthPhoneAction } from "@/auth/actions/update-auth-phone.actions";
+import { updateAuthProfileAction } from "@/auth/actions/update-auth-phone.actions";
 
 interface UseAuthModalOptions {
   onLoginSuccess: () => void;
@@ -156,7 +153,6 @@ export const useAuthModal = ({ onLoginSuccess, onClose }: UseAuthModalOptions) =
   };
 
   const handleProfileSubmit = async () => {
-    // Validación obligatoria: teléfono requerido en ambos flujos (OTP y Google).
     if (!phone || !isValidPhoneNumber(phone)) {
       setError("Ingresa un teléfono válido para continuar.");
       return;
@@ -165,25 +161,18 @@ export const useAuthModal = ({ onLoginSuccess, onClose }: UseAuthModalOptions) =
     setIsLoading(true);
     setError("");
 
-    if (authMethod === "google") {
-      const result = await updateAuthPhoneAction(phone);
-      if (!result.success) {
-        setError(result.message ?? "No se pudo guardar el teléfono.");
-        setIsLoading(false);
-        return;
-      }
-    } else {
-      // OTP: re-verify incluye phone obligatorio; nombre/apellido opcionales.
-      const extra: VerifyOtpExtra = { phone };
-      if (firstName.trim()) extra.first_name = firstName.trim();
-      if (lastName.trim()) extra.last_name = lastName.trim();
+    // Tanto OTP como Google: el usuario ya está autenticado al llegar aquí.
+    // Se actualiza el perfil directamente — nunca re-verificar el OTP consumido.
+    const result = await updateAuthProfileAction({
+      phone,
+      ...(firstName.trim() ? { first_name: firstName.trim() } : {}),
+      ...(lastName.trim() ? { last_name: lastName.trim() } : {}),
+    });
 
-      const result = await verifyOtpAction(email, token, extra);
-      if (!result.success) {
-        setError(result.message ?? "No se pudo guardar el teléfono.");
-        setIsLoading(false);
-        return;
-      }
+    if (!result.success) {
+      setError(result.message ?? "No se pudo guardar el perfil.");
+      setIsLoading(false);
+      return;
     }
 
     setIsLoading(false);

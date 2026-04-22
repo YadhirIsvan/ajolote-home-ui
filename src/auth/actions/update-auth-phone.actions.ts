@@ -26,3 +26,31 @@ export const updateAuthPhoneAction = async (
     return { success: false, message };
   }
 };
+
+export interface UpdateAuthProfileData {
+  phone: string;
+  first_name?: string;
+  last_name?: string;
+}
+
+export const updateAuthProfileAction = async (
+  data: UpdateAuthProfileData
+): Promise<UpdateAuthPhoneResponse> => {
+  if (!data.phone || !isValidPhoneNumber(data.phone)) {
+    return { success: false, message: "Ingresa un teléfono válido." };
+  }
+
+  try {
+    await authApi.updateAuthProfile(data);
+    return { success: true };
+  } catch (error: unknown) {
+    const axiosError = error as {
+      response?: { data?: { error?: string; detail?: string } };
+    };
+    const message =
+      axiosError.response?.data?.error ??
+      axiosError.response?.data?.detail ??
+      "No se pudo guardar el perfil. Intenta de nuevo.";
+    return { success: false, message };
+  }
+};
