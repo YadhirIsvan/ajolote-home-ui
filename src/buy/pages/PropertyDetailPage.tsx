@@ -380,7 +380,7 @@ const PropertyDetailPage = () => {
           {/* Description */}
           <div className="px-4 mb-6">
             <h3 className="text-lg font-semibold text-primary mb-2">Descripción</h3>
-            <p className="text-sm text-foreground/70 leading-relaxed">
+            <p className="text-sm text-foreground/70 leading-relaxed whitespace-pre-line">
               {showFullDescription ? property.description : truncatedDescription}
             </p>
             <button
@@ -605,7 +605,19 @@ const PropertyDetailPage = () => {
                 {/* Description */}
                 <div>
                   <h3 className="text-xl font-semibold text-primary mb-3">Descripción</h3>
-                  <p className="text-foreground/70 leading-relaxed">{property.description}</p>
+                  <p className="text-foreground/70 leading-relaxed whitespace-pre-line">
+                    {showFullDescription ? property.description : truncatedDescription}
+                  </p>
+                  <button
+                    onClick={() => setShowFullDescription(!showFullDescription)}
+                    className="flex items-center gap-1 text-champagne text-sm font-medium mt-2"
+                  >
+                    {showFullDescription ? (
+                      <>Leer menos <ChevronUp className="w-4 h-4" /></>
+                    ) : (
+                      <>Leer más <ChevronDown className="w-4 h-4" /></>
+                    )}
+                  </button>
                 </div>
 
                 {/* Video Tour */}

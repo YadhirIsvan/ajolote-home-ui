@@ -70,7 +70,7 @@ export const usePropertyDetail = () => {
 
   // ── Derived display values ────────────────────────────────────────
   const truncatedDescription = property?.description
-    ? property.description.slice(0, 80) + "..."
+    ? property.description.slice(0, 250) + "..."
     : "";
   const displayImages = property?.images?.length ? property.images : ["/placeholder.svg"];
   const nearbyPOIs = property?.nearbyPlaces ?? [];
