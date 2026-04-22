@@ -137,7 +137,7 @@ export interface BuyFilters {
 
 export const DEFAULT_BUY_FILTERS: BuyFilters = {
   zone: "Todas las zonas",
-  priceRange: [0, 20000000],
+  priceRange: [500000, 20000000],
   type: "all",
   amenities: [],
   state: "all",
@@ -185,7 +185,7 @@ export const AMENITY_OPTIONS = [
 ] as const;
 
 export const PRICE_RANGE_LIMITS = {
-  min: 0,
+  min: 500_000,
   max: 20_000_000,
   step: 100_000,
 } as const;

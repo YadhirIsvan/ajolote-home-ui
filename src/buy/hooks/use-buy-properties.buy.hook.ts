@@ -187,11 +187,6 @@ export const useBuyProperties = () => {
     const trimmed = query.trim();
     if (!trimmed) return;
 
-    if (!isAuthenticated) {
-      setNaturalSearchError("Inicia sesión para usar la búsqueda inteligente.");
-      return;
-    }
-
     setIsNaturalSearching(true);
     setNaturalSearchError(null);
 
@@ -219,7 +214,7 @@ export const useBuyProperties = () => {
     } finally {
       setIsNaturalSearching(false);
     }
-  }, [isAuthenticated]);
+  }, []);
 
   const clearNaturalSearch = useCallback(() => {
     setNaturalSearchQuery("");
