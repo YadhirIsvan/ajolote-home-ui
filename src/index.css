@@ -166,3 +166,49 @@
 .animate-scroll-x:hover {
   animation-play-state: paused;
 }
+
+/* ── react-phone-number-input ───────────────────────────────────────────────── */
+.ajolote-phone-input {
+  --PhoneInputCountryFlag-height: 1.25rem;
+  --PhoneInputCountrySelectArrow-color: hsl(var(--foreground) / 0.5);
+  --PhoneInputCountrySelectArrow-opacity: 1;
+
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 3.5rem;
+  padding: 0 0.75rem;
+  border: 1px solid hsl(var(--border) / 0.5);
+  border-radius: 0.5rem;
+  background: hsl(var(--background));
+  transition: border-color 150ms, box-shadow 150ms;
+}
+
+.ajolote-phone-input:focus-within {
+  border-color: hsl(var(--champagne-gold));
+  box-shadow: 0 0 0 4px hsl(var(--champagne-gold) / 0.2);
+}
+
+.ajolote-phone-input .PhoneInputInput {
+  flex: 1;
+  height: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 0.875rem;
+  color: hsl(var(--foreground));
+}
+
+.ajolote-phone-input .PhoneInputInput::placeholder {
+  color: hsl(var(--foreground) / 0.4);
+}
+
+.ajolote-phone-input .PhoneInputCountry {
+  gap: 0.35rem;
+}
+
+.ajolote-phone-input[disabled],
+.ajolote-phone-input:has(input:disabled) {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

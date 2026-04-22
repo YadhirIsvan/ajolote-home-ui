@@ -28,4 +28,9 @@ export const authApi = {
 
   // No body needed — refresh_token is sent automatically as an httpOnly cookie
   refreshToken: () => axiosInstance.post("/auth/refresh"),
+
+  // Usado tras login social (Google) para completar el teléfono del perfil.
+  // El endpoint vive en /client/profile porque el backend ya lo expone ahí.
+  updateAuthPhone: (phone: string) =>
+    axiosInstance.patch("/client/profile", { phone }),
 };

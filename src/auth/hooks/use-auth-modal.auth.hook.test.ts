@@ -4,15 +4,24 @@ import { useAuthModal } from "./use-auth-modal.auth.hook";
 import { sendEmailOtpAction } from "@/auth/actions/send-email-otp.actions";
 import { verifyOtpAction } from "@/auth/actions/verify-otp.actions";
 import { loginWithAppleAction } from "@/auth/actions/login-with-apple.actions";
+import { updateAuthPhoneAction } from "@/auth/actions/update-auth-phone.actions";
 
 vi.mock("@/auth/actions/send-email-otp.actions");
 vi.mock("@/auth/actions/verify-otp.actions");
 vi.mock("@/auth/actions/login-with-google.actions");
 vi.mock("@/auth/actions/login-with-apple.actions");
+vi.mock("@/auth/actions/update-auth-phone.actions");
+vi.mock("react-phone-number-input", () => ({
+  // Heurística simple para tests: válido si empieza con "+" y tiene 10+ chars
+  isValidPhoneNumber: vi.fn((v?: string) => !!v && v.startsWith("+") && v.length >= 10),
+}));
 
 const mockedSendOtp = vi.mocked(sendEmailOtpAction);
 const mockedVerifyOtp = vi.mocked(verifyOtpAction);
 const mockedApple = vi.mocked(loginWithAppleAction);
+const mockedUpdatePhone = vi.mocked(updateAuthPhoneAction);
+
+const VALID_PHONE_E164 = "+525512345678";
 
 function renderModal(onLoginSuccess = vi.fn(), onClose = vi.fn()) {
   return renderHook(() => useAuthModal({ onLoginSuccess, onClose }));
@@ -28,6 +37,9 @@ describe("useAuthModal — estado inicial", () => {
     expect(result.current.step).toBe("options");
     expect(result.current.email).toBe("");
     expect(result.current.error).toBe("");
+    expect(result.current.authMethod).toBe("otp");
+    expect(result.current.profileVariant).toBe("full");
+    expect(result.current.isPhoneValid).toBe(false);
   });
 
   it("goToEmailStep cambia step a 'email'", () => {
@@ -82,9 +94,23 @@ describe("useAuthModal — handleTokenVerify", () => {
     expect(result.current.error).toBeTruthy();
   });
 
-  it("verify exitoso cambia step a 'success' y llama onLoginSuccess", async () => {
+  it("verify exitoso con user.phone lleno → step 'success' y onLoginSuccess", async () => {
     vi.useFakeTimers();
-    mockedVerifyOtp.mockResolvedValueOnce({ success: true, message: "ok" });
+    mockedVerifyOtp.mockResolvedValueOnce({
+      success: true,
+      message: "ok",
+      data: {
+        refresh_expires_at: 0,
+        user: {
+          id: 1,
+          email: "u@x.com",
+          first_name: "",
+          last_name: "",
+          phone: "+525512345678",
+          memberships: [],
+        },
+      },
+    });
     const onLoginSuccess = vi.fn();
     const { result } = renderModal(onLoginSuccess);
 
@@ -97,12 +123,105 @@ describe("useAuthModal — handleTokenVerify", () => {
     vi.useRealTimers();
   });
 
+  it("verify exitoso sin phone → step 'profile' variante full, authMethod otp", async () => {
+    mockedVerifyOtp.mockResolvedValueOnce({
+      success: true,
+      message: "ok",
+      data: {
+        refresh_expires_at: 0,
+        user: {
+          id: 1,
+          email: "u@x.com",
+          first_name: "",
+          last_name: "",
+          phone: null,
+          memberships: [],
+        },
+      },
+    });
+    const onLoginSuccess = vi.fn();
+    const { result } = renderModal(onLoginSuccess);
+
+    act(() => result.current.setToken("1234"));
+    await act(() => result.current.handleTokenVerify());
+
+    expect(result.current.step).toBe("profile");
+    expect(result.current.authMethod).toBe("otp");
+    expect(result.current.profileVariant).toBe("full");
+    expect(onLoginSuccess).not.toHaveBeenCalled();
+  });
+
   it("verify fallido popula error con mensaje de la acción", async () => {
     mockedVerifyOtp.mockResolvedValueOnce({ success: false, message: "Código expirado" });
     const { result } = renderModal();
     act(() => result.current.setToken("9999"));
     await act(() => result.current.handleTokenVerify());
     expect(result.current.error).toBe("Código expirado");
+  });
+});
+
+// ─── handleProfileSubmit (teléfono obligatorio) ─────────────────────────────
+
+describe("useAuthModal — handleProfileSubmit", () => {
+  it("phone vacío popula error y NO llama APIs", async () => {
+    const { result } = renderModal();
+    await act(() => result.current.handleProfileSubmit());
+    expect(result.current.error).toBe("Ingresa un teléfono válido para continuar.");
+    expect(mockedUpdatePhone).not.toHaveBeenCalled();
+    expect(mockedVerifyOtp).not.toHaveBeenCalled();
+  });
+
+  it("phone inválido popula error y NO llama APIs", async () => {
+    const { result } = renderModal();
+    act(() => result.current.setPhone("123"));
+    await act(() => result.current.handleProfileSubmit());
+    expect(result.current.error).toBe("Ingresa un teléfono válido para continuar.");
+    expect(mockedUpdatePhone).not.toHaveBeenCalled();
+  });
+
+  it("otp + phone válido llama verifyOtpAction con phone + campos opcionales", async () => {
+    vi.useFakeTimers();
+    mockedVerifyOtp.mockResolvedValueOnce({ success: true, message: "ok" });
+    const onLoginSuccess = vi.fn();
+    const { result } = renderModal(onLoginSuccess);
+
+    act(() => {
+      result.current.setEmail("u@x.com");
+      result.current.setToken("1234");
+      result.current.setPhone(VALID_PHONE_E164);
+      result.current.setFirstName("Juan");
+    });
+
+    await act(() => result.current.handleProfileSubmit());
+
+    expect(mockedVerifyOtp).toHaveBeenCalledWith("u@x.com", "1234", {
+      phone: VALID_PHONE_E164,
+      first_name: "Juan",
+    });
+    expect(result.current.step).toBe("success");
+    vi.runAllTimers();
+    expect(onLoginSuccess).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
+  });
+
+  it("otp + phone válido pero verifyOtp falla → error, step queda en profile", async () => {
+    mockedVerifyOtp.mockResolvedValueOnce({ success: false, message: "Phone inválido en backend" });
+    const { result } = renderModal();
+
+    act(() => {
+      result.current.setPhone(VALID_PHONE_E164);
+    });
+
+    await act(() => result.current.handleProfileSubmit());
+
+    expect(result.current.error).toBe("Phone inválido en backend");
+  });
+
+  it("isPhoneValid es false con phone vacío, true con phone E.164 válido", () => {
+    const { result } = renderModal();
+    expect(result.current.isPhoneValid).toBe(false);
+    act(() => result.current.setPhone(VALID_PHONE_E164));
+    expect(result.current.isPhoneValid).toBe(true);
   });
 });
 
@@ -139,13 +258,14 @@ describe("useAuthModal — handleOpenChange", () => {
 
     act(() => result.current.setEmail("u@x.com"));
     await act(() => result.current.handleEmailSubmit());
-    // En step 'verify', con email seteado
     act(() => result.current.handleOpenChange(false));
 
     expect(result.current.step).toBe("options");
     expect(result.current.email).toBe("");
     expect(result.current.token).toBe("");
     expect(result.current.error).toBe("");
+    expect(result.current.authMethod).toBe("otp");
+    expect(result.current.profileVariant).toBe("full");
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 });

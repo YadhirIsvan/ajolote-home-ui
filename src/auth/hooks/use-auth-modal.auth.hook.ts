@@ -1,9 +1,18 @@
 import { useState } from "react";
-import type { AuthStep } from "@/auth/types/auth.types";
+import { isValidPhoneNumber } from "react-phone-number-input";
+import type {
+  AuthStep,
+  AuthMethod,
+  ProfileVariant,
+} from "@/auth/types/auth.types";
 import { sendEmailOtpAction } from "@/auth/actions/send-email-otp.actions";
-import { verifyOtpAction } from "@/auth/actions/verify-otp.actions";
+import {
+  verifyOtpAction,
+  type VerifyOtpExtra,
+} from "@/auth/actions/verify-otp.actions";
 import { loginWithGoogleAction } from "@/auth/actions/login-with-google.actions";
 import { loginWithAppleAction } from "@/auth/actions/login-with-apple.actions";
+import { updateAuthPhoneAction } from "@/auth/actions/update-auth-phone.actions";
 
 interface UseAuthModalOptions {
   onLoginSuccess: () => void;
@@ -17,10 +26,17 @@ export const useAuthModal = ({ onLoginSuccess, onClose }: UseAuthModalOptions) =
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // Campos opcionales del perfil — siempre visibles en el paso verify (C-1: sin is_new_user)
+  // Campos del perfil. phone almacena un valor E.164 producido por PhoneInputField.
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
+
+  // Ramifica el flujo de "completar perfil" según el provider de auth.
+  const [authMethod, setAuthMethod] = useState<AuthMethod>("otp");
+  const [profileVariant, setProfileVariant] =
+    useState<ProfileVariant>("full");
+
+  const isPhoneValid = Boolean(phone) && isValidPhoneNumber(phone);
 
   const handleGoogleLogin = () => {
     setError("");
@@ -63,6 +79,14 @@ export const useAuthModal = ({ onLoginSuccess, onClose }: UseAuthModalOptions) =
 
         const result = await loginWithGoogleAction(tokenResponse.access_token);
         if (result.success) {
+          const needsPhone = !result.user?.phone?.trim();
+          if (needsPhone) {
+            setAuthMethod("google");
+            setProfileVariant("phone-only");
+            setStep("profile");
+            setIsLoading(false);
+            return;
+          }
           onLoginSuccess();
         } else {
           setError(result.message ?? "Error al iniciar sesión con Google");
@@ -115,13 +139,15 @@ export const useAuthModal = ({ onLoginSuccess, onClose }: UseAuthModalOptions) =
     setIsLoading(false);
 
     if (result.success) {
-      // Si el usuario ya tiene nombre guardado, ir directo al éxito.
-      // Si es nuevo (sin nombre), mostrar paso de perfil opcional.
-      const hasProfile = !!result.data?.user?.first_name?.trim();
-      if (hasProfile) {
+      // Si el usuario ya tiene teléfono, ya no necesita completar nada → success.
+      // Si no, mostrar paso profile con teléfono obligatorio.
+      const hasPhone = !!result.data?.user?.phone?.trim();
+      if (hasPhone) {
         setStep("success");
         setTimeout(onLoginSuccess, 1500);
       } else {
+        setAuthMethod("otp");
+        setProfileVariant("full");
         setStep("profile");
       }
     } else {
@@ -130,21 +156,34 @@ export const useAuthModal = ({ onLoginSuccess, onClose }: UseAuthModalOptions) =
   };
 
   const handleProfileSubmit = async () => {
+    // Validación obligatoria: teléfono requerido en ambos flujos (OTP y Google).
+    if (!phone || !isValidPhoneNumber(phone)) {
+      setError("Ingresa un teléfono válido para continuar.");
+      return;
+    }
+
     setIsLoading(true);
     setError("");
 
-    // Actualizar perfil si el usuario llenó algún campo
-    const extra = (firstName.trim() || lastName.trim() || phone.trim())
-      ? {
-          ...(firstName.trim() ? { first_name: firstName.trim() } : {}),
-          ...(lastName.trim() ? { last_name: lastName.trim() } : {}),
-          ...(phone.trim() ? { phone: phone.trim() } : {}),
-        }
-      : undefined;
+    if (authMethod === "google") {
+      const result = await updateAuthPhoneAction(phone);
+      if (!result.success) {
+        setError(result.message ?? "No se pudo guardar el teléfono.");
+        setIsLoading(false);
+        return;
+      }
+    } else {
+      // OTP: re-verify incluye phone obligatorio; nombre/apellido opcionales.
+      const extra: VerifyOtpExtra = { phone };
+      if (firstName.trim()) extra.first_name = firstName.trim();
+      if (lastName.trim()) extra.last_name = lastName.trim();
 
-    if (extra) {
-      // Re-verificar OTP con los datos de perfil para actualizarlos en el backend
-      await verifyOtpAction(email, token, extra);
+      const result = await verifyOtpAction(email, token, extra);
+      if (!result.success) {
+        setError(result.message ?? "No se pudo guardar el teléfono.");
+        setIsLoading(false);
+        return;
+      }
     }
 
     setIsLoading(false);
@@ -175,6 +214,8 @@ export const useAuthModal = ({ onLoginSuccess, onClose }: UseAuthModalOptions) =
     setFirstName("");
     setLastName("");
     setPhone("");
+    setAuthMethod("otp");
+    setProfileVariant("full");
   };
 
   const handleOpenChange = (open: boolean) => {
@@ -200,6 +241,9 @@ export const useAuthModal = ({ onLoginSuccess, onClose }: UseAuthModalOptions) =
     setLastName,
     phone,
     setPhone,
+    authMethod,
+    profileVariant,
+    isPhoneValid,
     goToEmailStep,
     handleGoogleLogin,
     handleAppleLogin,

@@ -5,6 +5,7 @@ import { Label } from "@/shared/components/ui/label";
 import { Separator } from "@/shared/components/ui/separator";
 import { Mail, ArrowRight, Check, CircleAlert, Loader2 } from "lucide-react";
 import { useAuthModal } from "@/auth/hooks/use-auth-modal.auth.hook";
+import { PhoneInputField } from "@/auth/components/PhoneInputField";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -27,9 +28,10 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }: AuthModalProps) => {
     setLastName,
     phone,
     setPhone,
+    profileVariant,
+    isPhoneValid,
     goToEmailStep,
     handleGoogleLogin,
-    handleAppleLogin,
     handleEmailSubmit,
     handleTokenVerify,
     handleProfileSubmit,
@@ -45,14 +47,18 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }: AuthModalProps) => {
             {step === "options" && "Iniciar Sesión"}
             {step === "email" && "Continuar con Email"}
             {step === "verify" && "Verificar Código"}
-            {step === "profile" && "Completa tu perfil"}
+            {step === "profile" && profileVariant === "full" && "Completa tu perfil"}
+            {step === "profile" && profileVariant === "phone-only" && "Falta tu teléfono"}
             {step === "success" && "¡Bienvenido!"}
           </DialogTitle>
           <DialogDescription className="text-foreground/60">
             {step === "options" && "Elige cómo deseas ingresar a tu cuenta"}
             {step === "email" && "Te enviaremos un código de acceso"}
             {step === "verify" && `Ingresa el código enviado a ${email}`}
-            {step === "profile" && "Puedes completarlo ahora o más tarde en tu cuenta"}
+            {step === "profile" && profileVariant === "full" &&
+              "Necesitamos tu teléfono para continuar"}
+            {step === "profile" && profileVariant === "phone-only" &&
+              "Lo necesitamos para contactarte sobre tus propiedades de interés"}
             {step === "success" && "Ingresando a tu cuenta..."}
           </DialogDescription>
         </DialogHeader>
@@ -216,57 +222,54 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }: AuthModalProps) => {
             </div>
           )}
 
-          {/* ── PROFILE (solo usuarios nuevos sin nombre) ── */}
+          {/* ── PROFILE (teléfono obligatorio; nombre/apellido solo en variante full) ── */}
           {step === "profile" && (
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label htmlFor="firstName" className="text-foreground font-medium text-sm">
-                    Nombre <span className="text-muted-foreground text-xs">(opcional)</span>
-                  </Label>
-                  <Input
-                    id="firstName"
-                    type="text"
-                    placeholder="Juan"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    className="h-12 border-border/50 focus:border-champagne-gold focus:ring-champagne-gold/20"
-                    maxLength={100}
-                    disabled={isLoading}
-                    autoFocus
-                  />
+              {profileVariant === "full" && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName" className="text-foreground font-medium text-sm">
+                      Nombre <span className="text-muted-foreground text-xs">(opcional)</span>
+                    </Label>
+                    <Input
+                      id="firstName"
+                      type="text"
+                      placeholder="Juan"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      className="h-12 border-border/50 focus:border-champagne-gold focus:ring-champagne-gold/20"
+                      maxLength={100}
+                      disabled={isLoading}
+                      autoFocus
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName" className="text-foreground font-medium text-sm">
+                      Apellido <span className="text-muted-foreground text-xs">(opcional)</span>
+                    </Label>
+                    <Input
+                      id="lastName"
+                      type="text"
+                      placeholder="García"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      className="h-12 border-border/50 focus:border-champagne-gold focus:ring-champagne-gold/20"
+                      maxLength={100}
+                      disabled={isLoading}
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lastName" className="text-foreground font-medium text-sm">
-                    Apellido <span className="text-muted-foreground text-xs">(opcional)</span>
-                  </Label>
-                  <Input
-                    id="lastName"
-                    type="text"
-                    placeholder="García"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    className="h-12 border-border/50 focus:border-champagne-gold focus:ring-champagne-gold/20"
-                    maxLength={100}
-                    disabled={isLoading}
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="phone" className="text-foreground font-medium text-sm">
-                  Teléfono <span className="text-muted-foreground text-xs">(opcional)</span>
-                </Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="+52 55 1234 5678"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="h-12 border-border/50 focus:border-champagne-gold focus:ring-champagne-gold/20"
-                  maxLength={20}
-                  disabled={isLoading}
-                />
-              </div>
+              )}
+
+              <PhoneInputField
+                label="Teléfono"
+                hint="(requerido)"
+                value={phone}
+                onChange={(v) => setPhone(v ?? "")}
+                defaultCountry="MX"
+                disabled={isLoading}
+                autoFocus={profileVariant === "phone-only"}
+              />
 
               {error && (
                 <div className="flex items-center gap-2 text-destructive text-sm">
@@ -277,23 +280,14 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }: AuthModalProps) => {
 
               <Button
                 onClick={handleProfileSubmit}
-                disabled={isLoading}
-                className="w-full h-14 bg-champagne-gold hover:bg-champagne-gold-dark text-white font-semibold"
+                disabled={isLoading || !isPhoneValid}
+                className="w-full h-14 bg-champagne-gold hover:bg-champagne-gold-dark text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
                 ) : (
                   <>Guardar y continuar <ArrowRight className="w-5 h-5 ml-2" /></>
                 )}
-              </Button>
-
-              <Button
-                variant="ghost"
-                onClick={handleProfileSubmit}
-                disabled={isLoading}
-                className="w-full text-muted-foreground hover:text-foreground"
-              >
-                Saltar por ahora
               </Button>
             </div>
           )}

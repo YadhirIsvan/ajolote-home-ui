@@ -80,3 +80,18 @@ export interface AuthResponse {
 
 // AuthTokens kept as an alias for backward compatibility with existing callers.
 export type AuthTokens = AuthResponse;
+
+// ── Update profile tras social login ──────────────────────────────────────────
+
+export interface UpdateAuthPhoneRequest {
+  /** Número en formato E.164, ej: "+525512345678". Lo produce react-phone-number-input. */
+  phone: string;
+}
+
+export interface UpdateAuthPhoneResponse {
+  success: boolean;
+  message?: string;
+}
+
+export type AuthMethod = "otp" | "google";
+export type ProfileVariant = "full" | "phone-only";
