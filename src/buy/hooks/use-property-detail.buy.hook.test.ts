@@ -21,7 +21,11 @@ vi.mock("@/shared/actions/toggle-saved-property.actions");
 
 // El hook usa useAuth() — lo mockeamos para controlar isAuthenticated en cada test
 vi.mock("@/shared/hooks/auth.context", () => ({
-  useAuth: vi.fn(() => ({ isAuthenticated: false })),
+  useAuth: vi.fn(() => ({
+    isAuthenticated: false,
+    user: null,
+    syncAuthState: vi.fn().mockResolvedValue(undefined),
+  })),
 }));
 
 // Mockeamos useParams para controlar el id sin necesitar un router completo
@@ -72,7 +76,11 @@ function makeWrapper() {
 }
 
 function setupDefaultMocks() {
-  mockedUseAuth.mockReturnValue({ isAuthenticated: false } as ReturnType<typeof useAuth>);
+  mockedUseAuth.mockReturnValue({
+    isAuthenticated: false,
+    user: null,
+    syncAuthState: vi.fn().mockResolvedValue(undefined),
+  } as unknown as ReturnType<typeof useAuth>);
   mockedGetDetail.mockResolvedValue({ data: MOCK_PROPERTY, fromFallback: false });
   mockedGetFinancial.mockResolvedValue({ profile: null });
   mockedCheckSaved.mockResolvedValue({ isSaved: false });
@@ -137,7 +145,11 @@ describe("usePropertyDetail — handleScheduleClick", () => {
   });
 
   it("con autenticación (isAuthenticated: true) abre showScheduleModal, no showAuthModal", async () => {
-    mockedUseAuth.mockReturnValue({ isAuthenticated: true } as ReturnType<typeof useAuth>);
+    mockedUseAuth.mockReturnValue({
+      isAuthenticated: true,
+      user: null,
+      syncAuthState: vi.fn().mockResolvedValue(undefined),
+    } as unknown as ReturnType<typeof useAuth>);
 
     const { result } = renderHook(() => usePropertyDetail(), { wrapper: makeWrapper() });
 
@@ -151,14 +163,14 @@ describe("usePropertyDetail — handleScheduleClick", () => {
 // ─── handleAuthSuccess ────────────────────────────────────────────────────────
 
 describe("usePropertyDetail — handleAuthSuccess", () => {
-  it("cierra showAuthModal y abre showScheduleModal", () => {
+  it("cierra showAuthModal y abre showScheduleModal", async () => {
     const { result } = renderHook(() => usePropertyDetail(), { wrapper: makeWrapper() });
 
     // Abrir authModal primero (sin autenticación)
     act(() => result.current.handleScheduleClick());
     expect(result.current.showAuthModal).toBe(true);
 
-    act(() => result.current.handleAuthSuccess());
+    await act(() => result.current.handleAuthSuccess());
 
     expect(result.current.showAuthModal).toBe(false);
     expect(result.current.showScheduleModal).toBe(true);
@@ -169,7 +181,11 @@ describe("usePropertyDetail — handleAuthSuccess", () => {
 
 describe("usePropertyDetail — showMortgageCalculator", () => {
   it("true cuando autenticado, perfil no null y ya no está cargando", async () => {
-    mockedUseAuth.mockReturnValue({ isAuthenticated: true } as ReturnType<typeof useAuth>);
+    mockedUseAuth.mockReturnValue({
+      isAuthenticated: true,
+      user: null,
+      syncAuthState: vi.fn().mockResolvedValue(undefined),
+    } as unknown as ReturnType<typeof useAuth>);
     mockedGetFinancial.mockResolvedValueOnce({
       profile: {
         loanType: "hipoteca",

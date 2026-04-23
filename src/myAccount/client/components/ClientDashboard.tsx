@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Camera, Bookmark, Home, ShoppingCart, ChevronRight, Calculator, TrendingUp, BedDouble, Bath, Maximize, Phone, RefreshCw, Briefcase, MapPin, CreditCard, CalendarCheck, Calendar, Clock } from "lucide-react";
+import { Camera, Bookmark, Home, ShoppingCart, ChevronRight, Calculator, TrendingUp, BedDouble, Bath, Maximize, Phone, RefreshCw, Briefcase, MapPin, CreditCard, CalendarCheck, Calendar, Clock, Settings } from "lucide-react";
 import { getMediaUrl } from "@/shared/utils/media-url.utils";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
@@ -31,9 +31,10 @@ interface ClientDashboardProps {
   onNavigateVentas?: () => void;
   onNavigateCompras?: () => void;
   onNavigateCitas?: () => void;
+  onNavigateConfig?: () => void;
 }
 
-const ClientDashboard = ({ onNavigateVentas, onNavigateCompras, onNavigateCitas }: ClientDashboardProps) => {
+const ClientDashboard = ({ onNavigateVentas, onNavigateCompras, onNavigateCitas, onNavigateConfig }: ClientDashboardProps) => {
   const navigate = useNavigate();
   const { openFinancialModal } = useFinancialModal();
   const { user } = useAuth();
@@ -219,6 +220,15 @@ const ClientDashboard = ({ onNavigateVentas, onNavigateCompras, onNavigateCitas 
           )}
           {(clientProfileLoading || completedCount >= profileFields.length) && (
             <p className="text-sm text-foreground/50">Cliente</p>
+          )}
+          {onNavigateConfig && (
+            <button
+              onClick={onNavigateConfig}
+              className="mt-2 inline-flex items-center gap-1.5 text-xs text-foreground/60 hover:text-champagne-gold transition-colors"
+            >
+              <Settings className="w-3.5 h-3.5" />
+              Configuración
+            </button>
           )}
         </div>
       </div>

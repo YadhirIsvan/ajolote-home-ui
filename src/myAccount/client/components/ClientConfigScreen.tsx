@@ -4,6 +4,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 import { useState } from "react";
 import { useClientConfig } from "@/myAccount/client/hooks/use-client-config.client.hook";
+import ClientProfileEditForm from "./ClientProfileEditForm";
 
 interface ClientConfigScreenProps {
   onBack: () => void;
@@ -11,7 +12,21 @@ interface ClientConfigScreenProps {
 
 const ClientConfigScreen = ({ onBack }: ClientConfigScreenProps) => {
   const [activeTab, setActiveTab] = useState("datos");
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
   const { profile, profileLoading, phone } = useClientConfig();
+
+  const initials =
+    [profile?.first_name, profile?.last_name]
+      .filter(Boolean)
+      .map((n) => (n as string).trim()[0])
+      .filter(Boolean)
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() || "?";
+
+  if (isEditingProfile) {
+    return <ClientProfileEditForm onBack={() => setIsEditingProfile(false)} />;
+  }
 
   return (
     <div className="space-y-6">
@@ -28,7 +43,7 @@ const ClientConfigScreen = ({ onBack }: ClientConfigScreenProps) => {
       <div className="flex items-center gap-4 mb-2">
         <div className="relative">
           <div className="w-20 h-20 rounded-full bg-gradient-to-br from-champagne-gold to-champagne-gold-dark flex items-center justify-center text-white text-2xl font-bold shadow-lg">
-            {profile ? (profile.Name || "?").slice(0, 2).toUpperCase() : "?"}
+            {initials}
           </div>
           <button className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-white border-2 border-champagne-gold/30 flex items-center justify-center shadow-md hover:scale-110 transition-transform">
             <Camera className="w-3.5 h-3.5 text-champagne-gold" />
@@ -78,10 +93,11 @@ const ClientConfigScreen = ({ onBack }: ClientConfigScreenProps) => {
                 {!profileLoading && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {[
-                      { label: "Nombre completo", value: profile?.Name ?? "-" },
-                      { label: "Correo electrónico", value: profile?.Email ?? "-" },
-                      { label: "Teléfono", value: phone ? `+52 ${phone}` : "-" },
-                      { label: "Ciudad", value: profile?.City ?? "-" },
+                      { label: "Nombre", value: profile?.first_name ?? "-" },
+                      { label: "Apellido", value: profile?.last_name ?? "-" },
+                      { label: "Correo electrónico", value: profile?.email ?? "-" },
+                      { label: "Teléfono", value: phone || "-" },
+                      { label: "Ciudad", value: profile?.city ?? "-" },
                     ].map((field) => (
                       <div key={field.label} className="space-y-1.5">
                         <label className="text-xs font-medium text-foreground/50 uppercase tracking-wider">
@@ -94,7 +110,11 @@ const ClientConfigScreen = ({ onBack }: ClientConfigScreenProps) => {
                     ))}
                   </div>
                 )}
-                <Button variant="gold" className="w-full sm:w-auto mt-2">
+                <Button 
+                  variant="gold" 
+                  className="w-full sm:w-auto mt-2"
+                  onClick={() => setIsEditingProfile(true)}
+                >
                   Editar Perfil
                 </Button>
               </div>

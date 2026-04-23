@@ -12,7 +12,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import {
   ArrowLeft, Share2, MapPin, BedDouble, Bath, Maximize,
   CircleCheckBig, Play, ChevronDown, ChevronUp,
-  GraduationCap, ShoppingBag, Hospital, Train, Loader2,
+  GraduationCap, ShoppingBag, Hospital, Train,
   Waves, Dumbbell, Shield, ArrowUpDown,
   Car, Leaf, Sun, Bookmark, MessageCircle, Phone, Copy, Mail,
   ChevronLeft, ChevronRight, X,
@@ -23,6 +23,7 @@ import AuthModal from "@/auth/components/AuthModal";
 import MortgageCallToAction from "@/buy/components/MortgageCallToAction";
 import MortgageCalculatorWidget from "@/buy/components/MortgageCalculatorWidget";
 import SimilarPropertiesSection from "@/buy/components/SimilarPropertiesSection";
+import PhoneConfirmationModal from "@/buy/components/PhoneConfirmationModal";
 import { useFinancialModal } from "@/shared/hooks/financial-modal.context";
 
 const getPOIIcon = (iconType: string) => {
@@ -120,9 +121,13 @@ const PropertyDetailPage = () => {
     hasVideoTour,
     handleScheduleClick,
     handleAuthSuccess,
-    handleConfirmAppointment,
+    handleOpenPhoneConfirm,
+    handleConfirmPhoneAndSchedule,
     isScheduling,
-    scheduleError,
+    phoneFlowError,
+    currentUserPhone,
+    showPhoneConfirmModal,
+    setShowPhoneConfirmModal,
     isSaved,
     showSaveAuthModal,
     setShowSaveAuthModal,
@@ -878,25 +883,28 @@ const PropertyDetailPage = () => {
                 </div>
               )}
             </div>
-            {scheduleError && (
-              <p className="text-sm text-destructive text-center">{scheduleError}</p>
-            )}
             <Button
               variant="gold"
               size="lg"
               className="w-full"
-              onClick={handleConfirmAppointment}
+              onClick={handleOpenPhoneConfirm}
               disabled={!selectedDate || !selectedTime || isScheduling || slotsLoading}
             >
-              {isScheduling ? (
-                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Agendando...</>
-              ) : (
-                "Confirmar Cita"
-              )}
+              Continuar
             </Button>
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Phone Confirmation Modal */}
+      <PhoneConfirmationModal
+        open={showPhoneConfirmModal}
+        onOpenChange={setShowPhoneConfirmModal}
+        currentPhone={currentUserPhone}
+        isSubmitting={isScheduling}
+        errorMessage={phoneFlowError}
+        onConfirm={handleConfirmPhoneAndSchedule}
+      />
 
       {/* Video Modal */}
       <Dialog open={showVideoModal} onOpenChange={setShowVideoModal}>

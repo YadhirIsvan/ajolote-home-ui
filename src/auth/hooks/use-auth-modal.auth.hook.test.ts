@@ -4,7 +4,7 @@ import { useAuthModal } from "./use-auth-modal.auth.hook";
 import { sendEmailOtpAction } from "@/auth/actions/send-email-otp.actions";
 import { verifyOtpAction } from "@/auth/actions/verify-otp.actions";
 import { loginWithAppleAction } from "@/auth/actions/login-with-apple.actions";
-import { updateAuthPhoneAction } from "@/auth/actions/update-auth-phone.actions";
+import { updateAuthProfileAction } from "@/auth/actions/update-auth-phone.actions";
 
 vi.mock("@/auth/actions/send-email-otp.actions");
 vi.mock("@/auth/actions/verify-otp.actions");
@@ -19,7 +19,7 @@ vi.mock("react-phone-number-input", () => ({
 const mockedSendOtp = vi.mocked(sendEmailOtpAction);
 const mockedVerifyOtp = vi.mocked(verifyOtpAction);
 const mockedApple = vi.mocked(loginWithAppleAction);
-const mockedUpdatePhone = vi.mocked(updateAuthPhoneAction);
+const mockedUpdateProfile = vi.mocked(updateAuthProfileAction);
 
 const VALID_PHONE_E164 = "+525512345678";
 
@@ -167,7 +167,7 @@ describe("useAuthModal — handleProfileSubmit", () => {
     const { result } = renderModal();
     await act(() => result.current.handleProfileSubmit());
     expect(result.current.error).toBe("Ingresa un teléfono válido para continuar.");
-    expect(mockedUpdatePhone).not.toHaveBeenCalled();
+    expect(mockedUpdateProfile).not.toHaveBeenCalled();
     expect(mockedVerifyOtp).not.toHaveBeenCalled();
   });
 
@@ -176,12 +176,12 @@ describe("useAuthModal — handleProfileSubmit", () => {
     act(() => result.current.setPhone("123"));
     await act(() => result.current.handleProfileSubmit());
     expect(result.current.error).toBe("Ingresa un teléfono válido para continuar.");
-    expect(mockedUpdatePhone).not.toHaveBeenCalled();
+    expect(mockedUpdateProfile).not.toHaveBeenCalled();
   });
 
-  it("otp + phone válido llama verifyOtpAction con phone + campos opcionales", async () => {
+  it("phone válido llama updateAuthProfileAction con phone + campos opcionales trimmeados", async () => {
     vi.useFakeTimers();
-    mockedVerifyOtp.mockResolvedValueOnce({ success: true, message: "ok" });
+    mockedUpdateProfile.mockResolvedValueOnce({ success: true });
     const onLoginSuccess = vi.fn();
     const { result } = renderModal(onLoginSuccess);
 
@@ -194,7 +194,7 @@ describe("useAuthModal — handleProfileSubmit", () => {
 
     await act(() => result.current.handleProfileSubmit());
 
-    expect(mockedVerifyOtp).toHaveBeenCalledWith("u@x.com", "1234", {
+    expect(mockedUpdateProfile).toHaveBeenCalledWith({
       phone: VALID_PHONE_E164,
       first_name: "Juan",
     });
@@ -204,8 +204,11 @@ describe("useAuthModal — handleProfileSubmit", () => {
     vi.useRealTimers();
   });
 
-  it("otp + phone válido pero verifyOtp falla → error, step queda en profile", async () => {
-    mockedVerifyOtp.mockResolvedValueOnce({ success: false, message: "Phone inválido en backend" });
+  it("phone válido pero updateAuthProfileAction falla → error, step queda en profile", async () => {
+    mockedUpdateProfile.mockResolvedValueOnce({
+      success: false,
+      message: "Phone inválido en backend",
+    });
     const { result } = renderModal();
 
     act(() => {

@@ -8,6 +8,7 @@ import { getFinancialProfileAction } from "@/buy/actions/get-financial-profile.a
 import { FINANCIAL_PROFILE_QUERY_KEY } from "@/shared/actions/save-financial-profile.actions";
 import { checkSavedPropertyAction } from "@/shared/actions/check-saved-property.actions";
 import { toggleSavedPropertyAction } from "@/shared/actions/toggle-saved-property.actions";
+import { updateUserPhoneAction } from "@/shared/actions/update-user-phone.actions";
 import { useAuth } from "@/shared/hooks/auth.context";
 import type {
   AppointmentResponse,
@@ -21,7 +22,7 @@ export const usePropertyDetail = () => {
   const { id } = useParams<{ id: string }>();
   const numId = id ? parseInt(id, 10) : NaN;
 
-  const { isAuthenticated, syncAuthState } = useAuth();
+  const { isAuthenticated, user, syncAuthState } = useAuth();
 
   // ── Modal / UI state ──────────────────────────────────────────────
   const [showFullDescription, setShowFullDescription] = useState(false);
@@ -29,15 +30,16 @@ export const usePropertyDetail = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
+  const [showPhoneConfirmModal, setShowPhoneConfirmModal] = useState(false);
 
   // ── Appointment state ─────────────────────────────────────────────
   const [successData, setSuccessData] = useState<AppointmentResponse | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [isScheduling, setIsScheduling] = useState(false);
-  const [scheduleError, setScheduleError] = useState<string | null>(null);
   const [availableSlots, setAvailableSlots] = useState<AppointmentSlot[]>([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
+  const [phoneFlowError, setPhoneFlowError] = useState<string | null>(null);
 
   // ── Saved property state ──────────────────────────────────────────
   const [isSaved, setIsSaved] = useState(false);
@@ -130,45 +132,56 @@ export const usePropertyDetail = () => {
     setShowCallConfirmModal(false);
   };
 
-  const handleConfirmAppointment = async () => {
+  // Step 1: user pressed "Confirmar Cita" → open phone confirmation first
+  const handleOpenPhoneConfirm = () => {
+    if (!selectedDate || !selectedTime || isNaN(numId)) return;
+    setPhoneFlowError(null);
+    setShowScheduleModal(false);
+    setShowPhoneConfirmModal(true);
+  };
+
+  // Step 2: runs after phone is confirmed/updated in the modal
+  const handleConfirmPhoneAndSchedule = async (finalPhone: string) => {
     if (!selectedDate || !selectedTime || isNaN(numId)) return;
 
-    let user: {
-      first_name?: string;
-      last_name?: string;
-      phone?: string | null;
-      email?: string;
-    } | null = null;
-    try {
-      user = JSON.parse(localStorage.getItem("user") ?? "null");
-    } catch {
-      user = null;
+    setPhoneFlowError(null);
+    setIsScheduling(true);
+
+    // Persist phone if it changed (or if user didn't have one before)
+    if (finalPhone !== (user?.phone ?? "")) {
+      const updateResult = await updateUserPhoneAction({ phone: finalPhone });
+      if (!updateResult.success) {
+        setPhoneFlowError(updateResult.message ?? "No se pudo guardar el teléfono.");
+        setIsScheduling(false);
+        return;
+      }
+      await syncAuthState();
     }
 
-    const name = `${user?.first_name ?? ""} ${user?.last_name ?? ""}`.trim() || user?.email || "";
+    const name =
+      `${user?.first_name ?? ""} ${user?.last_name ?? ""}`.trim() ||
+      user?.email ||
+      "";
     const dateStr = selectedDate.toISOString().split("T")[0];
-
-    setIsScheduling(true);
-    setScheduleError(null);
 
     const result = await scheduleAppointmentAction(numId, {
       date: dateStr,
       time: selectedTime,
       name,
-      phone: user?.phone ?? "",
+      phone: finalPhone,
       email: user?.email ?? "",
     });
 
     setIsScheduling(false);
 
     if (result.success && result.data) {
-      setShowScheduleModal(false);
+      setShowPhoneConfirmModal(false);
       setSelectedDate(undefined);
       setSelectedTime(null);
       setSuccessData(result.data);
       setShowSuccessModal(true);
     } else {
-      setScheduleError(result.message);
+      setPhoneFlowError(result.message);
     }
   };
 
@@ -218,6 +231,8 @@ export const usePropertyDetail = () => {
     setShowSuccessModal,
     showVideoModal,
     setShowVideoModal,
+    showPhoneConfirmModal,
+    setShowPhoneConfirmModal,
     // Appointment
     successData,
     selectedDate,
@@ -229,9 +244,11 @@ export const usePropertyDetail = () => {
     slotsLoading,
     handleScheduleClick,
     handleAuthSuccess,
-    handleConfirmAppointment,
+    handleOpenPhoneConfirm,
+    handleConfirmPhoneAndSchedule,
     isScheduling,
-    scheduleError,
+    phoneFlowError,
+    currentUserPhone: user?.phone ?? "",
     // Saved property
     isSaved,
     savingInProgress,

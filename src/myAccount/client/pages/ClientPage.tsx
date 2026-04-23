@@ -11,7 +11,7 @@ interface ClientPageProps {
   onNavigateConfig: () => void;
 }
 
-const ClientPage = ({ onLogout, onNavigateConfig: _ }: ClientPageProps) => {
+const ClientPage = ({ onLogout }: ClientPageProps) => {
   const [subView, setSubView] = useState<ClientSubView>("dashboard");
 
   const renderView = () => {
@@ -31,6 +31,7 @@ const ClientPage = ({ onLogout, onNavigateConfig: _ }: ClientPageProps) => {
             onNavigateVentas={() => setSubView("ventas")}
             onNavigateCompras={() => setSubView("compras")}
             onNavigateCitas={() => setSubView("citas")}
+            onNavigateConfig={() => setSubView("config")}
           />
         );
     }

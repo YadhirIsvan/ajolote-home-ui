@@ -5,7 +5,7 @@ import { Label } from "@/shared/components/ui/label";
 import { Separator } from "@/shared/components/ui/separator";
 import { Mail, ArrowRight, Check, CircleAlert, Loader2 } from "lucide-react";
 import { useAuthModal } from "@/auth/hooks/use-auth-modal.auth.hook";
-import { PhoneInputField } from "@/auth/components/PhoneInputField";
+import { PhoneInputField } from "@/shared/components/custom/PhoneInputField";
 
 interface AuthModalProps {
   isOpen: boolean;
