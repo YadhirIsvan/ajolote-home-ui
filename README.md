@@ -1,5 +1,5 @@
 # Avakanta — Frontend
-
+  
 SPA React para la plataforma inmobiliaria Avakanta.
 
 ## Stack
