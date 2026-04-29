@@ -1,15 +1,20 @@
 import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { isValidPhoneNumber } from "react-phone-number-input";
 import type {
   AuthStep,
   AuthMethod,
   ProfileVariant,
 } from "@/auth/types/auth.types";
+import type { AuthMembership } from "@/auth/types/auth.types";
 import { sendEmailOtpAction } from "@/auth/actions/send-email-otp.actions";
 import { verifyOtpAction } from "@/auth/actions/verify-otp.actions";
 import { loginWithGoogleAction } from "@/auth/actions/login-with-google.actions";
 import { loginWithAppleAction } from "@/auth/actions/login-with-apple.actions";
-import { updateAuthProfileAction } from "@/auth/actions/update-auth-phone.actions";
+import {
+  updateAuthProfileAction,
+  type UpdateAuthProfileData,
+} from "@/auth/actions/update-auth-phone.actions";
 
 interface UseAuthModalOptions {
   onLoginSuccess: () => void;
@@ -21,41 +26,73 @@ export const useAuthModal = ({ onLoginSuccess, onClose }: UseAuthModalOptions) =
   const [email, setEmail] = useState("");
   const [token, setToken] = useState("");
   const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
 
-  // Campos del perfil. phone almacena un valor E.164 producido por PhoneInputField.
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
 
-  // Ramifica el flujo de "completar perfil" según el provider de auth.
   const [authMethod, setAuthMethod] = useState<AuthMethod>("otp");
-  const [profileVariant, setProfileVariant] =
-    useState<ProfileVariant>("full");
+  const [profileVariant, setProfileVariant] = useState<ProfileVariant>("full");
+  // Tracks the "popup is open" phase of Google OAuth before mutateAsync fires
+  const [isGooglePending, setIsGooglePending] = useState(false);
 
   const isPhoneValid = Boolean(phone) && isValidPhoneNumber(phone);
 
+  // ── Mutations ──────────────────────────────────────────────────────────────────
+
+  const sendOtpMutation = useMutation({
+    mutationFn: (email: string) => sendEmailOtpAction(email),
+  });
+  const verifyOtpMutation = useMutation({
+    mutationFn: (params: { email: string; token: string }) =>
+      verifyOtpAction(params.email, params.token),
+  });
+  const googleLoginMutation = useMutation({
+    mutationFn: (accessToken: string) => loginWithGoogleAction(accessToken),
+  });
+  const appleLoginMutation = useMutation({
+    mutationFn: (identityToken: string) => loginWithAppleAction(identityToken),
+  });
+  const updateProfileMutation = useMutation({
+    mutationFn: (data: UpdateAuthProfileData) => updateAuthProfileAction(data),
+  });
+
+  const isLoading =
+    sendOtpMutation.isPending ||
+    verifyOtpMutation.isPending ||
+    isGooglePending ||
+    googleLoginMutation.isPending ||
+    appleLoginMutation.isPending ||
+    updateProfileMutation.isPending;
+
+  // ── Helpers ────────────────────────────────────────────────────────────────────
+
+  const saveTenantPreference = (memberships?: AuthMembership[]) => {
+    if (memberships?.length) {
+      localStorage.setItem("selected_tenant_id", String(memberships[0].tenant_id));
+    }
+  };
+
+  // ── Handlers ──────────────────────────────────────────────────────────────────
+
   const handleGoogleLogin = () => {
     setError("");
-    setIsLoading(true);
 
     const google = window.google;
     if (!google?.accounts?.oauth2) {
       setError("Google Sign-In no se ha cargado. Recarga la página.");
-      setIsLoading(false);
       return;
     }
 
     // Cuando el usuario cierra el popup de Google sin completar el flujo,
     // el callback de initTokenClient nunca se invoca. Detectamos el cierre del
     // popup escuchando cuando la ventana principal recupera el foco.
+    setIsGooglePending(true);
     let callbackInvoked = false;
 
     const onWindowFocus = () => {
-      // Damos 500 ms para que el callback pueda dispararse primero si el flujo
-      // completó justo al cerrarse el popup (ej. redirección automática).
       setTimeout(() => {
-        if (!callbackInvoked) setIsLoading(false);
+        if (!callbackInvoked) setIsGooglePending(false);
       }, 500);
       window.removeEventListener("focus", onWindowFocus);
     };
@@ -67,28 +104,31 @@ export const useAuthModal = ({ onLoginSuccess, onClose }: UseAuthModalOptions) =
       callback: async (tokenResponse) => {
         callbackInvoked = true;
         window.removeEventListener("focus", onWindowFocus);
+        setIsGooglePending(false);
 
         if (tokenResponse.error) {
           setError("Error al autenticar con Google");
-          setIsLoading(false);
           return;
         }
 
-        const result = await loginWithGoogleAction(tokenResponse.access_token);
-        if (result.success) {
-          const needsPhone = !result.user?.phone?.trim();
-          if (needsPhone) {
-            setAuthMethod("google");
-            setProfileVariant("phone-only");
-            setStep("profile");
-            setIsLoading(false);
-            return;
+        try {
+          const result = await googleLoginMutation.mutateAsync(tokenResponse.access_token);
+          if (result.success) {
+            saveTenantPreference(result.user?.memberships);
+            const needsPhone = !result.user?.phone?.trim();
+            if (needsPhone) {
+              setAuthMethod("google");
+              setProfileVariant("phone-only");
+              setStep("profile");
+            } else {
+              onLoginSuccess();
+            }
+          } else {
+            setError(result.message ?? "Error al iniciar sesión con Google");
           }
-          onLoginSuccess();
-        } else {
-          setError(result.message ?? "Error al iniciar sesión con Google");
+        } catch {
+          setError("Error al iniciar sesión con Google");
         }
-        setIsLoading(false);
       },
     });
 
@@ -96,15 +136,18 @@ export const useAuthModal = ({ onLoginSuccess, onClose }: UseAuthModalOptions) =
   };
 
   const handleAppleLogin = async () => {
-    setIsLoading(true);
     setError("");
-    const result = await loginWithAppleAction("");
-    if (result.success) {
-      onLoginSuccess();
-    } else {
-      setError(result.message ?? "Apple Login no está disponible actualmente");
+    try {
+      const result = await appleLoginMutation.mutateAsync("");
+      if (result.success) {
+        saveTenantPreference(result.user?.memberships);
+        onLoginSuccess();
+      } else {
+        setError(result.message ?? "Apple Login no está disponible actualmente");
+      }
+    } catch {
+      setError("Apple Login no está disponible actualmente");
     }
-    setIsLoading(false);
   };
 
   const handleEmailSubmit = async () => {
@@ -113,14 +156,16 @@ export const useAuthModal = ({ onLoginSuccess, onClose }: UseAuthModalOptions) =
       setError("Por favor ingresa un correo válido");
       return;
     }
-    setIsLoading(true);
     setError("");
-    const result = await sendEmailOtpAction(email);
-    setIsLoading(false);
-    if (result.success) {
-      setStep("verify");
-    } else {
-      setError(result.message);
+    try {
+      const result = await sendOtpMutation.mutateAsync(email);
+      if (result.success) {
+        setStep("verify");
+      } else {
+        setError(result.message);
+      }
+    } catch {
+      setError("Error al enviar el código. Intenta de nuevo.");
     }
   };
 
@@ -129,26 +174,27 @@ export const useAuthModal = ({ onLoginSuccess, onClose }: UseAuthModalOptions) =
       setError("El código debe tener al menos 4 dígitos");
       return;
     }
-    setIsLoading(true);
     setError("");
 
-    const result = await verifyOtpAction(email, token);
-    setIsLoading(false);
+    try {
+      const result = await verifyOtpMutation.mutateAsync({ email, token });
 
-    if (result.success) {
-      // Si el usuario ya tiene teléfono, ya no necesita completar nada → success.
-      // Si no, mostrar paso profile con teléfono obligatorio.
-      const hasPhone = !!result.data?.user?.phone?.trim();
-      if (hasPhone) {
-        setStep("success");
-        setTimeout(onLoginSuccess, 1500);
+      if (result.success) {
+        saveTenantPreference(result.data?.user?.memberships);
+        const hasPhone = !!result.data?.user?.phone?.trim();
+        if (hasPhone) {
+          setStep("success");
+          setTimeout(onLoginSuccess, 1500);
+        } else {
+          setAuthMethod("otp");
+          setProfileVariant("full");
+          setStep("profile");
+        }
       } else {
-        setAuthMethod("otp");
-        setProfileVariant("full");
-        setStep("profile");
+        setError(result.message);
       }
-    } else {
-      setError(result.message);
+    } catch {
+      setError("Código inválido o expirado. Intenta de nuevo.");
     }
   };
 
@@ -158,26 +204,25 @@ export const useAuthModal = ({ onLoginSuccess, onClose }: UseAuthModalOptions) =
       return;
     }
 
-    setIsLoading(true);
     setError("");
 
-    // Tanto OTP como Google: el usuario ya está autenticado al llegar aquí.
-    // Se actualiza el perfil directamente — nunca re-verificar el OTP consumido.
-    const result = await updateAuthProfileAction({
-      phone,
-      ...(firstName.trim() ? { first_name: firstName.trim() } : {}),
-      ...(lastName.trim() ? { last_name: lastName.trim() } : {}),
-    });
+    try {
+      const result = await updateProfileMutation.mutateAsync({
+        phone,
+        ...(firstName.trim() ? { first_name: firstName.trim() } : {}),
+        ...(lastName.trim() ? { last_name: lastName.trim() } : {}),
+      });
 
-    if (!result.success) {
-      setError(result.message ?? "No se pudo guardar el perfil.");
-      setIsLoading(false);
-      return;
+      if (!result.success) {
+        setError(result.message ?? "No se pudo guardar el perfil.");
+        return;
+      }
+
+      setStep("success");
+      setTimeout(onLoginSuccess, 1500);
+    } catch {
+      setError("No se pudo guardar el perfil.");
     }
-
-    setIsLoading(false);
-    setStep("success");
-    setTimeout(onLoginSuccess, 1500);
   };
 
   const handleBack = () => {

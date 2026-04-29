@@ -14,14 +14,6 @@ export const loginWithAppleAction = async (
     const { data } = await authApi.loginWithApple(identityToken);
     const authData = data as AuthResponse;
 
-    // Tokens are set as httpOnly cookies by the backend — not stored here.
-    if (authData.user.memberships?.length) {
-      localStorage.setItem(
-        "selected_tenant_id",
-        String(authData.user.memberships[0].tenant_id)
-      );
-    }
-
     return { success: true, user: authData.user };
   } catch (error) {
     console.error("[loginWithAppleAction] Error al iniciar sesión con Apple:", error);

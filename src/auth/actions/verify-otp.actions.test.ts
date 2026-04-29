@@ -41,7 +41,7 @@ beforeEach(() => {
 });
 
 describe("verifyOtpAction", () => {
-  it("respuesta exitosa retorna { success: true, data } — tokens en cookies httpOnly, no en localStorage", async () => {
+  it("respuesta exitosa retorna { success: true, data } con los datos del usuario", async () => {
     const authResponse = makeAuthResponse();
     mockedVerifyOtp.mockResolvedValueOnce({ data: authResponse } as never);
 
@@ -49,29 +49,26 @@ describe("verifyOtpAction", () => {
 
     expect(result.success).toBe(true);
     expect(result.data).toEqual(authResponse);
-
-    // Tokens NO se guardan en localStorage — los maneja el backend como httpOnly cookies
-    expect(localStorage.getItem("access_token")).toBeNull();
-    expect(localStorage.getItem("refresh_token")).toBeNull();
-    expect(localStorage.getItem("user")).toBeNull();
   });
 
-  it("usuario con memberships guarda selected_tenant_id del primero", async () => {
+  it("NO escribe selected_tenant_id en localStorage — responsabilidad del hook", async () => {
     const authResponse = makeAuthResponse({ memberships: [MEMBERSHIP] });
     mockedVerifyOtp.mockResolvedValueOnce({ data: authResponse } as never);
 
     await verifyOtpAction("user@example.com", "1234");
 
-    expect(localStorage.getItem("selected_tenant_id")).toBe("99");
+    expect(localStorage.getItem("selected_tenant_id")).toBeNull();
   });
 
-  it("usuario sin memberships NO guarda selected_tenant_id", async () => {
-    const authResponse = makeAuthResponse({ memberships: [] });
+  it("NO escribe tokens en localStorage — los maneja el backend como httpOnly cookies", async () => {
+    const authResponse = makeAuthResponse();
     mockedVerifyOtp.mockResolvedValueOnce({ data: authResponse } as never);
 
     await verifyOtpAction("user@example.com", "1234");
 
-    expect(localStorage.getItem("selected_tenant_id")).toBeNull();
+    expect(localStorage.getItem("access_token")).toBeNull();
+    expect(localStorage.getItem("refresh_token")).toBeNull();
+    expect(localStorage.getItem("user")).toBeNull();
   });
 
   it("error con response.data.error retorna ese mensaje y success: false", async () => {

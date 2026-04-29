@@ -1,36 +1,12 @@
-import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
 import { Mail, CircleAlert, ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
-import { useVerifyOtp } from "@/auth/hooks/use-verify-otp.auth.hook";
+import { useVerifyOtpPage } from "@/auth/hooks/use-verify-otp-page.auth.hook";
 
 const VerifyOtpPage = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const email = (location.state as { email?: string } | null)?.email ?? "";
-
-  const [token, setToken] = useState("");
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
-  const { verify, isLoading } = useVerifyOtp();
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (token.length < 4) {
-      setError("El código debe tener al menos 4 dígitos.");
-      return;
-    }
-    setError("");
-    const result = await verify({ email, token });
-    if (result.success) {
-      setSuccess(true);
-      setTimeout(() => navigate("/mi-cuenta"), 1000);
-    } else {
-      setError(result.message);
-    }
-  };
+  const { email, token, error, success, isLoading, setToken, handleSubmit, handleBack } =
+    useVerifyOtpPage();
 
   return (
     <div className="min-h-screen bg-white">
@@ -47,7 +23,8 @@ const VerifyOtpPage = () => {
             <h1 className="text-3xl font-bold text-midnight mb-2">Verificar Código</h1>
             {email && (
               <p className="text-foreground/60">
-                Ingresa el código enviado a <span className="font-medium text-midnight">{email}</span>
+                Ingresa el código enviado a{" "}
+                <span className="font-medium text-midnight">{email}</span>
               </p>
             )}
           </div>
@@ -73,7 +50,6 @@ const VerifyOtpPage = () => {
                     value={token}
                     onChange={(e) => {
                       setToken(e.target.value);
-                      setError("");
                     }}
                     className="h-14 border-border/50 focus:border-champagne-gold focus:ring-champagne-gold/20 text-center text-2xl tracking-widest"
                     maxLength={6}
@@ -100,7 +76,7 @@ const VerifyOtpPage = () => {
                 <Button
                   type="button"
                   variant="ghost"
-                  onClick={() => navigate(-1)}
+                  onClick={handleBack}
                   className="w-full text-muted-foreground hover:text-foreground"
                 >
                   <ArrowLeft className="w-4 h-4 mr-2" />

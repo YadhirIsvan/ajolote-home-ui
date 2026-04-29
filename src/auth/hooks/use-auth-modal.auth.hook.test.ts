@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { createElement } from "react";
 import { useAuthModal } from "./use-auth-modal.auth.hook";
 import { sendEmailOtpAction } from "@/auth/actions/send-email-otp.actions";
 import { verifyOtpAction } from "@/auth/actions/verify-otp.actions";
@@ -12,7 +14,6 @@ vi.mock("@/auth/actions/login-with-google.actions");
 vi.mock("@/auth/actions/login-with-apple.actions");
 vi.mock("@/auth/actions/update-auth-phone.actions");
 vi.mock("react-phone-number-input", () => ({
-  // Heurística simple para tests: válido si empieza con "+" y tiene 10+ chars
   isValidPhoneNumber: vi.fn((v?: string) => !!v && v.startsWith("+") && v.length >= 10),
 }));
 
@@ -23,11 +24,32 @@ const mockedUpdateProfile = vi.mocked(updateAuthProfileAction);
 
 const VALID_PHONE_E164 = "+525512345678";
 
-function renderModal(onLoginSuccess = vi.fn(), onClose = vi.fn()) {
-  return renderHook(() => useAuthModal({ onLoginSuccess, onClose }));
+const MEMBERSHIP = {
+  id: 1,
+  tenant_id: 99,
+  tenant_name: "Test Corp",
+  tenant_slug: "test-corp",
+  role: "client" as const,
+};
+
+function makeWrapper() {
+  const client = new QueryClient({
+    defaultOptions: { mutations: { retry: false } },
+  });
+  return ({ children }: { children: React.ReactNode }) =>
+    createElement(QueryClientProvider, { client }, children);
 }
 
-beforeEach(() => vi.clearAllMocks());
+function renderModal(onLoginSuccess = vi.fn(), onClose = vi.fn()) {
+  return renderHook(() => useAuthModal({ onLoginSuccess, onClose }), {
+    wrapper: makeWrapper(),
+  });
+}
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  localStorage.clear();
+});
 
 // ─── Estado inicial ───────────────────────────────────────────────────────────
 
@@ -120,6 +142,58 @@ describe("useAuthModal — handleTokenVerify", () => {
     expect(result.current.step).toBe("success");
     vi.runAllTimers();
     expect(onLoginSuccess).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
+  });
+
+  it("verify exitoso con memberships guarda selected_tenant_id en localStorage", async () => {
+    vi.useFakeTimers();
+    mockedVerifyOtp.mockResolvedValueOnce({
+      success: true,
+      message: "ok",
+      data: {
+        refresh_expires_at: 0,
+        user: {
+          id: 1,
+          email: "u@x.com",
+          first_name: "",
+          last_name: "",
+          phone: "+525512345678",
+          memberships: [MEMBERSHIP],
+        },
+      },
+    });
+    const { result } = renderModal();
+
+    act(() => result.current.setToken("1234"));
+    await act(() => result.current.handleTokenVerify());
+
+    expect(localStorage.getItem("selected_tenant_id")).toBe("99");
+    vi.useRealTimers();
+  });
+
+  it("verify exitoso sin memberships NO escribe selected_tenant_id", async () => {
+    vi.useFakeTimers();
+    mockedVerifyOtp.mockResolvedValueOnce({
+      success: true,
+      message: "ok",
+      data: {
+        refresh_expires_at: 0,
+        user: {
+          id: 1,
+          email: "u@x.com",
+          first_name: "",
+          last_name: "",
+          phone: "+525512345678",
+          memberships: [],
+        },
+      },
+    });
+    const { result } = renderModal();
+
+    act(() => result.current.setToken("1234"));
+    await act(() => result.current.handleTokenVerify());
+
+    expect(localStorage.getItem("selected_tenant_id")).toBeNull();
     vi.useRealTimers();
   });
 
@@ -284,6 +358,15 @@ describe("useAuthModal — handleAppleLogin", () => {
     await act(() => result.current.handleAppleLogin());
 
     expect(onLoginSuccess).toHaveBeenCalledTimes(1);
+  });
+
+  it("Apple login exitoso con memberships guarda selected_tenant_id", async () => {
+    mockedApple.mockResolvedValueOnce({ success: true, user: { id: 1, email: "a@b.com", first_name: "", last_name: "", phone: null, memberships: [MEMBERSHIP] } });
+    const { result } = renderModal();
+
+    await act(() => result.current.handleAppleLogin());
+
+    expect(localStorage.getItem("selected_tenant_id")).toBe("99");
   });
 
   it("Apple login fallido popula error", async () => {

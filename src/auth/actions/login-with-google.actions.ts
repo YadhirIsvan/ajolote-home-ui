@@ -14,15 +14,6 @@ export const loginWithGoogleAction = async (
     const { data } = await authApi.loginWithGoogle(accessToken);
     const authData = data as AuthResponse;
 
-    // Tokens are set as httpOnly cookies by the backend — not stored here.
-    // Only the UI preference (tenant selection) goes to localStorage.
-    if (authData.user.memberships?.length) {
-      localStorage.setItem(
-        "selected_tenant_id",
-        String(authData.user.memberships[0].tenant_id)
-      );
-    }
-
     return { success: true, user: authData.user };
   } catch (error: unknown) {
     console.error("[loginWithGoogleAction] Error al iniciar sesión con Google:", error);

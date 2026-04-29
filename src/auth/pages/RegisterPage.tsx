@@ -1,52 +1,12 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { UserPlus, CircleAlert, ArrowRight } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
-import { useRegister } from "@/auth/hooks/use-register.auth.hook";
+import { useRegisterPage } from "@/auth/hooks/use-register-page.auth.hook";
 
 const RegisterPage = () => {
-  const navigate = useNavigate();
-  const [form, setForm] = useState({
-    email: "",
-    first_name: "",
-    last_name: "",
-    phone: "",
-  });
-  const [error, setError] = useState("");
-  const [userExists, setUserExists] = useState(false);
-  const { register, isLoading } = useRegister();
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-    setError("");
-    setUserExists(false);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.email || !form.first_name || !form.last_name) {
-      setError("Nombre, apellido y correo son obligatorios.");
-      return;
-    }
-    setError("");
-    setUserExists(false);
-    const result = await register({
-      email: form.email,
-      first_name: form.first_name,
-      last_name: form.last_name,
-      ...(form.phone ? { phone: form.phone } : {}),
-    });
-    if (result.success) {
-      navigate("/auth/verify", { state: { email: form.email } });
-    } else if (result.userExists) {
-      setUserExists(true);
-      setError(result.message);
-    } else {
-      setError(result.message);
-    }
-  };
+  const { form, error, userExists, isLoading, handleChange, handleSubmit, navigateToLogin } =
+    useRegisterPage();
 
   return (
     <div className="min-h-screen bg-white">
@@ -66,15 +26,15 @@ const RegisterPage = () => {
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="first_name" className="text-foreground font-medium">
+                  <Label htmlFor="firstName" className="text-foreground font-medium">
                     Nombre <span className="text-destructive">*</span>
                   </Label>
                   <Input
-                    id="first_name"
-                    name="first_name"
+                    id="firstName"
+                    name="firstName"
                     type="text"
                     placeholder="Juan"
-                    value={form.first_name}
+                    value={form.firstName}
                     onChange={handleChange}
                     className="h-12 border-border/50 focus:border-champagne-gold focus:ring-champagne-gold/20"
                     maxLength={100}
@@ -82,15 +42,15 @@ const RegisterPage = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="last_name" className="text-foreground font-medium">
+                  <Label htmlFor="lastName" className="text-foreground font-medium">
                     Apellido <span className="text-destructive">*</span>
                   </Label>
                   <Input
-                    id="last_name"
-                    name="last_name"
+                    id="lastName"
+                    name="lastName"
                     type="text"
                     placeholder="García"
-                    value={form.last_name}
+                    value={form.lastName}
                     onChange={handleChange}
                     className="h-12 border-border/50 focus:border-champagne-gold focus:ring-champagne-gold/20"
                     maxLength={100}
@@ -144,7 +104,7 @@ const RegisterPage = () => {
                   type="button"
                   variant="outline"
                   className="w-full h-12 border-champagne-gold text-champagne-gold hover:bg-champagne-gold/5"
-                  onClick={() => navigate("/mi-cuenta")}
+                  onClick={navigateToLogin}
                 >
                   Iniciar Sesión
                 </Button>
@@ -164,7 +124,7 @@ const RegisterPage = () => {
           <p className="text-center mt-6 text-sm text-foreground/60">
             ¿Ya tienes cuenta?{" "}
             <button
-              onClick={() => navigate("/mi-cuenta")}
+              onClick={navigateToLogin}
               className="text-champagne-gold hover:underline font-medium"
             >
               Iniciar Sesión
