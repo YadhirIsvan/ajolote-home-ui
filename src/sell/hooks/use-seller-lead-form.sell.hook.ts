@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import type { SellerLeadData } from "@/sell/actions/submit-seller-lead.actions";
 import { submitSellerLeadAction } from "@/sell/actions/submit-seller-lead.actions";
+import { getCitiesAction, type CityItem } from "@/shared/actions/get-cities.actions";
 
 const step1Schema = z.object({
   propertyType: z.string().min(1, "Selecciona un tipo de propiedad"),
@@ -37,7 +39,7 @@ const EMPTY_FORM: SellerLeadData = {
 interface UseSellerLeadFormOptions {
   onOpenChange: (open: boolean) => void;
   mode?: "default" | "add";
-  onPropertyAdded?: (data: Record<string, string>) => void;
+  onPropertyAdded?: (data: SellerLeadData) => void;
   membershipId?: number;
 }
 
@@ -51,9 +53,19 @@ export const useSellerLeadForm = ({
 
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState<SellerLeadData>(EMPTY_FORM);
+
+  const submitMutation = useMutation({
+    mutationFn: (data: SellerLeadData) => submitSellerLeadAction(data, membershipId),
+  });
+
+  const { data: citiesData } = useQuery({
+    queryKey: ["sell-cities"],
+    queryFn: getCitiesAction,
+    staleTime: 1000 * 60 * 60,
+  });
+  const cities: CityItem[] = citiesData ?? [];
 
   const progressPercentage = (currentStep / TOTAL_STEPS) * 100;
 
@@ -100,27 +112,17 @@ export const useSellerLeadForm = ({
 
   const handleSubmit = async () => {
     if (mode === "add" && onPropertyAdded) {
-      onPropertyAdded(formData as unknown as Record<string, string>);
+      onPropertyAdded(formData);
       setIsSubmitted(true);
       return;
     }
 
-    // Default mode: send to backend
-    setIsSubmitting(true);
-    try {
-      const response = await submitSellerLeadAction(formData, membershipId);
-      setIsSubmitted(response.success);
-      if (!response.success) {
-        setErrors({ submit: response.message });
-        setIsSubmitting(false);
-        return;
-      }
-    } catch (error) {
-      setErrors({ submit: "Error al enviar el formulario" });
-      setIsSubmitting(false);
+    const response = await submitMutation.mutateAsync(formData);
+    if (!response.success) {
+      setErrors({ submit: response.message });
       return;
     }
-    setIsSubmitting(false);
+    setIsSubmitted(true);
   };
 
   const handleNext = () => {
@@ -141,7 +143,7 @@ export const useSellerLeadForm = ({
     setTimeout(() => {
       setCurrentStep(1);
       setIsSubmitted(false);
-      setIsSubmitting(false);
+      submitMutation.reset();
       setFormData(EMPTY_FORM);
       setErrors({});
     }, 300);
@@ -154,8 +156,9 @@ export const useSellerLeadForm = ({
     formData,
     errors,
     isSubmitted,
-    isSubmitting,
+    isSubmitting: submitMutation.isPending,
     mode,
+    cities,
     updateFormData,
     handleNext,
     handleBack,

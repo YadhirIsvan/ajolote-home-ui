@@ -3,30 +3,18 @@ import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/shared/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select";
-import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, ArrowLeft, CircleCheckBig, Home, Building2, Castle, Warehouse, Loader2 } from "lucide-react";
+import { ArrowRight, ArrowLeft, CircleCheckBig, Loader2 } from "lucide-react";
 import { useSellerLeadForm } from "@/sell/hooks/use-seller-lead-form.sell.hook";
-import { getCitiesAction, type CityItem } from "@/shared/actions/get-cities.actions";
+import type { SellerLeadData } from "@/sell/actions/submit-seller-lead.actions";
+import { SELL_PROPERTY_TYPES } from "@/sell/constants/sell.constants";
 import { useAuth } from "@/shared/hooks/use-auth.hook";
 import { formatMoney, formatSqm, formatPhone, parseRawNumber, parseRawDecimal } from "@/shared/utils/format-input";
-
-const PROPERTY_TYPES = [
-  { id: "casa", label: "Casa", icon: Home },
-  { id: "departamento", label: "Depto", icon: Building2 },
-  { id: "terreno", label: "Terreno", icon: Castle },
-  { id: "local", label: "Local", icon: Warehouse },
-] as const;
-
-const LOCATIONS = [
-  "Orizaba", "Córdoba", "Fortín", "Ixtaczoquitlán",
-  "Río Blanco", "Nogales", "Ciudad Mendoza", "Otra",
-] as const;
 
 export interface SellerLeadFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   mode?: "default" | "add";
-  onPropertyAdded?: (data: Record<string, string>) => void;
+  onPropertyAdded?: (data: SellerLeadData) => void;
 }
 
 const SellerLeadForm = ({ open, onOpenChange, mode = "default", onPropertyAdded }: SellerLeadFormProps) => {
@@ -39,6 +27,7 @@ const SellerLeadForm = ({ open, onOpenChange, mode = "default", onPropertyAdded 
     errors,
     isSubmitted,
     isSubmitting,
+    cities,
     updateFormData,
     handleNext,
     handleBack,
@@ -47,16 +36,8 @@ const SellerLeadForm = ({ open, onOpenChange, mode = "default", onPropertyAdded 
     onOpenChange,
     mode,
     onPropertyAdded,
-    membershipId: user?.membership_id
+    membershipId: user?.membership_id,
   });
-
-  const { data: citiesData = [] } = useQuery({
-    queryKey: ["sell-cities"],
-    queryFn: getCitiesAction,
-    staleTime: 1000 * 60 * 60,
-  });
-
-  const cities: CityItem[] = citiesData ?? [];
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -110,7 +91,7 @@ const SellerLeadForm = ({ open, onOpenChange, mode = "default", onPropertyAdded 
                 <div>
                   <Label className="text-sm font-medium text-primary mb-3 block">Tipo de propiedad</Label>
                   <div className="grid grid-cols-2 gap-3">
-                    {PROPERTY_TYPES.map((type) => (
+                    {SELL_PROPERTY_TYPES.map((type) => (
                       <button
                         key={type.id}
                         type="button"

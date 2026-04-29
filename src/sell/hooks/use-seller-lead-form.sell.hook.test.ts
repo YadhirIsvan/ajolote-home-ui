@@ -1,20 +1,35 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { createElement } from "react";
 import { useSellerLeadForm } from "./use-seller-lead-form.sell.hook";
 import { submitSellerLeadAction } from "@/sell/actions/submit-seller-lead.actions";
+import type { SellerLeadData } from "@/sell/actions/submit-seller-lead.actions";
 
 vi.mock("@/sell/actions/submit-seller-lead.actions");
+vi.mock("@/shared/actions/get-cities.actions", () => ({
+  getCitiesAction: vi.fn().mockResolvedValue([]),
+}));
 
 const mockedAction = vi.mocked(submitSellerLeadAction);
 
+function makeWrapper() {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false, gcTime: 0 }, mutations: { retry: false } },
+  });
+  return ({ children }: { children: React.ReactNode }) =>
+    createElement(QueryClientProvider, { client }, children);
+}
+
 function renderForm(opts: {
   mode?: "default" | "add";
-  onPropertyAdded?: (data: Record<string, string>) => void;
+  onPropertyAdded?: (data: SellerLeadData) => void;
   membershipId?: number;
 } = {}) {
   const onOpenChange = vi.fn();
-  const { result } = renderHook(() =>
-    useSellerLeadForm({ onOpenChange, ...opts })
+  const { result } = renderHook(
+    () => useSellerLeadForm({ onOpenChange, ...opts }),
+    { wrapper: makeWrapper() },
   );
   return { result, onOpenChange };
 }
