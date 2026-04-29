@@ -16,7 +16,8 @@ export const getAppointmentSlotsAction = async (
       `${ENDPOINTS.APPOINTMENT_SLOTS}?property_id=${propertyId}&date=${date}`
     );
     return { success: true, data };
-  } catch {
+  } catch (error) {
+    console.error("[getAppointmentSlotsAction] Error al obtener horarios:", error);
     return {
       success: false,
       message: "No se pudieron obtener los horarios disponibles.",

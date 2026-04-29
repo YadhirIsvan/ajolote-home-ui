@@ -5,7 +5,6 @@ export interface GetPropertiesResponse {
   data: BuyPropertyListItem[];
   totalCount: number;
   hasMore: boolean;
-  fromFallback: boolean;
 }
 
 interface BackendPropertyItem {
@@ -104,9 +103,11 @@ export const getPropertiesAction = async (
       data: data.results.map(mapItem),
       totalCount: data.count,
       hasMore: data.next !== null,
-      fromFallback: false,
     };
-  } catch {
-    return { data: [], totalCount: 0, hasMore: false, fromFallback: true };
+  } catch (error) {
+    console.error("[getPropertiesAction] Error al obtener propiedades:", error);
+    throw new Error(
+      error instanceof Error ? error.message : "Error desconocido al obtener propiedades"
+    );
   }
 };

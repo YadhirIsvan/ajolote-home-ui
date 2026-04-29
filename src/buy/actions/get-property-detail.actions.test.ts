@@ -168,23 +168,17 @@ describe("getPropertyDetailAction — mapDetail", () => {
 // ─── getPropertyDetailAction — respuestas ─────────────────────────────────────
 
 describe("getPropertyDetailAction — respuestas", () => {
-  it("éxito retorna fromFallback: false con datos mapeados", async () => {
+  it("éxito retorna datos mapeados correctamente", async () => {
     mockedGet.mockResolvedValueOnce({ data: makeBackendDetail({ id: 42 }) } as never);
 
     const result = await getPropertyDetailAction(42);
 
-    expect(result.fromFallback).toBe(false);
     expect(result.data.id).toBe(42);
   });
 
-  it("error retorna fromFallback: true, id correcto y title de 'no encontrada'", async () => {
+  it("error de API lanza Error con mensaje descriptivo", async () => {
     mockedGet.mockRejectedValueOnce(new Error("Not Found"));
 
-    const result = await getPropertyDetailAction(99);
-
-    expect(result.fromFallback).toBe(true);
-    expect(result.data.id).toBe(99);
-    expect(result.data.title).toBe("Propiedad no encontrada");
-    expect(result.data.images).toEqual([]);
+    await expect(getPropertyDetailAction(99)).rejects.toThrow("Not Found");
   });
 });

@@ -9,9 +9,8 @@ import {
   PROPERTY_STATES,
   AMENITY_OPTIONS,
   PRICE_RANGE_LIMITS,
-  type BuyFilters,
-  type PriceOrdering,
-} from "@/buy/types/property.types";
+} from "@/buy/constants/buy.constants";
+import type { BuyFilters, PriceOrdering } from "@/buy/types/property.types";
 import type { CityItem } from "@/shared/actions/get-cities.actions";
 import { formatPrice } from "@/buy/hooks/use-buy-properties.buy.hook";
 

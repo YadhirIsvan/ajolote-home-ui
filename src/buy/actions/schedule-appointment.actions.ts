@@ -44,7 +44,8 @@ export const scheduleAppointmentAction = async (
       data,
       message: `Cita agendada para el ${data.scheduled_date} a las ${data.scheduled_time.slice(0, 5)}. Matrícula: ${data.matricula}`,
     };
-  } catch {
+  } catch (error) {
+    console.error("[scheduleAppointmentAction] Error al agendar cita:", error);
     return {
       success: false,
       message: "No se pudo agendar la cita. Intenta de nuevo.",

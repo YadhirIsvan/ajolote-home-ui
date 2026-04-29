@@ -12,6 +12,8 @@ export const getAmenitiesAction = async (): Promise<AmenityItem[]> => {
     return Array.isArray(data) ? data : [];
   } catch (error) {
     console.error("[getAmenitiesAction] Error al obtener catálogo de amenidades:", error);
-    return [];
+    throw new Error(
+      error instanceof Error ? error.message : "Error desconocido al obtener amenidades"
+    );
   }
 };

@@ -32,6 +32,8 @@ export const getFinancialProfileAction = async (): Promise<GetFinancialProfileRe
     };
   } catch (error) {
     console.error("[getFinancialProfileAction] Error al obtener perfil financiero:", error);
-    return { profile: null };
+    throw new Error(
+      error instanceof Error ? error.message : "Error desconocido al obtener perfil financiero"
+    );
   }
 };

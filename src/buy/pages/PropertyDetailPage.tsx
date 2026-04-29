@@ -12,79 +12,19 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import {
   ArrowLeft, Share2, MapPin, BedDouble, Bath, Maximize,
   CircleCheckBig, Play, ChevronDown, ChevronUp,
-  GraduationCap, ShoppingBag, Hospital, Train,
-  Waves, Dumbbell, Shield, ArrowUpDown,
-  Car, Leaf, Sun, Bookmark, MessageCircle, Phone, Copy, Mail,
+  Bookmark, MessageCircle, Phone, Copy, Mail,
   ChevronLeft, ChevronRight, X,
 } from "lucide-react";
 import { usePropertyDetail } from "@/buy/hooks/use-property-detail.buy.hook";
-import { TIME_SLOTS } from "@/buy/types/property.types";
+import { TIME_SLOTS } from "@/buy/constants/buy.constants";
+import { getPOIIcon, getAmenityIcon } from "@/buy/components/PropertyDetailIcons";
+import { extractYouTubeId } from "@/buy/utils/extract-youtube-id.utils";
 import AuthModal from "@/auth/components/AuthModal";
 import MortgageCallToAction from "@/buy/components/MortgageCallToAction";
 import MortgageCalculatorWidget from "@/buy/components/MortgageCalculatorWidget";
 import SimilarPropertiesSection from "@/buy/components/SimilarPropertiesSection";
 import PhoneConfirmationModal from "@/buy/components/PhoneConfirmationModal";
 import { useFinancialModal } from "@/shared/hooks/financial-modal.context";
-
-const getPOIIcon = (iconType: string) => {
-  switch (iconType) {
-    case "school":   return <GraduationCap className="w-4 h-4" />;
-    case "shopping": return <ShoppingBag className="w-4 h-4" />;
-    case "hospital": return <Hospital className="w-4 h-4" />;
-    case "transport": return <Train className="w-4 h-4" />;
-    default:         return <MapPin className="w-4 h-4" />;
-  }
-};
-
-const getAmenityIcon = (iconName: string) => {
-  switch (iconName) {
-    case "waves":    return <Waves className="w-5 h-5" />;
-    case "dumbbell": return <Dumbbell className="w-5 h-5" />;
-    case "shield":   return <Shield className="w-5 h-5" />;
-    case "arrow-up-down": return <ArrowUpDown className="w-5 h-5" />;
-    case "car":      return <Car className="w-5 h-5" />;
-    case "leaf":     return <Leaf className="w-5 h-5" />;
-    case "sun":      return <Sun className="w-5 h-5" />;
-    default:         return <MapPin className="w-5 h-5" />;
-  }
-};
-
-const extractYouTubeId = (input: string | undefined): string | null => {
-  if (!input) return null;
-
-  // If it's already a short ID format (11 chars of alphanumeric, dash, underscore)
-  if (/^[a-zA-Z0-9_-]{11}$/.test(input)) {
-    return input;
-  }
-
-  // Try to extract from various YouTube URL formats
-  const patterns = [
-    /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
-    /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
-    /youtube\.com\/v\/([a-zA-Z0-9_-]{11})/,
-  ];
-
-  for (const pattern of patterns) {
-    const match = input.match(pattern);
-    if (match?.[1]) {
-      return match[1];
-    }
-  }
-
-  // If no pattern matches but it looks like a URL, try one more time
-  try {
-    const url = new URL(input);
-    const videoId = url.searchParams.get('v');
-    if (videoId && /^[a-zA-Z0-9_-]{11}$/.test(videoId)) {
-      return videoId;
-    }
-  } catch {
-    // Not a valid URL, return input as-is and let YouTube handle the error
-  }
-
-  // Return as-is and let YouTube give an error message
-  return input;
-};
 
 const PropertyDetailPage = () => {
   const { openFinancialModal } = useFinancialModal();

@@ -128,7 +128,7 @@ describe("getPropertiesAction — query params", () => {
 // ─── Respuestas ───────────────────────────────────────────────────────────────
 
 describe("getPropertiesAction — respuestas de la API", () => {
-  it("éxito retorna fromFallback: false, totalCount y hasMore: true cuando next !== null", async () => {
+  it("éxito retorna totalCount y hasMore: true cuando next !== null", async () => {
     mockedGet.mockResolvedValueOnce(
       makePaginatedResponse(
         [makeBackendItem(), makeBackendItem({ id: 2 })],
@@ -138,7 +138,6 @@ describe("getPropertiesAction — respuestas de la API", () => {
 
     const result = await getPropertiesAction({ limit: 20 });
 
-    expect(result.fromFallback).toBe(false);
     expect(result.totalCount).toBe(50);
     expect(result.hasMore).toBe(true);
     expect(result.data).toHaveLength(2);
@@ -154,14 +153,9 @@ describe("getPropertiesAction — respuestas de la API", () => {
     expect(hasMore).toBe(false);
   });
 
-  it("error retorna { data: [], totalCount: 0, hasMore: false, fromFallback: true }", async () => {
+  it("error de API lanza Error con mensaje descriptivo", async () => {
     mockedGet.mockRejectedValueOnce(new Error("Server Error"));
 
-    const result = await getPropertiesAction({});
-
-    expect(result.fromFallback).toBe(true);
-    expect(result.data).toHaveLength(0);
-    expect(result.totalCount).toBe(0);
-    expect(result.hasMore).toBe(false);
+    await expect(getPropertiesAction({})).rejects.toThrow("Server Error");
   });
 });

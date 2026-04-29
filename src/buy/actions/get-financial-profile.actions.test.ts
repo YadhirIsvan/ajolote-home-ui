@@ -67,11 +67,9 @@ describe("getFinancialProfileAction", () => {
     expect(profile).toBeNull();
   });
 
-  it("error de API retorna { profile: null }", async () => {
+  it("error de API lanza Error con mensaje descriptivo", async () => {
     mockedGet.mockRejectedValueOnce(new Error("Unauthorized"));
 
-    const { profile } = await getFinancialProfileAction();
-
-    expect(profile).toBeNull();
+    await expect(getFinancialProfileAction()).rejects.toThrow("Unauthorized");
   });
 });

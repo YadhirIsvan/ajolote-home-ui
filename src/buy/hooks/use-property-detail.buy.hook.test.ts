@@ -81,7 +81,7 @@ function setupDefaultMocks() {
     user: null,
     syncAuthState: vi.fn().mockResolvedValue(undefined),
   } as unknown as ReturnType<typeof useAuth>);
-  mockedGetDetail.mockResolvedValue({ data: MOCK_PROPERTY, fromFallback: false });
+  mockedGetDetail.mockResolvedValue({ data: MOCK_PROPERTY });
   mockedGetFinancial.mockResolvedValue({ profile: null });
   mockedCheckSaved.mockResolvedValue({ isSaved: false });
   mockedGetSlots.mockResolvedValue({ success: true, data: { date: "", agent: { name: "" }, available_slots: [], slot_duration_minutes: 30 } });

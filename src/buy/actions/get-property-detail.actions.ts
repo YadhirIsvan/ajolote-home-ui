@@ -3,7 +3,6 @@ import type { PropertyDetailData, SimilarProperty } from "@/buy/types/property.t
 
 export interface GetPropertyDetailResponse {
   data: PropertyDetailData;
-  fromFallback: boolean;
 }
 
 interface BackendNearbyPlace {
@@ -128,29 +127,11 @@ export const getPropertyDetailAction = async (
     const { data } = await buyApi.get<BackendPropertyDetail>(
       ENDPOINTS.PROPERTY_DETAIL(id)
     );
-    return { data: mapDetail(data), fromFallback: false };
+    return { data: mapDetail(data) };
   } catch (error) {
     console.error("[getPropertyDetailAction] Error al obtener detalle de propiedad:", error);
-    return {
-      data: {
-        id,
-        images: [],
-        price: "",
-        title: "Propiedad no encontrada",
-        address: "",
-        beds: 0,
-        baths: 0,
-        sqm: 0,
-        landSqm: undefined,
-        verified: false,
-        status: "",
-        description: "",
-        coordinates: { lat: 0, lng: 0 },
-        amenities: [],
-        agent: { name: "", photo: "", phone: "" },
-        similarProperties: [],
-      },
-      fromFallback: true,
-    };
+    throw new Error(
+      error instanceof Error ? error.message : "Error desconocido al obtener propiedad"
+    );
   }
 };

@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
 import { getPropertiesAction } from "@/buy/actions/get-properties.actions";
 import { getCitiesAction, type CityItem } from "@/shared/actions/get-cities.actions";
 import { naturalSearchAction } from "@/buy/actions/natural-search.actions";
@@ -8,35 +8,26 @@ import { useAuth } from "@/shared/hooks/auth.context";
 import {
   DEFAULT_BUY_FILTERS,
   PRICE_RANGE_LIMITS,
-  type BuyFilters,
-  type BuyPropertyListItem,
-  type PriceOrdering,
+} from "@/buy/constants/buy.constants";
+import type {
+  BuyFilters,
+  BuyPropertyListItem,
+  PriceOrdering,
 } from "@/buy/types/property.types";
-import type { PropertyStatus } from "@/shared/components/custom/PropertyCard";
+import { mapStateToStatus } from "@/buy/utils/map-state-to-status.utils";
+import { formatBuyPrice } from "@/buy/utils/format-price.utils";
 
+export { formatBuyPrice as formatPrice };
 export const BUY_PROPERTIES_QUERY_KEY = "buy-properties";
 const PAGE_SIZE = 20;
-
-const mapStateToStatus = (state: string): PropertyStatus => {
-  if (state === "used") return "oportunidad";
-  return "disponible";
-};
-
-export const formatPrice = (value: number): string =>
-  new Intl.NumberFormat("es-MX", {
-    style: "currency",
-    currency: "MXN",
-    maximumFractionDigits: 0,
-  }).format(value);
 
 export const useBuyProperties = () => {
   const [searchParams] = useSearchParams();
   const { isAuthenticated } = useAuth();
   const [filters, setFilters] = useState<BuyFilters>(DEFAULT_BUY_FILTERS);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [isNaturalSearching, setIsNaturalSearching] = useState(false);
-  const [naturalSearchError, setNaturalSearchError] = useState<string | null>(null);
   const [naturalSearchQuery, setNaturalSearchQuery] = useState<string>("");
+  const [naturalSearchError, setNaturalSearchError] = useState<string | null>(null);
 
   // Leer parámetro zone de la URL al cargar el componente
   useEffect(() => {
@@ -183,15 +174,19 @@ export const useBuyProperties = () => {
     []
   );
 
+  // ── Natural search via useMutation ────────────────────────────────────────────
+
+  const naturalSearchMutation = useMutation({
+    mutationFn: (query: string) => naturalSearchAction(query),
+  });
+
   const handleNaturalSearch = useCallback(async (query: string) => {
     const trimmed = query.trim();
     if (!trimmed) return;
 
-    setIsNaturalSearching(true);
     setNaturalSearchError(null);
-
     try {
-      const result = await naturalSearchAction(trimmed);
+      const result = await naturalSearchMutation.mutateAsync(trimmed);
       setNaturalSearchQuery(trimmed);
       setFilters((prev) => ({
         ...prev,
@@ -211,16 +206,15 @@ export const useBuyProperties = () => {
       }));
     } catch {
       setNaturalSearchError("No se pudo procesar tu búsqueda. Intenta de nuevo.");
-    } finally {
-      setIsNaturalSearching(false);
     }
-  }, []);
+  }, [naturalSearchMutation]);
 
   const clearNaturalSearch = useCallback(() => {
     setNaturalSearchQuery("");
     setNaturalSearchError(null);
+    naturalSearchMutation.reset();
     setFilters(DEFAULT_BUY_FILTERS);
-  }, []);
+  }, [naturalSearchMutation]);
 
   return {
     filteredProperties,
@@ -245,8 +239,9 @@ export const useBuyProperties = () => {
     hasNextPage,
     handleNaturalSearch,
     clearNaturalSearch,
-    isNaturalSearching,
+    isNaturalSearching: naturalSearchMutation.isPending,
     naturalSearchError,
     naturalSearchQuery,
+    isAuthenticated,
   };
 };

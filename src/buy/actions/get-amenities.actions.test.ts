@@ -33,11 +33,9 @@ describe("getAmenitiesAction", () => {
     expect(result).toEqual([]);
   });
 
-  it("error de API retorna []", async () => {
+  it("error de API lanza Error con mensaje descriptivo", async () => {
     mockedGet.mockRejectedValueOnce(new Error("Network Error"));
 
-    const result = await getAmenitiesAction();
-
-    expect(result).toEqual([]);
+    await expect(getAmenitiesAction()).rejects.toThrow("Network Error");
   });
 });

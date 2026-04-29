@@ -2,8 +2,9 @@ import { Link } from "react-router-dom";
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
 import { MapPin, BedDouble, Bath, Maximize } from "lucide-react";
+import type { PropertyStatus } from "@/shared/types/property-status.types";
 
-export type PropertyStatus = "disponible" | "preventa" | "oportunidad" | "vendida";
+export type { PropertyStatus };
 
 interface PropertyCardProps {
   id: number;

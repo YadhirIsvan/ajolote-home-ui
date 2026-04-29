@@ -45,7 +45,7 @@ describe("naturalSearchAction", () => {
     expect(result).toEqual(MOCK_RESULT);
   });
 
-  it("propaga el error sin capturarlo (sin try/catch)", async () => {
+  it("error de API lanza Error con el mensaje original", async () => {
     mockedPost.mockRejectedValueOnce(new Error("AI service unavailable"));
 
     await expect(naturalSearchAction("algo")).rejects.toThrow("AI service unavailable");

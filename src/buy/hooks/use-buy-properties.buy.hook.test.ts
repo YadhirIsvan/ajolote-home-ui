@@ -10,11 +10,14 @@ import {
 import { getPropertiesAction } from "@/buy/actions/get-properties.actions";
 import { getCitiesAction } from "@/shared/actions/get-cities.actions";
 import { naturalSearchAction } from "@/buy/actions/natural-search.actions";
-import { DEFAULT_BUY_FILTERS, PRICE_RANGE_LIMITS } from "@/buy/types/property.types";
+import { DEFAULT_BUY_FILTERS, PRICE_RANGE_LIMITS } from "@/buy/constants/buy.constants";
 
 vi.mock("@/buy/actions/get-properties.actions");
 vi.mock("@/shared/actions/get-cities.actions");
 vi.mock("@/buy/actions/natural-search.actions");
+vi.mock("@/shared/hooks/auth.context", () => ({
+  useAuth: vi.fn(() => ({ isAuthenticated: false, user: null })),
+}));
 
 const mockedGetProperties = vi.mocked(getPropertiesAction);
 const mockedGetCities = vi.mocked(getCitiesAction);
@@ -118,7 +121,7 @@ describe("useBuyProperties — filtros", () => {
   it("activeFiltersCount incrementa al activar priceRange fuera del default", () => {
     const { result } = renderHook(() => useBuyProperties(), { wrapper: makeWrapper() });
 
-    act(() => result.current.setPriceRange([500000, PRICE_RANGE_LIMITS.max]));
+    act(() => result.current.setPriceRange([1000000, PRICE_RANGE_LIMITS.max]));
 
     expect(result.current.activeFiltersCount).toBeGreaterThan(0);
   });

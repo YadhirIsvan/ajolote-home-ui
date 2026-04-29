@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getPropertyDetailAction } from "@/buy/actions/get-property-detail.actions";
 import { scheduleAppointmentAction } from "@/buy/actions/schedule-appointment.actions";
 import { getAppointmentSlotsAction } from "@/buy/actions/get-appointment-slots.actions";
@@ -10,17 +10,15 @@ import { checkSavedPropertyAction } from "@/shared/actions/check-saved-property.
 import { toggleSavedPropertyAction } from "@/shared/actions/toggle-saved-property.actions";
 import { updateUserPhoneAction } from "@/shared/actions/update-user-phone.actions";
 import { useAuth } from "@/shared/hooks/auth.context";
-import type {
-  AppointmentResponse,
-  AppointmentSlot,
-} from "@/buy/types/property.types";
+import type { AppointmentResponse, AppointmentSlot } from "@/buy/types/property.types";
 
 export const PROPERTY_DETAIL_QUERY_KEY = "buy-property-detail";
-export const APPOINTMENT_SLOTS_QUERY_KEY = "buy-appointment-slots";
+const SAVED_PROPERTY_QUERY_KEY = "buy-saved-property";
 
 export const usePropertyDetail = () => {
   const { id } = useParams<{ id: string }>();
   const numId = id ? parseInt(id, 10) : NaN;
+  const queryClient = useQueryClient();
 
   const { isAuthenticated, user, syncAuthState } = useAuth();
 
@@ -36,14 +34,10 @@ export const usePropertyDetail = () => {
   const [successData, setSuccessData] = useState<AppointmentResponse | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
-  const [isScheduling, setIsScheduling] = useState(false);
   const [availableSlots, setAvailableSlots] = useState<AppointmentSlot[]>([]);
-  const [slotsLoading, setSlotsLoading] = useState(false);
   const [phoneFlowError, setPhoneFlowError] = useState<string | null>(null);
 
   // ── Saved property state ──────────────────────────────────────────
-  const [isSaved, setIsSaved] = useState(false);
-  const [savingInProgress, setSavingInProgress] = useState(false);
   const [showSaveAuthModal, setShowSaveAuthModal] = useState(false);
 
   // ── Agent call state ──────────────────────────────────────────────
@@ -57,6 +51,7 @@ export const usePropertyDetail = () => {
     enabled: isAuthenticated,
     select: (result) => result.profile,
     staleTime: 0,
+    retry: false,
   });
   const financialProfile = financialProfileData ?? null;
 
@@ -70,6 +65,15 @@ export const usePropertyDetail = () => {
 
   const property = data?.data ?? null;
 
+  // ── Saved property query ──────────────────────────────────────────
+  const { data: savedPropertyData } = useQuery({
+    queryKey: [SAVED_PROPERTY_QUERY_KEY, numId],
+    queryFn: () => checkSavedPropertyAction(numId),
+    enabled: !!property?.id && isAuthenticated && !isNaN(numId),
+    staleTime: 0,
+  });
+  const isSaved = savedPropertyData?.isSaved ?? false;
+
   // ── Derived display values ────────────────────────────────────────
   const truncatedDescription = property?.description
     ? property.description.slice(0, 250) + "..."
@@ -78,27 +82,48 @@ export const usePropertyDetail = () => {
   const nearbyPOIs = property?.nearbyPlaces ?? [];
   const hasVideoTour = !!(property?.videoId || property?.videoImg);
 
-  // ── Fetch appointment slots when date changes ─────────────────────
+  // ── Mutations ────────────────────────────────────────────────────
+
+  const slotsMutation = useMutation({
+    mutationFn: ({ propertyId, date }: { propertyId: number; date: string }) =>
+      getAppointmentSlotsAction(propertyId, date),
+  });
+
+  const updatePhoneMutation = useMutation({
+    mutationFn: (phone: string) => updateUserPhoneAction({ phone }),
+  });
+
+  const scheduleAppointmentMutation = useMutation({
+    mutationFn: (params: { propertyId: number; data: Parameters<typeof scheduleAppointmentAction>[1] }) =>
+      scheduleAppointmentAction(params.propertyId, params.data),
+  });
+
+  const toggleSavedPropertyMutation = useMutation({
+    mutationFn: ({ propertyId, currentlySaved }: { propertyId: number; currentlySaved: boolean }) =>
+      toggleSavedPropertyAction(propertyId, currentlySaved),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [SAVED_PROPERTY_QUERY_KEY, numId] });
+    },
+  });
+
+  const isScheduling = updatePhoneMutation.isPending || scheduleAppointmentMutation.isPending;
+  const slotsLoading = slotsMutation.isPending;
+  const savingInProgress = toggleSavedPropertyMutation.isPending;
+
+  // ── Handlers ─────────────────────────────────────────────────────
+
   const handleDateSelect = async (date: Date) => {
     setSelectedDate(date);
     setSelectedTime(null);
-    setSlotsLoading(true);
-    try {
-      const dateStr = date.toISOString().split("T")[0];
-      const result = await getAppointmentSlotsAction(numId, dateStr);
-      if (result.success && result.data) {
-        setAvailableSlots(result.data.available_slots || []);
-      } else {
-        setAvailableSlots([]);
-      }
-    } catch {
+    const dateStr = date.toISOString().split("T")[0];
+    const result = await slotsMutation.mutateAsync({ propertyId: numId, date: dateStr });
+    if (result.success && result.data) {
+      setAvailableSlots(result.data.available_slots || []);
+    } else {
       setAvailableSlots([]);
-    } finally {
-      setSlotsLoading(false);
     }
   };
 
-  // ── Schedule / call handlers ──────────────────────────────────────
   const handleScheduleClick = () => {
     if (!isAuthenticated) {
       setShowAuthModal(true);
@@ -145,14 +170,11 @@ export const usePropertyDetail = () => {
     if (!selectedDate || !selectedTime || isNaN(numId)) return;
 
     setPhoneFlowError(null);
-    setIsScheduling(true);
 
-    // Persist phone if it changed (or if user didn't have one before)
     if (finalPhone !== (user?.phone ?? "")) {
-      const updateResult = await updateUserPhoneAction({ phone: finalPhone });
+      const updateResult = await updatePhoneMutation.mutateAsync(finalPhone);
       if (!updateResult.success) {
         setPhoneFlowError(updateResult.message ?? "No se pudo guardar el teléfono.");
-        setIsScheduling(false);
         return;
       }
       await syncAuthState();
@@ -164,15 +186,16 @@ export const usePropertyDetail = () => {
       "";
     const dateStr = selectedDate.toISOString().split("T")[0];
 
-    const result = await scheduleAppointmentAction(numId, {
-      date: dateStr,
-      time: selectedTime,
-      name,
-      phone: finalPhone,
-      email: user?.email ?? "",
+    const result = await scheduleAppointmentMutation.mutateAsync({
+      propertyId: numId,
+      data: {
+        date: dateStr,
+        time: selectedTime,
+        name,
+        phone: finalPhone,
+        email: user?.email ?? "",
+      },
     });
-
-    setIsScheduling(false);
 
     if (result.success && result.data) {
       setShowPhoneConfirmModal(false);
@@ -188,10 +211,10 @@ export const usePropertyDetail = () => {
   // ── Saved property handlers ───────────────────────────────────────
   const performToggleSave = async () => {
     if (!property?.id || savingInProgress) return;
-    setSavingInProgress(true);
-    const result = await toggleSavedPropertyAction(property.id, isSaved);
-    setIsSaved(result.isSaved);
-    setSavingInProgress(false);
+    await toggleSavedPropertyMutation.mutateAsync({
+      propertyId: property.id,
+      currentlySaved: isSaved,
+    });
   };
 
   const handleToggleSave = async () => {
@@ -201,15 +224,6 @@ export const usePropertyDetail = () => {
     }
     await performToggleSave();
   };
-
-  useEffect(() => {
-    if (property?.id && isAuthenticated) {
-      checkSavedPropertyAction(property.id).then(({ isSaved: saved }) => {
-        setIsSaved(saved);
-      });
-    }
-  }, [property?.id, isAuthenticated]);
-
 
   return {
     property,
