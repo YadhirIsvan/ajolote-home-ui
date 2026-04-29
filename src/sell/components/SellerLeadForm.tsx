@@ -78,10 +78,10 @@ const SellerLeadForm = ({ open, onOpenChange, mode = "default", onPropertyAdded 
               <CircleCheckBig className="w-10 h-10 text-[hsl(var(--champagne-gold))]" />
             </div>
             <h2 className="text-2xl md:text-3xl font-bold text-primary mb-4">
-              ¡Recibido, Champ!
+              ¡Recibido! Hemos registrado los datos de tu propiedad.
             </h2>
             <p className="text-muted-foreground text-lg mb-8">
-              Un asesor experto te contactará en menos de 24 horas.
+              Un asesor experto revisará la información y te contactará pronto para dar el siguiente paso.
             </p>
             <Button
               onClick={handleClose}
