@@ -4,7 +4,8 @@ import { Card, CardContent } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import { Badge } from "@/shared/components/ui/badge";
 import { useIsMobile } from "@/shared/hooks/use-mobile.hook";
-import SalesPipeline, { pipelineStages } from "@/myAccount/agent/components/SalesPipeline";
+import SalesPipeline from "@/myAccount/agent/components/SalesPipeline";
+import { PIPELINE_STAGE_LABELS } from "@/myAccount/agent/constants/agent.constants";
 import VerticalPipeline from "@/myAccount/agent/components/VerticalPipeline";
 import PipelineActionSheet from "@/myAccount/agent/components/PipelineActionSheet";
 import type { AgentLead } from "@/myAccount/agent/types/agent.types";
@@ -47,7 +48,7 @@ const LeadDetailCard = ({ lead, onBack, onUploadDocs, onStageChange }: LeadDetai
     }
   };
 
-  const currentStageName = pipelineStages.find((s) => s.id === lead.stage)?.label || "";
+  const currentStageName = PIPELINE_STAGE_LABELS[lead.stage] ?? "";
 
   return (
     <div className="space-y-5 px-0">

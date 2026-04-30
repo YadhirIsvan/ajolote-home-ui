@@ -4,7 +4,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/shared/compo
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/shared/components/ui/drawer";
 import { Badge } from "@/shared/components/ui/badge";
 import { cn } from "@/lib/utils";
-import type { AgentAppointment, AppointmentStatus } from "@/myAccount/agent/types/agent.types";
+import type { AgentAppointment } from "@/myAccount/agent/types/agent.types";
+import {
+  APPOINTMENT_STATUS_ORDER,
+  APPOINTMENT_STATUS_LABELS,
+} from "@/myAccount/agent/constants/agent.constants";
 
 interface AppointmentStatusSheetProps {
   isOpen: boolean;
@@ -14,24 +18,6 @@ interface AppointmentStatusSheetProps {
   onRevert: () => void;
   isMobile: boolean;
 }
-
-const statusLabels: Record<AppointmentStatus, string> = {
-  programada: "Programada",
-  confirmada: "Confirmada",
-  en_progreso: "En Progreso",
-  completada: "Completada",
-  cancelada: "Cancelada",
-  reagendada: "Reagendada",
-};
-
-const statusOrder: AppointmentStatus[] = [
-  "programada",
-  "confirmada",
-  "en_progreso",
-  "completada",
-  "cancelada",
-  "reagendada",
-];
 
 const AppointmentStatusSheet = ({
   isOpen,
@@ -43,12 +29,12 @@ const AppointmentStatusSheet = ({
 }: AppointmentStatusSheetProps) => {
   if (!appointment) return null;
 
-  const currentIndex = statusOrder.indexOf(appointment.status);
+  const currentIndex = APPOINTMENT_STATUS_ORDER.indexOf(appointment.status);
   const canAdvance = currentIndex < 3 && currentIndex >= 0;
   const canRevert = currentIndex > 0;
 
-  const nextStatus = canAdvance ? statusLabels[statusOrder[currentIndex + 1]] : null;
-  const prevStatus = canRevert ? statusLabels[statusOrder[currentIndex - 1]] : null;
+  const nextStatus = canAdvance ? APPOINTMENT_STATUS_LABELS[APPOINTMENT_STATUS_ORDER[currentIndex + 1]] : null;
+  const prevStatus = canRevert ? APPOINTMENT_STATUS_LABELS[APPOINTMENT_STATUS_ORDER[currentIndex - 1]] : null;
 
   const content = (
     <div className="space-y-6">
@@ -89,7 +75,7 @@ const AppointmentStatusSheet = ({
       <div className="text-center">
         <p className="text-sm text-foreground/60 mb-2">Estado Actual</p>
         <Badge className="px-4 py-2 text-base bg-champagne-gold/10 text-champagne-gold border border-champagne-gold/30">
-          {statusLabels[appointment.status]}
+          {APPOINTMENT_STATUS_LABELS[appointment.status]}
         </Badge>
       </div>
 

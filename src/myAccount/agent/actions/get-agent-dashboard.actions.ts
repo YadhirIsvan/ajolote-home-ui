@@ -11,12 +11,14 @@ const mapDashboard = (raw: BackendAgentDashboard): AgentDashboard => ({
   },
 });
 
-export const getAgentDashboardAction = async (): Promise<AgentDashboard | null> => {
+export const getAgentDashboardAction = async (): Promise<AgentDashboard> => {
   try {
     const { data } = await agentApi.getDashboard();
     return mapDashboard(data);
   } catch (error) {
     console.error("[getAgentDashboardAction] Error al obtener dashboard del agente:", error);
-    return null;
+    throw new Error(
+      error instanceof Error ? error.message : "Error al obtener el dashboard del agente"
+    );
   }
 };

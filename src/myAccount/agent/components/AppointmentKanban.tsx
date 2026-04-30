@@ -7,20 +7,12 @@ import { useIsMobile } from "@/shared/hooks/use-mobile.hook";
 import AppointmentStatusSheet from "@/myAccount/agent/components/AppointmentStatusSheet";
 import EmptyState from "@/myAccount/agent/components/EmptyState";
 import type { AgentAppointment, AppointmentStatus } from "@/myAccount/agent/types/agent.types";
+import { APPOINTMENT_STATUS_ORDER } from "@/myAccount/agent/constants/agent.constants";
 
 interface AppointmentKanbanProps {
   appointments: AgentAppointment[];
   onStatusChange: (id: number, newStatus: AppointmentStatus) => void;
 }
-
-const statusOrder: AppointmentStatus[] = [
-  "programada",
-  "confirmada",
-  "en_progreso",
-  "completada",
-  "cancelada",
-  "reagendada",
-];
 
 const statusConfig: Record<
   AppointmentStatus,
@@ -108,9 +100,9 @@ const AppointmentKanban = ({ appointments, onStatusChange }: AppointmentKanbanPr
 
   const handleAdvanceStatus = () => {
     if (!selectedAppointment) return;
-    const currentIndex = statusOrder.indexOf(selectedAppointment.status);
-    if (currentIndex < statusOrder.length - 1 && currentIndex < 3) {
-      onStatusChange(selectedAppointment.id, statusOrder[currentIndex + 1]);
+    const currentIndex = APPOINTMENT_STATUS_ORDER.indexOf(selectedAppointment.status);
+    if (currentIndex < APPOINTMENT_STATUS_ORDER.length - 1 && currentIndex < 3) {
+      onStatusChange(selectedAppointment.id, APPOINTMENT_STATUS_ORDER[currentIndex + 1]);
     }
     setIsSheetOpen(false);
     setSelectedAppointment(null);
@@ -118,20 +110,20 @@ const AppointmentKanban = ({ appointments, onStatusChange }: AppointmentKanbanPr
 
   const handleRevertStatus = () => {
     if (!selectedAppointment) return;
-    const currentIndex = statusOrder.indexOf(selectedAppointment.status);
+    const currentIndex = APPOINTMENT_STATUS_ORDER.indexOf(selectedAppointment.status);
     if (currentIndex > 0) {
-      onStatusChange(selectedAppointment.id, statusOrder[currentIndex - 1]);
+      onStatusChange(selectedAppointment.id, APPOINTMENT_STATUS_ORDER[currentIndex - 1]);
     }
     setIsSheetOpen(false);
     setSelectedAppointment(null);
   };
 
   const handleSwipe = (direction: "left" | "right") => {
-    const currentIndex = statusOrder.indexOf(activeTab);
-    if (direction === "right" && currentIndex < statusOrder.length - 1) {
-      setActiveTab(statusOrder[currentIndex + 1]);
+    const currentIndex = APPOINTMENT_STATUS_ORDER.indexOf(activeTab);
+    if (direction === "right" && currentIndex < APPOINTMENT_STATUS_ORDER.length - 1) {
+      setActiveTab(APPOINTMENT_STATUS_ORDER[currentIndex + 1]);
     } else if (direction === "left" && currentIndex > 0) {
-      setActiveTab(statusOrder[currentIndex - 1]);
+      setActiveTab(APPOINTMENT_STATUS_ORDER[currentIndex - 1]);
     }
   };
 
@@ -148,7 +140,7 @@ const AppointmentKanban = ({ appointments, onStatusChange }: AppointmentKanbanPr
       <div className="space-y-4">
         <div className="relative">
           <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory">
-            {statusOrder.map((status) => {
+            {APPOINTMENT_STATUS_ORDER.map((status) => {
               const config = statusConfig[status];
               const count = getByStatus(status).length;
               const Icon = config.icon;
@@ -184,10 +176,10 @@ const AppointmentKanban = ({ appointments, onStatusChange }: AppointmentKanbanPr
           <div className="flex justify-between mt-3">
             <button
               onClick={() => handleSwipe("left")}
-              disabled={statusOrder.indexOf(activeTab) === 0}
+              disabled={APPOINTMENT_STATUS_ORDER.indexOf(activeTab) === 0}
               className={cn(
                 "p-2 rounded-full transition-all",
-                statusOrder.indexOf(activeTab) === 0
+                APPOINTMENT_STATUS_ORDER.indexOf(activeTab) === 0
                   ? "opacity-30"
                   : "bg-muted hover:bg-champagne-gold/10"
               )}
@@ -195,7 +187,7 @@ const AppointmentKanban = ({ appointments, onStatusChange }: AppointmentKanbanPr
               <ChevronLeft className="w-5 h-5 text-foreground/60" />
             </button>
             <div className="flex gap-1.5">
-              {statusOrder.map((status) => (
+              {APPOINTMENT_STATUS_ORDER.map((status) => (
                 <div
                   key={status}
                   className={cn(
@@ -207,10 +199,10 @@ const AppointmentKanban = ({ appointments, onStatusChange }: AppointmentKanbanPr
             </div>
             <button
               onClick={() => handleSwipe("right")}
-              disabled={statusOrder.indexOf(activeTab) === statusOrder.length - 1}
+              disabled={APPOINTMENT_STATUS_ORDER.indexOf(activeTab) === APPOINTMENT_STATUS_ORDER.length - 1}
               className={cn(
                 "p-2 rounded-full transition-all",
-                statusOrder.indexOf(activeTab) === statusOrder.length - 1
+                APPOINTMENT_STATUS_ORDER.indexOf(activeTab) === APPOINTMENT_STATUS_ORDER.length - 1
                   ? "opacity-30"
                   : "bg-muted hover:bg-champagne-gold/10"
               )}
@@ -252,7 +244,7 @@ const AppointmentKanban = ({ appointments, onStatusChange }: AppointmentKanbanPr
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-6 gap-4 min-h-[500px]">
-        {statusOrder.map((status) => {
+        {APPOINTMENT_STATUS_ORDER.map((status) => {
           const config = statusConfig[status];
           const columnAppointments = getByStatus(status);
           const Icon = config.icon;

@@ -23,7 +23,7 @@ describe("getAgentDashboardAction — mapeo", () => {
     expect(result!.stats.activeLeads).toBe(12);
     expect(result!.stats.todayAppointments).toBe(3);
     expect(result!.stats.monthSales).toBe(2);
-  });
+    });
 
   it("preserva campos del agente sin transformar", async () => {
     mockedGetDashboard.mockResolvedValueOnce({ data: BACKEND_DASHBOARD } as never);
@@ -38,9 +38,8 @@ describe("getAgentDashboardAction — mapeo", () => {
 });
 
 describe("getAgentDashboardAction — error", () => {
-  it("retorna null en caso de error", async () => {
+  it("lanza un Error en caso de error", async () => {
     mockedGetDashboard.mockRejectedValueOnce(new Error("Network error"));
-    const result = await getAgentDashboardAction();
-    expect(result).toBeNull();
+    await expect(getAgentDashboardAction()).rejects.toThrow("Network error");
   });
 });

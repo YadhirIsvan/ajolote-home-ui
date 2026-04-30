@@ -3,23 +3,12 @@ import { Card, CardContent } from "@/shared/components/ui/card";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import type { AgentLead } from "@/myAccount/agent/types/agent.types";
+import { PIPELINE_STAGE_LABELS } from "@/myAccount/agent/constants/agent.constants";
 
 interface LeadCardProps {
   lead: AgentLead;
   onClick: () => void;
 }
-
-const stageLabels: Record<number, string> = {
-  1: "Lead",
-  2: "Visita",
-  3: "Interés",
-  4: "Pre-Aprob",
-  5: "Avalúo",
-  6: "Crédito",
-  7: "Docs Finales",
-  8: "Escrituras",
-  9: "Cerrado",
-};
 
 const interestConfig = {
   alta: { icon: "★★★", color: "text-green-600" },
@@ -29,7 +18,7 @@ const interestConfig = {
 
 const LeadCard = ({ lead, onClick }: LeadCardProps) => {
   const interest = interestConfig[lead.interestLevel || "media"];
-  const stageLabel = stageLabels[lead.stage] || `Etapa ${lead.stage}`;
+  const stageLabel = PIPELINE_STAGE_LABELS[lead.stage] ?? `Etapa ${lead.stage}`;
 
   return (
     <Card className="border border-slate-100 bg-white shadow-sm hover:shadow-md hover:border-champagne-gold/30 transition-all duration-200 active:scale-[0.98]">

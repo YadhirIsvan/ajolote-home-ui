@@ -19,6 +19,8 @@ export const getAgentPropertyLeadsAction = async (
     return data.results.map(mapLead);
   } catch (error) {
     console.error("[getAgentPropertyLeadsAction] Error al obtener leads del agente:", error);
-    return [];
+    throw new Error(
+      error instanceof Error ? error.message : "Error al obtener los leads del agente"
+    );
   }
 };

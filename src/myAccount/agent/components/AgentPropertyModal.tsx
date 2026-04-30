@@ -1,16 +1,14 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Upload, FileText, Home, Users, RefreshCw } from "lucide-react";
+import { Upload, Home, Users, RefreshCw } from "lucide-react";
 import { Dialog, DialogContent } from "@/shared/components/ui/dialog";
 import { Button } from "@/shared/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 import { Badge } from "@/shared/components/ui/badge";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { ScrollArea } from "@/shared/components/ui/scroll-area";
-import { useIsMobile } from "@/shared/hooks/use-mobile.hook";
 import LeadDetailCard from "@/myAccount/agent/components/LeadDetailCard";
 import LeadCard from "@/myAccount/agent/components/LeadCard";
-import { getAgentPropertyLeadsAction } from "@/myAccount/agent/actions/get-agent-property-leads.actions";
+import { useAgentPropertyLeads } from "@/myAccount/agent/hooks/use-agent-property-leads.agent.hook";
 import type { AgentProperty, AgentLead } from "@/myAccount/agent/types/agent.types";
 
 interface AgentPropertyModalProps {
@@ -46,22 +44,11 @@ const formatStatusLabel = (displayStatus: string): string => {
 
 const AgentPropertyModal = ({ isOpen, onClose, property }: AgentPropertyModalProps) => {
   const [selectedLead, setSelectedLead] = useState<AgentLead | null>(null);
-  const [localLeadUpdates, setLocalLeadUpdates] = useState<Record<number, number>>({});
   const [isDragging, setIsDragging] = useState(false);
-  const isMobile = useIsMobile();
 
-  const leadsQuery = useQuery({
-    queryKey: ["agent-property-leads", property?.id],
-    queryFn: () => getAgentPropertyLeadsAction(property!.id),
-    enabled: !!property?.id && isOpen,
-    staleTime: 0, // Considera datos stale inmediatamente
-    refetchInterval: 5000, // Refetch cada 5 segundos
-  });
-
-  const leads: AgentLead[] = (leadsQuery.data ?? []).map((lead) =>
-    localLeadUpdates[lead.id] !== undefined
-      ? { ...lead, stage: localLeadUpdates[lead.id] }
-      : lead
+  const { leads, refetchLeads, handleLeadStageUpdate } = useAgentPropertyLeads(
+    property?.id,
+    isOpen
   );
 
   if (!property) return null;
@@ -79,7 +66,7 @@ const AgentPropertyModal = ({ isOpen, onClose, property }: AgentPropertyModalPro
   };
 
   const handleStageChange = (leadId: number, newStage: number, _note: string) => {
-    setLocalLeadUpdates((prev) => ({ ...prev, [leadId]: newStage }));
+    handleLeadStageUpdate(leadId, newStage);
     if (selectedLead?.id === leadId) {
       setSelectedLead((prev) => (prev ? { ...prev, stage: newStage } : null));
     }
@@ -204,7 +191,7 @@ const AgentPropertyModal = ({ isOpen, onClose, property }: AgentPropertyModalPro
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => leadsQuery.refetch()}
+                          onClick={() => refetchLeads()}
                           className="gap-2 border-champagne-gold/30 hover:border-champagne-gold hover:bg-champagne-gold/5"
                         >
                           <RefreshCw className="w-4 h-4" />

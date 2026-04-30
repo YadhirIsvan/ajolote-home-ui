@@ -7,7 +7,7 @@ interface SalesPipelineProps {
   interactive?: boolean;
 }
 
-export const pipelineStages = [
+const pipelineStages = [
   { id: 1, label: "Lead", shortLabel: "Lead" },
   { id: 2, label: "Visita", shortLabel: "Visita" },
   { id: 3, label: "Interés", shortLabel: "Int." },

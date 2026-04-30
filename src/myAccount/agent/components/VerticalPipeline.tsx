@@ -7,7 +7,7 @@ interface VerticalPipelineProps {
   interactive?: boolean;
 }
 
-export const pipelineStages = [
+const pipelineStages = [
   { id: 1, label: "Lead", description: "Contacto inicial" },
   { id: 2, label: "Visita", description: "Agendar recorrido" },
   { id: 3, label: "Interés", description: "Confirmación de interés" },

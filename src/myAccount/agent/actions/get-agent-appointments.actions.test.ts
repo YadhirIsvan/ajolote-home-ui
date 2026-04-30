@@ -67,9 +67,8 @@ describe("getAgentAppointmentsAction — mapeo", () => {
 });
 
 describe("getAgentAppointmentsAction — error", () => {
-  it("retorna [] en caso de error", async () => {
+  it("lanza un Error en caso de error", async () => {
     mockedGetAppointments.mockRejectedValueOnce(new Error("Network error"));
-    const result = await getAgentAppointmentsAction();
-    expect(result).toEqual([]);
+    await expect(getAgentAppointmentsAction()).rejects.toThrow("Network error");
   });
 });

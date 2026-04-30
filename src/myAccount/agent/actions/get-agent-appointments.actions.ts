@@ -1,19 +1,7 @@
 import { agentApi } from "@/myAccount/agent/api/agent.api";
 import type { BackendAppointment } from "@/myAccount/agent/api/agent.api";
 import type { AgentAppointment } from "@/myAccount/agent/types/agent.types";
-
-const formatTime = (time24: string): string => {
-  const [hoursStr, minutes] = time24.split(":");
-  const hours = parseInt(hoursStr, 10);
-  const period = hours >= 12 ? "PM" : "AM";
-  const h = hours % 12 || 12;
-  return `${h}:${minutes} ${period}`;
-};
-
-const formatDate = (dateStr: string): string => {
-  const date = new Date(`${dateStr}T00:00:00`);
-  return date.toLocaleDateString("es-MX", { day: "numeric", month: "short" });
-};
+import { formatDate, formatTime } from "@/myAccount/agent/utils/agent.utils";
 
 const mapItem = (item: BackendAppointment): AgentAppointment => ({
   id: item.id,
@@ -33,6 +21,8 @@ export const getAgentAppointmentsAction = async (): Promise<AgentAppointment[]> 
     return data.results.map(mapItem);
   } catch (error) {
     console.error("[getAgentAppointmentsAction] Error al obtener citas del agente:", error);
-    return [];
+    throw new Error(
+      error instanceof Error ? error.message : "Error al obtener las citas del agente"
+    );
   }
 };

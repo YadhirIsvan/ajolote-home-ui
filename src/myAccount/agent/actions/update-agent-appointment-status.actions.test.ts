@@ -9,12 +9,12 @@ const mockedUpdate = vi.mocked(agentApi.updateAppointmentStatus);
 beforeEach(() => vi.clearAllMocks());
 
 describe("updateAgentAppointmentStatusAction — éxito", () => {
-  it("retorna { success: true } cuando la llamada tiene éxito", async () => {
+  it("resuelve void cuando la llamada tiene éxito", async () => {
     mockedUpdate.mockResolvedValueOnce({ data: undefined } as never);
 
-    const result = await updateAgentAppointmentStatusAction(1, "confirmada");
-
-    expect(result.success).toBe(true);
+    await expect(
+      updateAgentAppointmentStatusAction(1, "confirmada")
+    ).resolves.toBeUndefined();
   });
 
   it("pasa id, status y notes a la API correctamente", async () => {
@@ -35,12 +35,11 @@ describe("updateAgentAppointmentStatusAction — éxito", () => {
 });
 
 describe("updateAgentAppointmentStatusAction — error", () => {
-  it("retorna { success: false, message } en caso de error", async () => {
+  it("lanza un Error en caso de error", async () => {
     mockedUpdate.mockRejectedValueOnce(new Error("Network error"));
 
-    const result = await updateAgentAppointmentStatusAction(1, "confirmada");
-
-    expect(result.success).toBe(false);
-    expect(result.message).toBeTruthy();
+    await expect(
+      updateAgentAppointmentStatusAction(1, "confirmada")
+    ).rejects.toThrow("Network error");
   });
 });

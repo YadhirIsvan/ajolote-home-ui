@@ -1,15 +1,7 @@
 import { agentApi } from "@/myAccount/agent/api/agent.api";
 import type { BackendAgentProperty } from "@/myAccount/agent/api/agent.api";
 import type { AgentProperty } from "@/myAccount/agent/types/agent.types";
-
-const formatPrice = (raw: string): string => {
-  const num = parseFloat(raw);
-  return new Intl.NumberFormat("es-MX", {
-    style: "currency",
-    currency: "MXN",
-    maximumFractionDigits: 0,
-  }).format(num);
-};
+import { formatPrice } from "@/myAccount/agent/utils/agent.utils";
 
 const mapItem = (item: BackendAgentProperty): AgentProperty => ({
   id: item.id,
@@ -28,6 +20,8 @@ export const getAgentPropertiesAction = async (): Promise<AgentProperty[]> => {
     return data.results.map(mapItem);
   } catch (error) {
     console.error("[getAgentPropertiesAction] Error al obtener propiedades del agente:", error);
-    return [];
+    throw new Error(
+      error instanceof Error ? error.message : "Error al obtener las propiedades del agente"
+    );
   }
 };

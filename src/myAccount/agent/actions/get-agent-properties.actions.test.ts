@@ -59,9 +59,8 @@ describe("getAgentPropertiesAction — mapeo", () => {
 });
 
 describe("getAgentPropertiesAction — error", () => {
-  it("retorna [] en caso de error", async () => {
+  it("lanza un Error en caso de error", async () => {
     mockedGetProperties.mockRejectedValueOnce(new Error("Network error"));
-    const result = await getAgentPropertiesAction();
-    expect(result).toEqual([]);
+    await expect(getAgentPropertiesAction()).rejects.toThrow("Network error");
   });
 });
