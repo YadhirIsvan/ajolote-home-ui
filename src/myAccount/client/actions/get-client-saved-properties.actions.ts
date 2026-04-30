@@ -57,6 +57,8 @@ export async function getClientSavedPropertiesAction(): Promise<SavedPropertyIte
     }));
   } catch (error) {
     console.error("[getClientSavedPropertiesAction] Error al obtener propiedades guardadas:", error);
-    return [];
+    throw new Error(
+      error instanceof Error ? error.message : "Error al obtener propiedades guardadas"
+    );
   }
 }

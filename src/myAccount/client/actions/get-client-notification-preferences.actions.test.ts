@@ -42,12 +42,10 @@ describe("getClientNotificationPreferencesAction", () => {
     expect(result).toEqual(ACTIVE_PREFERENCES);
   });
 
-  it("error → retorna DEFAULT_PREFERENCES (todos false)", async () => {
+  it("error → lanza un Error", async () => {
     mockedGet.mockRejectedValueOnce(new Error("Network error"));
 
-    const result = await getClientNotificationPreferencesAction();
-
-    expect(result).toEqual(DEFAULT_PREFERENCES);
+    await expect(getClientNotificationPreferencesAction()).rejects.toThrow("Network error");
   });
 });
 

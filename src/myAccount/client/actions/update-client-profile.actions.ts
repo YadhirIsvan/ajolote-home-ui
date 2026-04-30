@@ -1,4 +1,5 @@
 import { isValidPhoneNumber } from "react-phone-number-input";
+import type { AxiosError } from "axios";
 import { clientApi } from "@/myAccount/client/api/client.api";
 
 export interface UpdateClientProfileData {
@@ -29,9 +30,7 @@ export const updateClientProfileAction = async (
     await clientApi.updateProfile(payload);
     return { success: true };
   } catch (error: unknown) {
-    const axiosError = error as {
-      response?: { data?: { error?: string; detail?: string } };
-    };
+    const axiosError = error as AxiosError<{ error?: string; detail?: string }>;
     const message =
       axiosError.response?.data?.error ??
       axiosError.response?.data?.detail ??

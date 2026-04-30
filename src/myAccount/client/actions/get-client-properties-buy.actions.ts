@@ -37,6 +37,8 @@ export const getClientPropertiesBuyAction =
       return raw.results.map(mapBuyItem);
     } catch (error) {
       console.error("[getClientPropertiesBuyAction] Error al obtener propiedades en compra:", error);
-      return [];
+      throw new Error(
+        error instanceof Error ? error.message : "Error al obtener propiedades en compra"
+      );
     }
   };

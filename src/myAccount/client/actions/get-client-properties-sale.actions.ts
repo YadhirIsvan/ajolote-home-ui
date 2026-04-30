@@ -90,6 +90,8 @@ export const getClientPropertiesSaleAction =
       return { list, summary };
     } catch (error) {
       console.error("[getClientPropertiesSaleAction] Error al obtener propiedades en venta:", error);
-      return { list: [], summary: null };
+      throw new Error(
+        error instanceof Error ? error.message : "Error al obtener propiedades en venta"
+      );
     }
   };

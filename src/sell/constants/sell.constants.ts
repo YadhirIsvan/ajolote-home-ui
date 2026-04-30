@@ -3,18 +3,7 @@ import {
   ShieldCheck,
   Megaphone,
   FileSignature,
-  Home,
-  Building2,
-  Castle,
-  Warehouse,
 } from "lucide-react";
-
-export const SELL_PROPERTY_TYPES = [
-  { id: "casa", label: "Casa", icon: Home },
-  { id: "departamento", label: "Depto", icon: Building2 },
-  { id: "terreno", label: "Terreno", icon: Castle },
-  { id: "local", label: "Local", icon: Warehouse },
-] as const;
 
 export const SELL_LOCATIONS = [
   "Orizaba",

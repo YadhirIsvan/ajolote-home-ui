@@ -27,11 +27,9 @@ describe("getClientProfileAction", () => {
     expect(result).toEqual(profile);
   });
 
-  it("error → silencia y retorna null", async () => {
+  it("error → lanza un Error", async () => {
     mockedGetUserProfile.mockRejectedValueOnce(new Error("Unauthorized"));
 
-    const result = await getClientProfileAction();
-
-    expect(result).toBeNull();
+    await expect(getClientProfileAction()).rejects.toThrow("Unauthorized");
   });
 });

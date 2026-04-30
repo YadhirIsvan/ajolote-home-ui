@@ -1,20 +1,6 @@
 import { clientApi } from "@/myAccount/client/api/client.api";
-
-export interface FinancialProfile {
-  loanType: string;
-  monthlyIncome: number;
-  partnerMonthlyIncome: number | null;
-  savingsForEnganche: number;
-  hasInfonavit: boolean;
-  infonavitSubcuentaBalance: number | null;
-  calculatedBudget: number;
-}
-
-const LOAN_TYPE_LABELS: Record<string, string> = {
-  individual: "Individual (Banco, Infonavit o Fovissste)",
-  conyugal: "Conyugal o Familiar (Unir créditos)",
-  cofinavit: "Cofinavit (Banco + Ahorro Infonavit)",
-};
+import { LOAN_TYPE_LABELS } from "@/myAccount/client/constants/client.constants";
+import type { FinancialProfile } from "@/myAccount/client/types/client.types";
 
 export function getLoanTypeLabel(loanType: string): string {
   return LOAN_TYPE_LABELS[loanType] ?? loanType;
@@ -35,6 +21,8 @@ export async function getClientFinancialProfileAction(): Promise<FinancialProfil
     };
   } catch (error) {
     console.error("[getClientFinancialProfileAction] Error al obtener perfil financiero:", error);
-    return null;
+    throw new Error(
+      error instanceof Error ? error.message : "Error al obtener el perfil financiero"
+    );
   }
 }

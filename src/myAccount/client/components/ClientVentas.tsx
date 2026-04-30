@@ -2,70 +2,25 @@ import { ArrowLeft, Home, MapPin, Eye, Calendar, TrendingUp, RefreshCw } from "l
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import { Badge } from "@/shared/components/ui/badge";
-import SellerLeadForm from "@/sell/components/SellerLeadForm";
+import SellerLeadForm from "@/shared/components/custom/SellerLeadForm";
 import { useClientVentas } from "@/myAccount/client/hooks/use-client-ventas.client.hook";
 import type { PropertySaleItem } from "@/myAccount/client/types/client.types";
+import {
+  formatPrice,
+  getClientVisibleStatusLabel,
+  getStatusBadgeColor,
+  getProgressStepIndex,
+} from "@/myAccount/client/utils/client.utils";
+import type { ClientVisibleStatus } from "@/myAccount/client/utils/client.utils";
+import { SALE_PROGRESS_STEPS } from "@/myAccount/client/constants/client.constants";
 
 interface ClientVentasProps {
   onBack: () => void;
 }
 
-const progressSteps = ["Registrar propiedad", "Aprobar estado", "Marketing", "Vendida"];
-
-const formatPrice = (price: string | number | undefined): string => {
-  if (!price) return "$0";
-  const num = typeof price === "string" ? parseFloat(price) : price;
-  return new Intl.NumberFormat("es-MX", {
-    style: "currency",
-    currency: "MXN",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(num);
-};
-
-type ClientVisibleStatus = 'registrar_propiedad' | 'aprobar_estado' | 'marketing' | 'vendida' | 'cancelado';
-
-const getClientVisibleStatusLabel = (status: ClientVisibleStatus): string => {
-  const labels: Record<ClientVisibleStatus, string> = {
-    'registrar_propiedad': 'Registrar propiedad',
-    'aprobar_estado': 'Aprobar estado',
-    'marketing': 'Marketing',
-    'vendida': 'Vendida',
-    'cancelado': 'Cancelado',
-  };
-  return labels[status];
-};
-
-const getStatusBadgeColor = (status: ClientVisibleStatus) => {
-  switch (status) {
-    case 'vendida':
-      return 'bg-emerald-500 text-white';
-    case 'marketing':
-      return 'bg-blue-500 text-white';
-    case 'aprobar_estado':
-      return 'bg-yellow-500 text-white';
-    case 'cancelado':
-      return 'bg-red-500 text-white';
-    case 'registrar_propiedad':
-    default:
-      return 'bg-amber-100 text-amber-700';
-  }
-};
-
-const getProgressStepIndex = (status: ClientVisibleStatus): number => {
-  const map: Record<ClientVisibleStatus, number> = {
-    'registrar_propiedad': 0,
-    'aprobar_estado': 1,
-    'marketing': 2,
-    'vendida': 3,
-    'cancelado': -1,
-  };
-  return map[status];
-};
-
 const MiniProgressBar = ({ currentStep }: { currentStep: number }) => (
   <div className="flex items-center gap-1 mt-3">
-    {progressSteps.map((_, i) => (
+    {SALE_PROGRESS_STEPS.map((_, i) => (
       <div
         key={i}
         className={`h-1.5 flex-1 rounded-full transition-colors ${
@@ -82,11 +37,11 @@ const FullProgressStepper = ({ currentStep }: { currentStep: number }) => (
     <div
       className="absolute top-5 left-0 h-1 bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full mx-[12%] transition-all duration-500"
       style={{
-        width: `${Math.max(0, (currentStep / (progressSteps.length - 1)) * 76)}%`,
+        width: `${Math.max(0, (currentStep / (SALE_PROGRESS_STEPS.length - 1)) * 76)}%`,
       }}
     />
     <div className="flex items-start justify-between relative">
-      {progressSteps.map((label, i) => {
+      {SALE_PROGRESS_STEPS.map((label, i) => {
         const done = i <= currentStep;
         const active = i === currentStep;
         return (
@@ -367,7 +322,7 @@ const ClientVentas = ({ onBack }: ClientVentasProps) => {
                           <p className="text-xs text-foreground/50 mb-1">Progreso de revisión</p>
                           <MiniProgressBar currentStep={progressIndex} />
                           <div className="flex justify-between mt-2">
-                            {progressSteps.map((s, i) => (
+                            {SALE_PROGRESS_STEPS.map((s, i) => (
                               <span
                                 key={i}
                                 className={`text-[9px] ${

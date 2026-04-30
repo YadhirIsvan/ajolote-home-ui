@@ -1,30 +1,16 @@
 import { useRef, useState } from "react";
-import { Camera, Bookmark, Home, ShoppingCart, ChevronRight, Calculator, TrendingUp, BedDouble, Bath, Maximize, Phone, RefreshCw, Briefcase, MapPin, CreditCard, CalendarCheck, Calendar, Clock, Settings } from "lucide-react";
-import { getMediaUrl } from "@/shared/utils/media-url.utils";
+import { Camera, Bookmark, Home, ShoppingCart, ChevronRight, Calculator, TrendingUp, BedDouble, Bath, Maximize, RefreshCw, Briefcase, MapPin, CreditCard, CalendarCheck, Calendar, Clock, Settings } from "lucide-react";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import { Separator } from "@/shared/components/ui/separator";
 import { useNavigate } from "react-router-dom";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useClientDashboard } from "@/myAccount/client/hooks/use-client-dashboard.client.hook";
 import { useFinancialModal } from "@/shared/hooks/financial-modal.context";
 import { useAuth } from "@/shared/hooks/use-auth.hook";
 import { getLoanTypeLabel } from "@/myAccount/client/actions/get-client-financial-profile.actions";
-import { updateClientProfileFieldAction } from "@/myAccount/client/actions/get-client-profile-detail.actions";
-import { clientApi } from "@/myAccount/client/api/client.api";
+import { formatPrice } from "@/myAccount/client/utils/client.utils";
 import ProfileFieldModal from "./ProfileFieldModal";
 import type { PropertySaleItem, PropertyBuySummary, ClientProfileDetail, ClientAppointment } from "@/myAccount/client/types/client.types";
-
-const formatPrice = (price: string | number | undefined): string => {
-  if (!price) return "$0";
-  const num = typeof price === "string" ? parseFloat(price) : price;
-  return new Intl.NumberFormat("es-MX", {
-    style: "currency",
-    currency: "MXN",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(num);
-};
 
 interface ClientDashboardProps {
   onLogout: () => void;
@@ -38,32 +24,11 @@ const ClientDashboard = ({ onNavigateVentas, onNavigateCompras, onNavigateCitas,
   const navigate = useNavigate();
   const { openFinancialModal } = useFinancialModal();
   const { user } = useAuth();
-  const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const userName = user ? `${user.first_name} ${user.last_name}`.trim() || user.email : "";
   const userInitial = (user?.first_name?.[0] || user?.email?.[0] || "?").toUpperCase();
-
-  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
-    const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
-    if (!ALLOWED_TYPES.includes(file.type) || file.size > MAX_SIZE) return;
-    // Preview inmediato con blob local
-    const previewUrl = URL.createObjectURL(file);
-    setAvatarUrl(previewUrl);
-    try {
-      const { data } = await clientApi.uploadAvatar(file);
-      URL.revokeObjectURL(previewUrl);
-      setAvatarUrl(getMediaUrl(data.avatar_medium ?? data.avatar));
-      queryClient.invalidateQueries({ queryKey: ["client-user-profile"] });
-    } catch {
-      URL.revokeObjectURL(previewUrl);
-      setAvatarUrl(null);
-    }
-  };
 
   const {
     ventasList,
@@ -79,9 +44,42 @@ const ClientDashboard = ({ onNavigateVentas, onNavigateCompras, onNavigateCitas,
     userAvatar,
     appointmentsList,
     appointmentsLoading,
+    uploadAvatar,
+    latestAvatarUrl,
+    isUploadingAvatar,
+    deleteAvatar,
+    isDeletingAvatar,
+    updateProfileField,
+    isUpdatingProfileField,
   } = useClientDashboard();
 
-  const displayAvatar = avatarUrl || userAvatar;
+  const displayAvatar = previewUrl || latestAvatarUrl || userAvatar;
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
+    const MAX_SIZE = 5 * 1024 * 1024;
+    if (!ALLOWED_TYPES.includes(file.type) || file.size > MAX_SIZE) return;
+
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+    try {
+      await uploadAvatar(file);
+      URL.revokeObjectURL(url);
+      setPreviewUrl(null);
+    } catch {
+      URL.revokeObjectURL(url);
+      setPreviewUrl(null);
+    }
+  };
+
+  const handleDeleteAvatar = async () => {
+    setShowAvatarMenu(false);
+    try {
+      await deleteAvatar();
+    } catch { /* silent — avatar deletion failure is non-critical */ }
+  };
 
   const [modalField, setModalField] = useState<{
     key: keyof ClientProfileDetail;
@@ -108,15 +106,6 @@ const ClientDashboard = ({ onNavigateVentas, onNavigateCompras, onNavigateCitas,
     ? profileFields.filter((f) => clientProfile[f.key]?.trim()).length
     : 0;
 
-  const updateFieldMutation = useMutation({
-    mutationFn: ({ field, value }: { field: string; value: string }) =>
-      updateClientProfileFieldAction(field, value),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["client-profile-detail"] });
-      setModalField(null);
-    },
-  });
-
   const openFieldModal = (field: typeof profileFields[number]) => {
     setModalField({ key: field.key, title: field.title, description: field.description, icon: field.icon });
     setModalValue(clientProfile?.[field.key] ?? "");
@@ -132,15 +121,6 @@ const ClientDashboard = ({ onNavigateVentas, onNavigateCompras, onNavigateCitas,
     }
   };
 
-  const handleDeleteAvatar = async () => {
-    setShowAvatarMenu(false);
-    setAvatarUrl(null);
-    try {
-      await clientApi.updateProfile({ avatar: "" });
-      queryClient.invalidateQueries({ queryKey: ["client-user-profile"] });
-    } catch { /* silent */ }
-  };
-
   const progressPercent = (completedCount / profileFields.length) * 100;
   const ringRadius = 62;
   const ringCircumference = 2 * Math.PI * ringRadius;
@@ -151,11 +131,8 @@ const ClientDashboard = ({ onNavigateVentas, onNavigateCompras, onNavigateCitas,
       {/* Profile Avatar Header with Progress Ring */}
       <div className="flex flex-col items-center gap-3 py-2">
         <div className="relative">
-          {/* SVG progress ring around avatar */}
           <svg className="absolute -inset-3 w-[calc(100%+24px)] h-[calc(100%+24px)]" viewBox="0 0 136 136">
-            {/* Track */}
             <circle cx="68" cy="68" r={ringRadius} fill="none" stroke="hsl(var(--border))" strokeWidth="3" opacity="0.3" />
-            {/* Progress */}
             <circle
               cx="68" cy="68" r={ringRadius} fill="none"
               stroke="hsl(var(--champagne-gold))"
@@ -199,12 +176,14 @@ const ClientDashboard = ({ onNavigateVentas, onNavigateCompras, onNavigateCitas,
               <button
                 className="w-full text-left px-4 py-2.5 text-sm text-midnight hover:bg-muted/20 transition-colors"
                 onClick={() => { setShowAvatarMenu(false); fileInputRef.current?.click(); }}
+                disabled={isUploadingAvatar}
               >
                 Cambiar foto
               </button>
               <button
                 className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
                 onClick={handleDeleteAvatar}
+                disabled={isDeletingAvatar}
               >
                 Eliminar foto
               </button>
@@ -243,7 +222,6 @@ const ClientDashboard = ({ onNavigateVentas, onNavigateCompras, onNavigateCitas,
                 <p className="text-sm text-foreground/50">Cargando...</p>
               </div>
             ) : financialProfile ? (
-              /* --- TIENE PERFIL FINANCIERO --- */
               <>
                 <div className="flex items-start justify-between mb-4">
                   <div className="p-2.5 rounded-xl bg-champagne-gold/20">
@@ -261,7 +239,6 @@ const ClientDashboard = ({ onNavigateVentas, onNavigateCompras, onNavigateCitas,
 
                 <Separator className="mb-4" />
 
-                {/* Detalle del tipo de crédito */}
                 <div className="space-y-2 mb-4">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-foreground/60">Tipo de crédito</span>
@@ -285,7 +262,6 @@ const ClientDashboard = ({ onNavigateVentas, onNavigateCompras, onNavigateCitas,
                   </div>
                 </div>
 
-                {/* CTA contacto */}
                 <div className="mb-4">
                   <Button
                     variant="outline"
@@ -297,7 +273,6 @@ const ClientDashboard = ({ onNavigateVentas, onNavigateCompras, onNavigateCitas,
                   </Button>
                 </div>
 
-                {/* Recalcular */}
                 <button
                   onClick={openFinancialModal}
                   className="w-full flex items-center justify-center gap-2 text-sm font-medium text-champagne-gold hover:text-champagne-gold-dark hover:bg-champagne-gold/5 rounded-lg transition-colors py-2 px-4"
@@ -307,7 +282,6 @@ const ClientDashboard = ({ onNavigateVentas, onNavigateCompras, onNavigateCitas,
                 </button>
               </>
             ) : (
-              /* --- NO TIENE PERFIL FINANCIERO --- */
               <>
                 <div className="flex items-start justify-between mb-4">
                   <div className="p-2.5 rounded-xl bg-champagne-gold/20">
@@ -637,10 +611,13 @@ const ClientDashboard = ({ onNavigateVentas, onNavigateCompras, onNavigateCitas,
         maxLength={200}
         onSave={() => {
           if (modalField) {
-            updateFieldMutation.mutate({ field: modalField.key, value: modalValue });
+            updateProfileField(
+              { field: modalField.key, value: modalValue },
+              { onSuccess: () => setModalField(null) }
+            );
           }
         }}
-        isLoading={updateFieldMutation.isPending}
+        isLoading={isUpdatingProfileField}
         icon={modalField?.icon}
       />
     </div>

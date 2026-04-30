@@ -8,27 +8,12 @@ import type {
   PropertyFileItem,
   Step,
 } from "@/myAccount/client/types/client.types";
-import { UseMutationResult } from "@tanstack/react-query";
-
-const EXCLUDED_STATUSES = ["cerrado", "cancelado"];
-
-const capitalizeFirst = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
-
-const getStatusBadgeClass = (status: string) =>
-  status === "cerrado"
-    ? "bg-emerald-600 text-white text-xs"
-    : "bg-champagne-gold text-white text-xs";
-
-const formatPrice = (price: string | number | undefined): string => {
-  if (!price) return "$0";
-  const num = typeof price === "string" ? parseFloat(price) : price;
-  return new Intl.NumberFormat("es-MX", {
-    style: "currency",
-    currency: "MXN",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(num);
-};
+import {
+  formatPrice,
+  capitalizeFirst,
+  getStatusBadgeClass,
+} from "@/myAccount/client/utils/client.utils";
+import { EXCLUDED_BUY_STATUSES } from "@/myAccount/client/constants/client.constants";
 
 interface ClientComprasProps {
   onBack: () => void;
@@ -40,7 +25,7 @@ interface PropertyDetailCardProps {
   filesLoading: boolean;
   steps: Step[];
   onUpload: () => void;
-  uploadMutation: UseMutationResult<void, Error, { propertyId: number; files: File[] }>;
+  isUploading: boolean;
 }
 
 const PropertyDetailCard = ({
@@ -49,7 +34,7 @@ const PropertyDetailCard = ({
   filesLoading,
   steps,
   onUpload,
-  uploadMutation,
+  isUploading,
 }: PropertyDetailCardProps) => {
   const docStep = steps.find((s) => s.label === "Documentos verificados");
   const showUploadAction = docStep?.allowUpload;
@@ -186,10 +171,10 @@ const PropertyDetailCard = ({
               variant="gold"
               size="sm"
               onClick={onUpload}
-              disabled={uploadMutation.isPending}
+              disabled={isUploading}
             >
               <Upload className="w-4 h-4 mr-1" />
-              {uploadMutation.isPending ? "Subiendo..." : "Subir documentos"}
+              {isUploading ? "Subiendo..." : "Subir documentos"}
             </Button>
           </div>
         )}
@@ -211,7 +196,7 @@ const ClientCompras = ({ onBack }: ClientComprasProps) => {
     filesData,
     filesLoading,
     purchaseSteps,
-    uploadMutation,
+    isUploading,
     fileInputRef,
     activePropertyId,
     setActivePropertyId,
@@ -257,7 +242,7 @@ const ClientCompras = ({ onBack }: ClientComprasProps) => {
       <div>
         <h1 className="text-2xl font-bold text-midnight">Proceso de Compra</h1>
         <p className="text-sm text-foreground/60 mt-1">
-          {comprasLoading ? "Cargando..." : `${comprasList.filter((p) => !EXCLUDED_STATUSES.includes(p.status)).length} propiedad(es) en proceso`}
+          {comprasLoading ? "Cargando..." : `${comprasList.filter((p) => !(EXCLUDED_BUY_STATUSES as readonly string[]).includes(p.status)).length} propiedad(es) en proceso`}
         </p>
       </div>
 
@@ -274,7 +259,7 @@ const ClientCompras = ({ onBack }: ClientComprasProps) => {
             filesLoading={filesLoading}
             steps={purchaseSteps}
             onUpload={() => triggerUpload(viewingProperty.id)}
-            uploadMutation={uploadMutation}
+            isUploading={isUploading}
           />
         ) : (
           <p className="text-muted-foreground">Cargando propiedad...</p>
@@ -287,7 +272,7 @@ const ClientCompras = ({ onBack }: ClientComprasProps) => {
           filesLoading={filesLoading}
           steps={purchaseSteps}
           onUpload={() => triggerUpload(comprasList[0].id)}
-          uploadMutation={uploadMutation}
+          isUploading={isUploading}
         />
       ) : (
         // Mostrar lista de propiedades

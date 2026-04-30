@@ -102,11 +102,9 @@ describe("getClientPropertiesSaleAction", () => {
     expect(list).toHaveLength(2);
   });
 
-  it("error → retorna { list: [], summary: null }", async () => {
+  it("error → lanza un Error", async () => {
     mockedGetPropertiesSale.mockRejectedValueOnce(new Error("Server error"));
 
-    const result = await getClientPropertiesSaleAction();
-
-    expect(result).toEqual({ list: [], summary: null });
+    await expect(getClientPropertiesSaleAction()).rejects.toThrow("Server error");
   });
 });

@@ -1,4 +1,5 @@
 import { clientApi } from "@/myAccount/client/api/client.api";
+import { hoursAgo, humanizeType } from "@/myAccount/client/utils/client.utils";
 import type { RecentActivityItem } from "@/myAccount/client/types/client.types";
 
 interface BackendActivityItem {
@@ -11,20 +12,7 @@ interface DashboardResponse {
   recent_activity: BackendActivityItem[];
 }
 
-const hoursAgo = (isoDate: string): number =>
-  Math.max(
-    1,
-    Math.round((Date.now() - new Date(isoDate).getTime()) / 3_600_000)
-  );
-
-const humanizeType = (type: string): string =>
-  type
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase());
-
-export const getClientRecentActivityAction = async (): Promise<
-  RecentActivityItem[]
-> => {
+export const getClientRecentActivityAction = async (): Promise<RecentActivityItem[]> => {
   try {
     const { data } = await clientApi.getDashboard();
     const dashboard = data as DashboardResponse;
@@ -35,6 +23,8 @@ export const getClientRecentActivityAction = async (): Promise<
     }));
   } catch (error) {
     console.error("[getClientRecentActivityAction] Error al obtener actividad reciente:", error);
-    return [];
+    throw new Error(
+      error instanceof Error ? error.message : "Error al obtener actividad reciente"
+    );
   }
 };

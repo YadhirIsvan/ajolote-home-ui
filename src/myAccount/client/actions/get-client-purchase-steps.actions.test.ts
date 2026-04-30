@@ -70,11 +70,9 @@ describe("getClientPurchaseStepsAction", () => {
     expect(result).toEqual([]);
   });
 
-  it("error → silencia y retorna []", async () => {
+  it("error → lanza un Error", async () => {
     mockedGetPropertyDetail.mockRejectedValueOnce(new Error("Server error"));
 
-    const result = await getClientPurchaseStepsAction(5);
-
-    expect(result).toEqual([]);
+    await expect(getClientPurchaseStepsAction(5)).rejects.toThrow("Server error");
   });
 });

@@ -86,11 +86,9 @@ describe("getClientSavedPropertiesAction", () => {
     expect(item.image).toBeNull();
   });
 
-  it("error → silencia y retorna []", async () => {
+  it("error → lanza un Error", async () => {
     mockedGetSavedProperties.mockRejectedValueOnce(new Error("Unauthorized"));
 
-    const result = await getClientSavedPropertiesAction();
-
-    expect(result).toEqual([]);
+    await expect(getClientSavedPropertiesAction()).rejects.toThrow("Unauthorized");
   });
 });

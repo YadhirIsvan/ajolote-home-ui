@@ -129,6 +129,16 @@ export type AppointmentStatus =
   | "no_show"
   | "reagendada";
 
+export interface FinancialProfile {
+  loanType: string;
+  monthlyIncome: number;
+  partnerMonthlyIncome: number | null;
+  savingsForEnganche: number;
+  hasInfonavit: boolean;
+  infonavitSubcuentaBalance: number | null;
+  calculatedBudget: number;
+}
+
 export interface ClientAppointment {
   id: number;
   matricula: string;

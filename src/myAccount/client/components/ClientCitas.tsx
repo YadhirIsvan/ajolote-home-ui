@@ -3,41 +3,16 @@ import { ArrowLeft, Calendar, Clock, MapPin, User, X, AlertTriangle, Home } from
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import { useClientAppointments } from "@/myAccount/client/hooks/use-client-appointments.client.hook";
-import type { AppointmentStatus } from "@/myAccount/client/types/client.types";
+import {
+  formatDate,
+  formatTime,
+  getAppointmentStatusConfig,
+} from "@/myAccount/client/utils/client.utils";
+import { CANCELLABLE_APPOINTMENT_STATUSES } from "@/myAccount/client/constants/client.constants";
 
 interface ClientCitasProps {
   onBack: () => void;
 }
-
-const STATUS_CONFIG: Record<AppointmentStatus, { label: string; className: string }> = {
-  programada:  { label: "Programada",  className: "bg-blue-100 text-blue-700" },
-  confirmada:  { label: "Confirmada",  className: "bg-emerald-100 text-emerald-700" },
-  en_progreso: { label: "En progreso", className: "bg-amber-100 text-amber-700" },
-  completada:  { label: "Completada",  className: "bg-emerald-100 text-emerald-700" },
-  cancelada:   { label: "Cancelada",   className: "bg-red-100 text-red-600" },
-  no_show:     { label: "No asistió",  className: "bg-gray-100 text-gray-600" },
-  reagendada:  { label: "Reagendada",  className: "bg-violet-100 text-violet-700" },
-};
-
-const CANCELLABLE: Set<AppointmentStatus> = new Set(["programada", "confirmada", "en_progreso"]);
-
-const formatDate = (dateStr: string): string => {
-  const d = new Date(dateStr + "T00:00:00");
-  return d.toLocaleDateString("es-MX", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-};
-
-const formatTime = (timeStr: string): string => {
-  const [h, m] = timeStr.split(":");
-  const hour = parseInt(h, 10);
-  const ampm = hour >= 12 ? "PM" : "AM";
-  const h12 = hour % 12 || 12;
-  return `${h12}:${m} ${ampm}`;
-};
 
 const ClientCitas = ({ onBack }: ClientCitasProps) => {
   const { appointments, isLoading, cancelAppointment, isCancelling } = useClientAppointments();
@@ -87,8 +62,8 @@ const ClientCitas = ({ onBack }: ClientCitasProps) => {
       ) : (
         <div className="space-y-4">
           {appointments.map((apt) => {
-            const config = STATUS_CONFIG[apt.status] ?? STATUS_CONFIG.programada;
-            const canCancel = CANCELLABLE.has(apt.status);
+            const config = getAppointmentStatusConfig(apt.status);
+            const canCancel = CANCELLABLE_APPOINTMENT_STATUSES.has(apt.status);
 
             return (
               <Card

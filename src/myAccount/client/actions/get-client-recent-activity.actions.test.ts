@@ -116,11 +116,9 @@ describe("getClientRecentActivityAction", () => {
     expect(result).toEqual([]);
   });
 
-  it("error → silencia y retorna []", async () => {
+  it("error → lanza un Error", async () => {
     mockedGetDashboard.mockRejectedValueOnce(new Error("Server error"));
 
-    const result = await getClientRecentActivityAction();
-
-    expect(result).toEqual([]);
+    await expect(getClientRecentActivityAction()).rejects.toThrow("Server error");
   });
 });

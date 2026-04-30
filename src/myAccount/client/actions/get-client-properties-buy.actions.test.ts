@@ -71,11 +71,9 @@ describe("getClientPropertiesBuyAction", () => {
     expect(result).toHaveLength(2);
   });
 
-  it("error → silencia y retorna []", async () => {
+  it("error → lanza un Error", async () => {
     mockedGetPropertiesBuys.mockRejectedValueOnce(new Error("Server error"));
 
-    const result = await getClientPropertiesBuyAction();
-
-    expect(result).toEqual([]);
+    await expect(getClientPropertiesBuyAction()).rejects.toThrow("Server error");
   });
 });

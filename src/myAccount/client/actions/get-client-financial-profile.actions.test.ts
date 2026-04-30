@@ -71,11 +71,9 @@ describe("getClientFinancialProfileAction", () => {
     expect(result).toBeNull();
   });
 
-  it("error → silencia y retorna null", async () => {
+  it("error → lanza un Error", async () => {
     mockedGetFinancialProfile.mockRejectedValueOnce(new Error("Unauthorized"));
 
-    const result = await getClientFinancialProfileAction();
-
-    expect(result).toBeNull();
+    await expect(getClientFinancialProfileAction()).rejects.toThrow("Unauthorized");
   });
 });

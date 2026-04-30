@@ -7,6 +7,7 @@ import { getClientPropertiesBuyAction } from "@/myAccount/client/actions/get-cli
 import { getClientPropertyFilesAction } from "@/myAccount/client/actions/get-client-property-files.actions";
 import { getClientPurchaseStepsAction } from "@/myAccount/client/actions/get-client-purchase-steps.actions";
 import { uploadClientPropertyFilesAction } from "@/myAccount/client/actions/upload-client-property-files.actions";
+import { buildStepsFromProgress } from "@/myAccount/client/utils/client.utils";
 
 vi.mock("@/myAccount/client/actions/get-client-properties-buy.actions");
 vi.mock("@/myAccount/client/actions/get-client-property-files.actions");
@@ -38,46 +39,30 @@ beforeEach(() => {
   mockedUpload.mockResolvedValue(undefined);
 });
 
-// ─── buildStepsFromProgress ───────────────────────────────────────────────────
+// ─── buildStepsFromProgress (util pura, independiente del hook) ───────────────
 
-describe("useClientCompras — buildStepsFromProgress", () => {
+describe("buildStepsFromProgress", () => {
   it("progress 0 → todos done: false, current: false, allowUpload: false", () => {
-    mockedGetBuy.mockReturnValue(new Promise(() => {}));
-    const { result } = renderHook(() => useClientCompras(), {
-      wrapper: makeWrapper(),
-    });
-    const steps = result.current.buildStepsFromProgress(0);
+    const steps = buildStepsFromProgress(0);
     expect(steps.every((s) => !s.done && !s.current && !s.allowUpload)).toBe(true);
   });
 
   it("progress 15 → 'Oferta': done: true, current: true", () => {
-    mockedGetBuy.mockReturnValue(new Promise(() => {}));
-    const { result } = renderHook(() => useClientCompras(), {
-      wrapper: makeWrapper(),
-    });
-    const steps = result.current.buildStepsFromProgress(15);
+    const steps = buildStepsFromProgress(15);
     expect(steps[0].label).toBe("Oferta");
     expect(steps[0].done).toBe(true);
     expect(steps[0].current).toBe(true);
   });
 
   it("progress 60 → 'Documentos verificados': current: true, allowUpload: true", () => {
-    mockedGetBuy.mockReturnValue(new Promise(() => {}));
-    const { result } = renderHook(() => useClientCompras(), {
-      wrapper: makeWrapper(),
-    });
-    const steps = result.current.buildStepsFromProgress(60);
+    const steps = buildStepsFromProgress(60);
     const docs = steps.find((s) => s.label === "Documentos verificados")!;
     expect(docs.current).toBe(true);
     expect(docs.allowUpload).toBe(true);
   });
 
   it("progress 100 → todos done: true", () => {
-    mockedGetBuy.mockReturnValue(new Promise(() => {}));
-    const { result } = renderHook(() => useClientCompras(), {
-      wrapper: makeWrapper(),
-    });
-    const steps = result.current.buildStepsFromProgress(100);
+    const steps = buildStepsFromProgress(100);
     expect(steps.every((s) => s.done)).toBe(true);
   });
 });

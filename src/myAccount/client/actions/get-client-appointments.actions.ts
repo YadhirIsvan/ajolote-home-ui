@@ -7,7 +7,9 @@ export const getClientAppointmentsAction = async (): Promise<ClientAppointment[]
     return data;
   } catch (error) {
     console.error("[getClientAppointmentsAction] Error al obtener citas:", error);
-    return [];
+    throw new Error(
+      error instanceof Error ? error.message : "Error al obtener las citas"
+    );
   }
 };
 

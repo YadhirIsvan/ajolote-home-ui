@@ -38,12 +38,10 @@ describe("getClientAppointmentsAction", () => {
     expect(result).toEqual([MOCK_APPOINTMENT]);
   });
 
-  it("error → silencia y retorna []", async () => {
+  it("error → lanza un Error", async () => {
     mockedGetAppointments.mockRejectedValueOnce(new Error("Network error"));
 
-    const result = await getClientAppointmentsAction();
-
-    expect(result).toEqual([]);
+    await expect(getClientAppointmentsAction()).rejects.toThrow("Network error");
   });
 });
 

@@ -1,12 +1,6 @@
 import { clientApi } from "@/myAccount/client/api/client.api";
+import { DEFAULT_NOTIFICATION_PREFERENCES } from "@/myAccount/client/constants/client.constants";
 import type { NotificationPreferences } from "@/myAccount/client/types/client.types";
-
-const DEFAULT_PREFERENCES: NotificationPreferences = {
-  new_properties: false,
-  price_updates: false,
-  appointment_reminders: false,
-  offers: false,
-};
 
 export const getClientNotificationPreferencesAction =
   async (): Promise<NotificationPreferences> => {
@@ -15,7 +9,9 @@ export const getClientNotificationPreferencesAction =
       return data;
     } catch (error) {
       console.error("[getClientNotificationPreferencesAction] Error al obtener preferencias:", error);
-      return DEFAULT_PREFERENCES;
+      throw new Error(
+        error instanceof Error ? error.message : "Error al obtener preferencias de notificación"
+      );
     }
   };
 
@@ -31,3 +27,5 @@ export const updateClientNotificationPreferencesAction = async (
     );
   }
 };
+
+export { DEFAULT_NOTIFICATION_PREFERENCES };

@@ -4,22 +4,6 @@ import { getClientPropertiesBuyAction } from "@/myAccount/client/actions/get-cli
 import { getClientPropertyFilesAction } from "@/myAccount/client/actions/get-client-property-files.actions";
 import { uploadClientPropertyFilesAction } from "@/myAccount/client/actions/upload-client-property-files.actions";
 import { getClientPurchaseStepsAction } from "@/myAccount/client/actions/get-client-purchase-steps.actions";
-import type { Step } from "@/myAccount/client/types/client.types";
-
-const buildStepsFromProgress = (progress: number | undefined): Step[] => {
-  const p = progress ?? 0;
-  return [
-    { label: "Oferta", done: p >= 15, current: p >= 15 && p < 30, allowUpload: false },
-    { label: "Avalúo", done: p >= 30, current: p >= 30 && p < 45, allowUpload: false },
-    { label: "Crédito", done: p >= 45, current: p >= 45 && p < 60, allowUpload: false },
-    {
-      label: "Documentos verificados",
-      done: p >= 100,
-      current: p >= 60 && p < 100,
-      allowUpload: p >= 60 && p < 100,
-    },
-  ];
-};
 
 export const useClientCompras = () => {
   const queryClient = useQueryClient();
@@ -84,12 +68,11 @@ export const useClientCompras = () => {
     filesData,
     filesLoading,
     purchaseSteps,
-    uploadMutation,
+    isUploading: uploadMutation.isPending,
     fileInputRef,
     activePropertyId,
     setActivePropertyId,
     handleFileSelect,
     triggerUpload,
-    buildStepsFromProgress,
   };
 };

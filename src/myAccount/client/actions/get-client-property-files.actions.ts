@@ -9,6 +9,8 @@ export const getClientPropertyFilesAction = async (
     return Array.isArray(data.documents) ? data.documents : [];
   } catch (error) {
     console.error("[getClientPropertyFilesAction] Error al obtener documentos de propiedad:", error);
-    return [];
+    throw new Error(
+      error instanceof Error ? error.message : "Error al obtener documentos de la propiedad"
+    );
   }
 };

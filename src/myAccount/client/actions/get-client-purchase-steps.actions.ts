@@ -30,6 +30,8 @@ export const getClientPurchaseStepsAction = async (
     return detail.steps ? mapBackendSteps(detail.steps) : [];
   } catch (error) {
     console.error("[getClientPurchaseStepsAction] Error al obtener pasos del proceso de compra:", error);
-    return [];
+    throw new Error(
+      error instanceof Error ? error.message : "Error al obtener pasos del proceso de compra"
+    );
   }
 };

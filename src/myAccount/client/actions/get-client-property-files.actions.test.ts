@@ -33,11 +33,9 @@ describe("getClientPropertyFilesAction", () => {
     expect(result).toEqual([]);
   });
 
-  it("error → silencia y retorna []", async () => {
+  it("error → lanza un Error", async () => {
     mockedGetPropertyFiles.mockRejectedValueOnce(new Error("Not found"));
 
-    const result = await getClientPropertyFilesAction(42);
-
-    expect(result).toEqual([]);
+    await expect(getClientPropertyFilesAction(42)).rejects.toThrow("Not found");
   });
 });
