@@ -1,12 +1,6 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  getAdminAssignmentsAction,
-  createAdminAssignmentAction,
-  deleteAdminAssignmentAction,
-} from "@/myAccount/admin/actions/get-admin-assignments.actions";
-import { getAdminAgentsAction } from "@/myAccount/admin/actions/get-admin-agents.actions";
-import { getAdminPropertiesAction } from "@/myAccount/admin/actions/get-admin-properties.actions";
+import { useAdminAsignar } from "@/myAccount/admin/hooks/use-admin-asignar.admin.hook";
+import { getMediaUrl } from "@/myAccount/admin/utils/admin.utils";
 import {
   Home,
   User,
@@ -41,15 +35,6 @@ import {
   DrawerTitle,
 } from "@/shared/components/ui/drawer";
 import { useIsMobile } from "@/shared/hooks/use-mobile.hook";
-import { toast } from "sonner";
-import { getApiOrigin } from "@/shared/utils/media-url.utils";
-
-// ─── Media URL helper ─────────────────────────────────────────────────────────
-const getMediaUrl = (url: string | null | undefined): string => {
-  if (!url) return "";
-  if (url.startsWith("http")) return url;
-  return `${getApiOrigin()}${url}`;
-};
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -102,79 +87,13 @@ const AgentAvatarEl = ({
 
 const AsignarSection = () => {
   const isMobile = useIsMobile();
-  const queryClient = useQueryClient();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedProperty, setSelectedProperty] = useState<PropertyRow | null>(null);
   const [isTransferOpen, setIsTransferOpen] = useState(false);
 
-  // ─── Queries ──────────────────────────────────────────────────────────────────
-
-  const assignmentsQuery = useQuery({
-    queryKey: ["admin-assignments"],
-    queryFn: getAdminAssignmentsAction,
-  });
-
-  const agentsQuery = useQuery({
-    queryKey: ["admin-agents"],
-    queryFn: getAdminAgentsAction,
-  });
-
-  const propertiesQuery = useQuery({
-    queryKey: ["admin-properties"],
-    queryFn: () => getAdminPropertiesAction({ limit: 200 }),
-  });
-
-  // ─── Mutations ────────────────────────────────────────────────────────────────
-
-  // Assign to an unassigned property (no existing assignments to remove)
-  const assignMutation = useMutation({
-    mutationFn: ({ propertyId, membershipId }: { propertyId: number; membershipId: number }) =>
-      createAdminAssignmentAction(propertyId, membershipId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-assignments"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-properties"] });
-      toast.success("Propiedad asignada");
-    },
-    onError: () => toast.error("Error al asignar la propiedad"),
-  });
-
-  // Transfer: delete ALL existing assignments, then create new one
-  const transferMutation = useMutation({
-    mutationFn: async ({
-      propertyId,
-      allAssignmentIds,
-      newMembershipId,
-    }: {
-      propertyId: number;
-      allAssignmentIds: number[];
-      newMembershipId: number;
-    }) => {
-      if (allAssignmentIds.length > 0) {
-        await Promise.all(allAssignmentIds.map((id) => deleteAdminAssignmentAction(id)));
-      }
-      await createAdminAssignmentAction(propertyId, newMembershipId);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-assignments"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-properties"] });
-      toast.success("Agente actualizado");
-      setIsTransferOpen(false);
-    },
-    onError: () => toast.error("Error al cambiar el agente"),
-  });
-
-  // Remove: delete ALL assignments → property moves to "Sin Asignar"
-  const removeMutation = useMutation({
-    mutationFn: (allAssignmentIds: number[]) =>
-      Promise.all(allAssignmentIds.map((id) => deleteAdminAssignmentAction(id))),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-assignments"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-properties"] });
-      toast.success("Agente removido");
-    },
-    onError: () => toast.error("Error al remover el agente"),
-  });
+  const { assignmentsQuery, agentsQuery, propertiesQuery, assignMutation, transferMutation, removeMutation } =
+    useAdminAsignar();
 
   // ─── Derived data ─────────────────────────────────────────────────────────────
 
@@ -256,11 +175,10 @@ const AsignarSection = () => {
 
   const handleTransfer = (newMembershipId: number) => {
     if (!selectedProperty) return;
-    transferMutation.mutate({
-      propertyId: selectedProperty.rawId,
-      allAssignmentIds: selectedProperty.allAssignmentIds,
-      newMembershipId,
-    });
+    transferMutation.mutate(
+      { propertyId: selectedProperty.rawId, allAssignmentIds: selectedProperty.allAssignmentIds, newMembershipId },
+      { onSuccess: () => setIsTransferOpen(false) },
+    );
   };
 
   // ─── Sub-renders ──────────────────────────────────────────────────────────────

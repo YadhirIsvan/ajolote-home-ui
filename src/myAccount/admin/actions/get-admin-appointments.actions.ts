@@ -73,7 +73,7 @@ export const getAdminAppointmentAvailabilityAction = async (
     return data.available_slots ?? [];
   } catch (error) {
     console.error("[getAdminAppointmentAvailabilityAction] Error al obtener disponibilidad:", error);
-    return [];
+    throw error;
   }
 };
 

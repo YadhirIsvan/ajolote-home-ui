@@ -1,10 +1,11 @@
 import { useState, useEffect, DragEvent } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  getAdminPurchaseProcessesAction,
-  updatePurchaseProcessStatusAction,
-} from "@/myAccount/admin/actions/get-admin-kanban.actions";
 import type { AdminPurchaseProcess, PurchaseProcessStatus } from "@/myAccount/admin/types/admin.types";
+import { useAdminKanban } from "@/myAccount/admin/hooks/use-admin-kanban.admin.hook";
+import {
+  PURCHASE_PROCESS_PURCHASE_PROCESS_STATUS_LABELS,
+  PURCHASE_PIPELINE_STAGES,
+} from "@/myAccount/admin/constants/admin.constants";
+import { getMediaUrl, fmtPrice, calcDays } from "@/myAccount/admin/utils/admin.utils";
 import {
   ChevronLeft,
   ChevronRight,
@@ -34,25 +35,6 @@ import {
 import { useIsMobile } from "@/shared/hooks/use-mobile.hook";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { getApiOrigin } from "@/shared/utils/media-url.utils";
-
-// ─── helpers ────────────────────────────────────────────────────────────────
-
-const getMediaUrl = (url: string | null | undefined): string | null => {
-  if (!url) return null;
-  if (url.startsWith("http")) return url;
-  if (url.startsWith("/media/")) return `${getApiOrigin()}${url}`;
-  return null;
-};
-
-const fmtPrice = (price: string): string => {
-  const n = parseFloat(price);
-  if (!price || isNaN(n)) return "—";
-  return n.toLocaleString("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 });
-};
-
-const calcDays = (updatedAt: string): number =>
-  Math.floor((Date.now() - new Date(updatedAt).getTime()) / 86_400_000);
 
 // ─── types ───────────────────────────────────────────────────────────────────
 
@@ -84,19 +66,6 @@ const PIPELINE_IDS = [
   "avaluo", "credito", "docs", "escrituras", "cerrado",
 ];
 
-const STATUS_LABELS: Record<PurchaseProcessStatus, string> = {
-  lead: "Lead",
-  visita: "Visita",
-  interes: "Interés",
-  pre_aprobacion: "Pre-aprobación",
-  avaluo: "Avalúo",
-  credito: "Crédito",
-  docs_finales: "Docs finales",
-  escrituras: "Escrituras",
-  cerrado: "Cerrado",
-  cancelado: "Cancelado",
-};
-
 const STATUS_TO_COLUMN: Record<PurchaseProcessStatus, string> = {
   lead: "lead",
   visita: "visita",
@@ -122,11 +91,6 @@ const COLUMN_TO_STATUS: Record<string, PurchaseProcessStatus> = {
   cerrado: "cerrado",
   cancelado: "cancelado",
 };
-
-const PIPELINE_STATUSES: PurchaseProcessStatus[] = [
-  "lead", "visita", "interes", "pre_aprobacion",
-  "avaluo", "credito", "docs_finales", "escrituras", "cerrado",
-];
 
 const initialColumns: KanbanColumn[] = [
   { id: "lead",       title: "Lead",         color: "bg-blue-500",        items: [] },
@@ -159,7 +123,6 @@ const mapProcess = (p: AdminPurchaseProcess): KanbanItem => ({
 
 const KanbanSection = () => {
   const isMobile = useIsMobile();
-  const queryClient = useQueryClient();
   const [columns, setColumns] = useState<KanbanColumn[]>(initialColumns);
   const [activeColumnIndex, setActiveColumnIndex] = useState(0);
   const [selectedItem, setSelectedItem] = useState<{ item: KanbanItem; columnId: string } | null>(null);
@@ -175,12 +138,7 @@ const KanbanSection = () => {
   const [pendingDragToCerrado, setPendingDragToCerrado] = useState<{ item: KanbanItem } | null>(null);
   const [dragCerradoForm, setDragCerradoForm] = useState({ sale_price: "", payment_method: "" });
 
-  // ─── query ────────────────────────────────────────────────────────────────
-
-  const processesQuery = useQuery({
-    queryKey: ["admin-kanban"],
-    queryFn: () => getAdminPurchaseProcessesAction({ limit: 200 }),
-  });
+  const { processesQuery, moveMutation } = useAdminKanban();
 
   useEffect(() => {
     if (!processesQuery.data) return;
@@ -198,19 +156,6 @@ const KanbanSection = () => {
     setPendingStatus("");
     setCerradoForm({ sale_price: "", payment_method: "" });
   }, [selectedItem?.item.id]);
-
-  // ─── mutation ─────────────────────────────────────────────────────────────
-
-  const moveMutation = useMutation({
-    mutationFn: ({
-      rawId, status, extra,
-    }: { rawId: number; status: PurchaseProcessStatus; extra?: Record<string, unknown> }) =>
-      updatePurchaseProcessStatusAction(rawId, status, undefined, extra),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-kanban"] });
-    },
-    onError: () => toast.error("Error al cambiar la etapa"),
-  });
 
   // ─── navigation ──────────────────────────────────────────────────────────
 
@@ -281,7 +226,7 @@ const KanbanSection = () => {
 
     setColumns(newColumns);
     setSelectedItem({ ...selectedItem, columnId: targetColumnId });
-    toast.success(`Movido a ${STATUS_LABELS[pendingStatus]}`);
+    toast.success(`Movido a ${PURCHASE_PROCESS_STATUS_LABELS[pendingStatus]}`);
 
     const extra: Record<string, unknown> | undefined =
       pendingStatus === "cerrado"
@@ -548,8 +493,8 @@ const KanbanSection = () => {
               <SelectValue placeholder="Seleccionar etapa…" />
             </SelectTrigger>
             <SelectContent>
-              {PIPELINE_STATUSES.map(s => (
-                <SelectItem key={s} value={s}>{STATUS_LABELS[s]}</SelectItem>
+              {PURCHASE_PIPELINE_STAGES.map(s => (
+                <SelectItem key={s} value={s}>{PURCHASE_PROCESS_STATUS_LABELS[s]}</SelectItem>
               ))}
               <SelectItem value="cancelado">
                 <span className="flex items-center gap-2 text-red-500">
@@ -596,7 +541,7 @@ const KanbanSection = () => {
               }
               onClick={handleDirectStatusChange}
             >
-              Confirmar cambio a {STATUS_LABELS[pendingStatus]}
+              Confirmar cambio a {PURCHASE_PROCESS_STATUS_LABELS[pendingStatus]}
             </Button>
           )}
         </div>

@@ -1,14 +1,19 @@
 import { useState, useMemo } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  getAdminAppointmentsAction,
-  createAdminAppointmentAction,
-  updateAdminAppointmentStatusAction,
-  getAdminAppointmentAvailabilityAction,
-} from "@/myAccount/admin/actions/get-admin-appointments.actions";
-import { getAdminClientsAction } from "@/myAccount/admin/actions/get-admin-clients.actions";
-import { getAdminPropertiesAction } from "@/myAccount/admin/actions/get-admin-properties.actions";
+import { getAdminAppointmentAvailabilityAction } from "@/myAccount/admin/actions/get-admin-appointments.actions";
 import type { AdminAppointment, AdminClient, AdminProperty, AppointmentType } from "@/myAccount/admin/types/admin.types";
+import { useAdminCitas } from "@/myAccount/admin/hooks/use-admin-citas.admin.hook";
+import {
+  APPOINTMENT_APPOINTMENT_STATUS_LABELS,
+  APPOINTMENT_APPOINTMENT_STATUS_COLORS,
+  APPOINTMENT_APPOINTMENT_STATUS_PILL,
+  APPOINTMENT_APPOINTMENT_EDITABLE_STATUSES,
+  APPOINTMENT_APPOINTMENT_STATUS_ORDER,
+  APPOINTMENT_TYPE_OPTIONS,
+  MONTHS,
+  WEEKDAYS,
+  DURATION_OPTIONS,
+} from "@/myAccount/admin/constants/admin.constants";
+import { localDateStr } from "@/myAccount/admin/utils/admin.utils";
 import {
   Calendar as CalendarIcon,
   ChevronLeft,
@@ -41,57 +46,7 @@ import { useIsMobile } from "@/shared/hooks/use-mobile.hook";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-// ─── status config ────────────────────────────────────────────────────────────
-
-const STATUS_LABELS: Record<string, string> = {
-  programada: "Programada",
-  confirmada: "Confirmada",
-  en_progreso: "En progreso",
-  completada: "Completada",
-  cancelada: "Cancelada",
-  no_show: "No show",
-};
-
-// For badges / kanban headers
-const STATUS_COLORS: Record<string, string> = {
-  programada:  "bg-blue-100 text-blue-700 border-blue-200",
-  confirmada:  "bg-green-100 text-green-700 border-green-200",
-  en_progreso: "bg-amber-100 text-amber-800 border-amber-200",
-  completada:  "bg-emerald-100 text-emerald-700 border-emerald-200",
-  cancelada:   "bg-red-100 text-red-600 border-red-200",
-  no_show:     "bg-gray-100 text-gray-600 border-gray-200",
-  reagendada:  "bg-purple-100 text-purple-700 border-purple-200",
-};
-
-// For calendar pills (compact, visually distinct)
-const STATUS_PILL: Record<string, string> = {
-  programada:  "bg-blue-100 text-blue-700",
-  confirmada:  "bg-green-100 text-green-700",
-  en_progreso: "bg-amber-200 text-amber-800",
-  completada:  "bg-emerald-100 text-emerald-700",
-  cancelada:   "bg-red-100 text-red-500 line-through",
-  no_show:     "bg-gray-100 text-gray-400",
-  reagendada:  "bg-purple-100 text-purple-600",
-};
-
-// Statuses shown in the change-status dropdown (no reagendada)
-const EDITABLE_STATUSES = [
-  "programada", "confirmada", "en_progreso", "completada", "cancelada", "no_show",
-] as const;
-
-// Kanban column order (no reagendada)
-const STATUS_ORDER = [
-  "programada", "confirmada", "en_progreso", "completada", "cancelada", "no_show",
-] as const;
-
 // ─── local types ──────────────────────────────────────────────────────────────
-
-interface AppointmentTypeOption {
-  id: AppointmentType;
-  name: string;
-  color: string;
-  defaultDuration: number;
-}
 
 interface Client {
   id: string;
@@ -137,24 +92,6 @@ interface FormData {
 
 // ─── constants ────────────────────────────────────────────────────────────────
 
-const appointmentTypes: AppointmentTypeOption[] = [
-  { id: "primera_visita",  name: "Primera Visita",      color: "bg-blue-100 text-blue-700",    defaultDuration: 60  },
-  { id: "seguimiento",     name: "Seguimiento",         color: "bg-green-100 text-green-700",  defaultDuration: 45  },
-  { id: "cierre_contrato", name: "Cierre de Contrato",  color: "bg-champagne-gold/20 text-champagne-gold-dark", defaultDuration: 90 },
-  { id: "entrega_llaves",  name: "Entrega de Llaves",   color: "bg-purple-100 text-purple-700",defaultDuration: 30  },
-  { id: "avaluo",          name: "Avalúo",              color: "bg-orange-100 text-orange-700",defaultDuration: 120 },
-];
-
-const MONTHS = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
-const WEEKDAYS = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
-const DURATION_OPTIONS = [
-  { value: 30,  label: "30 minutos"    },
-  { value: 45,  label: "45 minutos"    },
-  { value: 60,  label: "1 hora"        },
-  { value: 90,  label: "1 hora 30 min" },
-  { value: 120, label: "2 horas"       },
-];
-
 const emptyFormData: FormData = {
   date: "", time: "", clientId: "", client: "",
   propertySearch: "", property: "", propertyId: "",
@@ -191,61 +128,11 @@ const mapAdminClient = (item: AdminClient): Client => ({
   email: item.email,
 });
 
-// ─── helpers ─────────────────────────────────────────────────────────────────
-
-/** Returns local YYYY-MM-DD (avoids UTC-shift bug with toISOString) */
-const localDateStr = (d: Date) =>
-  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-
 // ─── component ───────────────────────────────────────────────────────────────
 
 const CitasSection = () => {
   const isMobile = useIsMobile();
-  const queryClient = useQueryClient();
   const [currentDate, setCurrentDate] = useState(new Date());
-
-  // ── queries ──
-  const appointmentsQuery = useQuery({
-    queryKey: ["admin-appointments"],
-    queryFn: () => getAdminAppointmentsAction({ limit: 500 }),
-  });
-  const appointments = (appointmentsQuery.data?.results ?? []).map(mapAdminAppointment);
-
-  const propertiesQuery = useQuery({
-    queryKey: ["admin-properties"],
-    queryFn: () => getAdminPropertiesAction({ limit: 200 }),
-  });
-  const allProperties = propertiesQuery.data?.results ?? [];
-
-  // ── status mutation ──
-  const updateStatusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: number; status: string }) =>
-      updateAdminAppointmentStatusAction(id, { status }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-appointments"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-kanban"] });
-      toast.success("Estado actualizado");
-    },
-    onError: () => toast.error("Error al actualizar el estado"),
-  });
-
-  // ── create mutation ──
-  const createMutation = useMutation({
-    mutationFn: createAdminAppointmentAction,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-appointments"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-kanban"] });
-      toast.success("Cita creada correctamente");
-      setIsFormOpen(false);
-      setFormData(emptyFormData);
-      setClientSearch("");
-      setAvailableSlots([]);
-    },
-    onError: (err: unknown) => {
-      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
-      toast.error(msg ?? "Error al crear la cita");
-    },
-  });
 
   // ── UI state ──
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
@@ -260,11 +147,11 @@ const CitasSection = () => {
   const [availableSlots, setAvailableSlots]   = useState<string[]>([]);
   const [slotsLoading, setSlotsLoading]       = useState(false);
 
-  const clientsQuery = useQuery({
-    queryKey: ["admin-clients-search", clientSearch],
-    queryFn: () => getAdminClientsAction({ search: clientSearch, limit: 20 }),
-    enabled: clientSearch.length >= 2,
-  });
+  const { appointmentsQuery, propertiesQuery, clientsQuery, updateStatusMutation, createMutation } =
+    useAdminCitas({ clientSearch });
+
+  const appointments = (appointmentsQuery.data?.results ?? []).map(mapAdminAppointment);
+  const allProperties = propertiesQuery.data?.results ?? [];
   const clients = (clientsQuery.data?.results ?? []).map(mapAdminClient);
 
   // ── calendar computed ──
@@ -302,7 +189,7 @@ const CitasSection = () => {
   // ── kanban: appointments grouped by status ──
   const appointmentsByStatus = useMemo(() => {
     const map: Record<string, Appointment[]> = {};
-    STATUS_ORDER.forEach(s => {
+    APPOINTMENT_STATUS_ORDER.forEach(s => {
       map[s] = appointments
         .filter(a => a.status === s)
         .sort((a, b) => b.date.localeCompare(a.date) || b.time.localeCompare(a.time));
@@ -401,16 +288,26 @@ const CitasSection = () => {
       toast.error("Selecciona propiedad, fecha y hora para continuar");
       return;
     }
-    createMutation.mutate({
-      property_id: formData.propertyId as number,
-      agent_membership_id: formData.agentMembershipId as number,
-      client_membership_id: formData.clientId ? parseInt(formData.clientId) : null,
-      scheduled_date: formData.date,
-      scheduled_time: formData.time,
-      duration_minutes: formData.duration || null,
-      appointment_type: formData.typeId,
-      notes: formData.notes,
-    });
+    createMutation.mutate(
+      {
+        property_id: formData.propertyId as number,
+        agent_membership_id: formData.agentMembershipId as number,
+        client_membership_id: formData.clientId ? parseInt(formData.clientId) : null,
+        scheduled_date: formData.date,
+        scheduled_time: formData.time,
+        duration_minutes: formData.duration || null,
+        appointment_type: formData.typeId,
+        notes: formData.notes,
+      },
+      {
+        onSuccess: () => {
+          setIsFormOpen(false);
+          setFormData(emptyFormData);
+          setClientSearch("");
+          setAvailableSlots([]);
+        },
+      },
+    );
   };
 
   const handleDelete = (_id: string) => {
@@ -419,7 +316,7 @@ const CitasSection = () => {
   };
 
   const handleTypeChange = (typeId: string) => {
-    const type = appointmentTypes.find(t => t.id === typeId);
+    const type = APPOINTMENT_TYPE_OPTIONS.find(t => t.id === typeId);
     setFormData(prev => ({ ...prev, typeId: typeId as AppointmentType, duration: type?.defaultDuration || 60, time: "" }));
   };
 
@@ -432,7 +329,7 @@ const CitasSection = () => {
   const AppointmentDetailContent = () => {
     if (!selectedAppointment) return null;
     const apt = selectedAppointment;
-    const statusColor = STATUS_COLORS[apt.status] ?? STATUS_COLORS.programada;
+    const statusColor = APPOINTMENT_STATUS_COLORS[apt.status] ?? APPOINTMENT_STATUS_COLORS.programada;
 
     return (
       <div className="space-y-5 p-4">
@@ -454,7 +351,7 @@ const CitasSection = () => {
 
         {/* Appointment type badge */}
         {(() => {
-          const t = appointmentTypes.find(x => x.id === apt.typeId);
+          const t = APPOINTMENT_TYPE_OPTIONS.find(x => x.id === apt.typeId);
           return t ? (
             <div className="flex items-center gap-2">
               <Tag className="w-4 h-4 text-champagne-gold" />
@@ -476,11 +373,11 @@ const CitasSection = () => {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {EDITABLE_STATUSES.map(s => (
+              {APPOINTMENT_EDITABLE_STATUSES.map(s => (
                 <SelectItem key={s} value={s}>
                   <div className="flex items-center gap-2">
-                    <span className={cn("w-2 h-2 rounded-full", STATUS_COLORS[s].split(" ")[0])} />
-                    {STATUS_LABELS[s]}
+                    <span className={cn("w-2 h-2 rounded-full", APPOINTMENT_STATUS_COLORS[s].split(" ")[0])} />
+                    {APPOINTMENT_STATUS_LABELS[s]}
                   </div>
                 </SelectItem>
               ))}
@@ -780,7 +677,7 @@ const CitasSection = () => {
               <Select value={formData.typeId} onValueChange={handleTypeChange} disabled={!isPropertySelected}>
                 <SelectTrigger className="h-12"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {appointmentTypes.map(t => (
+                  {APPOINTMENT_TYPE_OPTIONS.map(t => (
                     <SelectItem key={t.id} value={t.id}>
                       <div className="flex items-center gap-2">
                         <Badge className={cn(t.color, "text-xs")}>{t.name}</Badge>
@@ -845,9 +742,9 @@ const CitasSection = () => {
 
         {/* Status legend */}
         <div className="px-6 pb-3 flex flex-wrap gap-2">
-          {STATUS_ORDER.map(s => (
-            <span key={s} className={cn("text-xs px-2 py-0.5 rounded-full border font-medium", STATUS_COLORS[s])}>
-              {STATUS_LABELS[s]}
+          {APPOINTMENT_STATUS_ORDER.map(s => (
+            <span key={s} className={cn("text-xs px-2 py-0.5 rounded-full border font-medium", APPOINTMENT_STATUS_COLORS[s])}>
+              {APPOINTMENT_STATUS_LABELS[s]}
             </span>
           ))}
         </div>
@@ -878,7 +775,7 @@ const CitasSection = () => {
                         onClick={e => { e.stopPropagation(); handleAppointmentClick(apt); }}
                         className={cn(
                           "w-full text-left p-1 rounded text-xs truncate transition-all hover:scale-105",
-                          STATUS_PILL[apt.status] ?? "bg-gray-100 text-gray-600"
+                          APPOINTMENT_STATUS_PILL[apt.status] ?? "bg-gray-100 text-gray-600"
                         )}>
                         {isMobile ? apt.time : `${apt.time} ${apt.client}`}
                       </button>
@@ -910,14 +807,14 @@ const CitasSection = () => {
         <CardContent>
           <div className="overflow-x-auto pb-2">
             <div className="flex gap-4 min-w-max">
-              {STATUS_ORDER.map(status => {
+              {APPOINTMENT_STATUS_ORDER.map(status => {
                 const cols = appointmentsByStatus[status] ?? [];
                 return (
                   <div key={status} className="w-56 space-y-3">
                     {/* Column header */}
                     <div className="flex items-center justify-between">
-                      <Badge className={cn("font-medium border", STATUS_COLORS[status])}>
-                        {STATUS_LABELS[status]}
+                      <Badge className={cn("font-medium border", APPOINTMENT_STATUS_COLORS[status])}>
+                        {APPOINTMENT_STATUS_LABELS[status]}
                       </Badge>
                       <span className="text-sm font-semibold text-foreground/60">{cols.length}</span>
                     </div>

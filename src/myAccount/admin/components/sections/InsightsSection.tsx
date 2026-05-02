@@ -1,5 +1,3 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import {
   DollarSign,
   TrendingUp,
@@ -31,21 +29,13 @@ import {
 } from "recharts";
 import { useIsMobile } from "@/shared/hooks/use-mobile.hook";
 import { cn } from "@/lib/utils";
-import { getAdminInsightsAction } from "@/myAccount/admin/actions/get-admin-insights.actions";
-import type { InsightsPeriod } from "@/myAccount/admin/actions/get-admin-insights.actions";
+import { useAdminInsights } from "@/myAccount/admin/hooks/use-admin-insights.admin.hook";
 
 const PIE_COLORS = ["#C5A059", "#3B82F6", "#8B5CF6", "#10B981", "#F59E0B", "#EF4444"];
 
 const InsightsSection = () => {
   const isMobile = useIsMobile();
-  const [period, setPeriod] = useState<InsightsPeriod>("year");
-
-  const insightsQuery = useQuery({
-    queryKey: ["admin-insights", period],
-    queryFn: () => getAdminInsightsAction(period),
-  });
-
-  const insights = insightsQuery.data;
+  const { period, setPeriod, insightsQuery, insights } = useAdminInsights();
 
   const monthlySalesData = (insights?.salesByMonth ?? []).map((m) => ({
     month: m.month,

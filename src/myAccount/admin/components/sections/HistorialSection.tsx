@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import {
   Home,
   User,
@@ -21,7 +20,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select";
 import { useIsMobile } from "@/shared/hooks/use-mobile.hook";
 import { cn } from "@/lib/utils";
-import { getAdminHistoryAction } from "@/myAccount/admin/actions/get-admin-history.actions";
+import { useAdminHistorial } from "@/myAccount/admin/hooks/use-admin-historial.admin.hook";
 import type { AdminSaleHistoryItem } from "@/myAccount/admin/types/admin.types";
 
 interface SoldProperty {
@@ -70,12 +69,9 @@ const HistorialSection = () => {
   const [filterType, setFilterType] = useState<string>("all");
   const [showFilters, setShowFilters] = useState(false);
 
-  const historyQuery = useQuery({
-    queryKey: ["admin-history"],
-    queryFn: () => getAdminHistoryAction({ limit: 100 }),
-  });
+  const { historyQuery, results } = useAdminHistorial();
 
-  const soldProperties: SoldProperty[] = (historyQuery.data?.results ?? []).map(mapHistoryItem);
+  const soldProperties: SoldProperty[] = results.map(mapHistoryItem);
 
   const zones = [...new Set(soldProperties.map(p => p.zone))].filter(Boolean);
   const types = [...new Set(soldProperties.map(p => p.type))].filter(Boolean);

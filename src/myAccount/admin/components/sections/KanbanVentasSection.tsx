@@ -1,10 +1,11 @@
 import { useState, useEffect, DragEvent } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  getAdminSaleProcessesAction,
-  updateSaleProcessStatusAction,
-} from "@/myAccount/admin/actions/get-admin-kanban.actions";
 import type { AdminSaleProcess, SaleProcessStatus } from "@/myAccount/admin/types/admin.types";
+import { useAdminKanbanVentas } from "@/myAccount/admin/hooks/use-admin-kanban-ventas.admin.hook";
+import {
+  SALE_PROCESS_SALE_PROCESS_STATUS_LABELS,
+  SALE_PIPELINE_STAGES,
+} from "@/myAccount/admin/constants/admin.constants";
+import { getMediaUrl, calcDays } from "@/myAccount/admin/utils/admin.utils";
 import {
   ChevronLeft,
   ChevronRight,
@@ -31,19 +32,6 @@ import {
 import { useIsMobile } from "@/shared/hooks/use-mobile.hook";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { getApiOrigin } from "@/shared/utils/media-url.utils";
-
-// ─── helpers ────────────────────────────────────────────────────────────────
-
-const getMediaUrl = (url: string | null | undefined): string | null => {
-  if (!url) return null;
-  if (url.startsWith("http")) return url;
-  if (url.startsWith("/media/")) return `${getApiOrigin()}${url}`;
-  return null;
-};
-
-const calcDays = (updatedAt: string): number =>
-  Math.floor((Date.now() - new Date(updatedAt).getTime()) / 86_400_000);
 
 // ─── types ───────────────────────────────────────────────────────────────────
 
@@ -64,35 +52,6 @@ interface KanbanColumn {
   color: string;
   items: KanbanItem[];
 }
-
-// ─── constants ───────────────────────────────────────────────────────────────
-
-const PIPELINE_STATUSES: SaleProcessStatus[] = [
-  "nuevo",
-  "contactado",
-  "en_revision",
-  "vendedor_completado",
-  "contacto_inicial",
-  "evaluacion",
-  "valuacion",
-  "firma_contrato",
-  "marketing",
-  "publicar",
-];
-
-const STATUS_LABELS: Record<SaleProcessStatus, string> = {
-  nuevo: "Nuevo",
-  contactado: "Contactado",
-  en_revision: "En Revisión",
-  vendedor_completado: "Vendedor Completado",
-  contacto_inicial: "Contacto Inicial",
-  evaluacion: "Evaluación",
-  valuacion: "Valuación",
-  firma_contrato: "Firma Contrato",
-  marketing: "Marketing",
-  publicar: "Publicar",
-  cancelado: "Cancelado",
-};
 
 const initialColumns: KanbanColumn[] = [
   { id: "nuevo",                title: "Nuevo",               color: "bg-blue-500",         items: [] },
@@ -123,7 +82,6 @@ const mapProcess = (p: AdminSaleProcess): KanbanItem => ({
 
 const KanbanVentasSection = () => {
   const isMobile = useIsMobile();
-  const queryClient = useQueryClient();
   const [columns, setColumns] = useState<KanbanColumn[]>(initialColumns);
   const [activeColumnIndex, setActiveColumnIndex] = useState(0);
   const [selectedItem, setSelectedItem] = useState<{ item: KanbanItem; columnId: string } | null>(null);
@@ -132,12 +90,7 @@ const KanbanVentasSection = () => {
   const [dragOverColumnId, setDragOverColumnId] = useState<string | null>(null);
   const [pendingStatus, setPendingStatus] = useState<SaleProcessStatus | "">("");
 
-  // ─── query ────────────────────────────────────────────────────────────────
-
-  const processesQuery = useQuery({
-    queryKey: ["admin-kanban-ventas"],
-    queryFn: () => getAdminSaleProcessesAction({ limit: 200 }),
-  });
+  const { processesQuery, moveMutation } = useAdminKanbanVentas();
 
   useEffect(() => {
     if (!processesQuery.data) return;
@@ -154,17 +107,6 @@ const KanbanVentasSection = () => {
     setPendingStatus("");
   }, [selectedItem?.item.id]);
 
-  // ─── mutation ─────────────────────────────────────────────────────────────
-
-  const moveMutation = useMutation({
-    mutationFn: ({ rawId, status }: { rawId: number; status: SaleProcessStatus }) =>
-      updateSaleProcessStatusAction(rawId, status),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-kanban-ventas"] });
-    },
-    onError: () => toast.error("Error al cambiar la etapa"),
-  });
-
   // ─── navigation ──────────────────────────────────────────────────────────
 
   const isCancelado = (columnId: string) => columnId === "cancelado";
@@ -172,24 +114,24 @@ const KanbanVentasSection = () => {
   const canMoveForward = () => {
     if (!selectedItem) return false;
     if (isCancelado(selectedItem.columnId)) return false;
-    const idx = PIPELINE_STATUSES.indexOf(selectedItem.columnId as SaleProcessStatus);
-    return idx >= 0 && idx < PIPELINE_STATUSES.length - 1;
+    const idx = SALE_PIPELINE_STAGES.indexOf(selectedItem.columnId as SaleProcessStatus);
+    return idx >= 0 && idx < SALE_PIPELINE_STAGES.length - 1;
   };
 
   const canMoveBackward = () => {
     if (!selectedItem) return false;
     if (isCancelado(selectedItem.columnId)) return false;
-    const idx = PIPELINE_STATUSES.indexOf(selectedItem.columnId as SaleProcessStatus);
+    const idx = SALE_PIPELINE_STAGES.indexOf(selectedItem.columnId as SaleProcessStatus);
     return idx > 0;
   };
 
   const handleMoveItem = (direction: "forward" | "backward") => {
     if (!selectedItem) return;
-    const currentIdx = PIPELINE_STATUSES.indexOf(selectedItem.columnId as SaleProcessStatus);
+    const currentIdx = SALE_PIPELINE_STAGES.indexOf(selectedItem.columnId as SaleProcessStatus);
     const newIdx = direction === "forward" ? currentIdx + 1 : currentIdx - 1;
-    if (newIdx < 0 || newIdx >= PIPELINE_STATUSES.length) return;
+    if (newIdx < 0 || newIdx >= SALE_PIPELINE_STAGES.length) return;
 
-    const newStatus = PIPELINE_STATUSES[newIdx];
+    const newStatus = SALE_PIPELINE_STAGES[newIdx];
 
     const newColumns = columns.map(col => {
       if (col.id === selectedItem.columnId) {
@@ -203,7 +145,7 @@ const KanbanVentasSection = () => {
 
     setColumns(newColumns);
     setSelectedItem({ ...selectedItem, columnId: newStatus });
-    toast.success(`Movido a ${STATUS_LABELS[newStatus]}`);
+    toast.success(`Movido a ${SALE_PROCESS_STATUS_LABELS[newStatus]}`);
     moveMutation.mutate({ rawId: selectedItem.item.rawId, status: newStatus });
   };
 
@@ -225,7 +167,7 @@ const KanbanVentasSection = () => {
 
     setColumns(newColumns);
     setSelectedItem({ ...selectedItem, columnId: pendingStatus });
-    toast.success(`Movido a ${STATUS_LABELS[pendingStatus]}`);
+    toast.success(`Movido a ${SALE_PROCESS_STATUS_LABELS[pendingStatus]}`);
     moveMutation.mutate({ rawId: selectedItem.item.rawId, status: pendingStatus });
     setPendingStatus("");
   };
@@ -404,8 +346,8 @@ const KanbanVentasSection = () => {
               <SelectValue placeholder="Seleccionar etapa…" />
             </SelectTrigger>
             <SelectContent>
-              {PIPELINE_STATUSES.map(s => (
-                <SelectItem key={s} value={s}>{STATUS_LABELS[s]}</SelectItem>
+              {SALE_PIPELINE_STAGES.map(s => (
+                <SelectItem key={s} value={s}>{SALE_PROCESS_STATUS_LABELS[s]}</SelectItem>
               ))}
               <SelectItem value="cancelado">
                 <span className="flex items-center gap-2 text-red-500">
@@ -423,7 +365,7 @@ const KanbanVentasSection = () => {
               disabled={moveMutation.isPending}
               onClick={handleDirectStatusChange}
             >
-              Confirmar cambio a {STATUS_LABELS[pendingStatus]}
+              Confirmar cambio a {SALE_PROCESS_STATUS_LABELS[pendingStatus]}
             </Button>
           )}
         </div>

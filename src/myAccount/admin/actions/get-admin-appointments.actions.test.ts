@@ -3,6 +3,7 @@ import {
   getAdminAppointmentsAction,
   createAdminAppointmentAction,
   updateAdminAppointmentStatusAction,
+  getAdminAppointmentAvailabilityAction,
 } from "./get-admin-appointments.actions";
 import { adminApi } from "@/myAccount/admin/api/admin.api";
 
@@ -77,6 +78,35 @@ describe("createAdminAppointmentAction", () => {
     mockedApi.createAppointment.mockRejectedValueOnce(new Error("err"));
     await expect(
       createAdminAppointmentAction({ property_id: 1, agent_membership_id: 1, scheduled_date: "", scheduled_time: "" })
+    ).rejects.toThrow();
+  });
+});
+
+// ─── getAdminAppointmentAvailabilityAction ────────────────────────────────────
+
+describe("getAdminAppointmentAvailabilityAction", () => {
+  it("retorna los slots disponibles", async () => {
+    mockedApi.getAppointmentAvailability.mockResolvedValueOnce({
+      data: { available_slots: ["09:00", "10:00", "11:00"] },
+    } as never);
+
+    const result = await getAdminAppointmentAvailabilityAction(3, "2026-05-10");
+    expect(result).toEqual(["09:00", "10:00", "11:00"]);
+  });
+
+  it("retorna [] cuando available_slots es null", async () => {
+    mockedApi.getAppointmentAvailability.mockResolvedValueOnce({
+      data: { available_slots: null },
+    } as never);
+
+    const result = await getAdminAppointmentAvailabilityAction(3, "2026-05-10");
+    expect(result).toEqual([]);
+  });
+
+  it("lanza el error en caso de fallo", async () => {
+    mockedApi.getAppointmentAvailability.mockRejectedValueOnce(new Error("err"));
+    await expect(
+      getAdminAppointmentAvailabilityAction(3, "2026-05-10")
     ).rejects.toThrow();
   });
 });

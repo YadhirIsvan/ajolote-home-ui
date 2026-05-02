@@ -1,5 +1,4 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Home,
   Plus,
@@ -37,25 +36,20 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from "
 import { useIsMobile } from "@/shared/hooks/use-mobile.hook";
 import { toast } from "sonner";
 import { formatMoney, formatSqm, parseRawNumber, parseRawDecimal } from "@/shared/utils/format-input";
-import { getApiOrigin } from "@/shared/utils/media-url.utils";
 import {
-  getAdminPropertiesAction,
-  deleteAdminPropertyAction,
-  toggleAdminPropertyFeaturedAction,
   getAdminPropertyDetailAction,
   createAdminPropertyAction,
   updateAdminPropertyAction,
   uploadAdminPropertyImagesAction,
   deleteAdminPropertyImageAction,
-  getAdminStatesAction,
-  getAdminCitiesAction,
-  getAdminAmenitiesAction,
   type PropertyFormPayload,
 } from "@/myAccount/admin/actions/get-admin-properties.actions";
 import type {
   AdminProperty,
   AdminPropertyImage,
 } from "@/myAccount/admin/types/admin.types";
+import { useAdminProperties } from "@/myAccount/admin/hooks/use-admin-properties.admin.hook";
+import { getMediaUrl, extractYouTubeId } from "@/myAccount/admin/utils/admin.utils";
 
 // ─── Local types ──────────────────────────────────────────────────────────────
 
@@ -107,14 +101,6 @@ interface PropertyFormData {
 }
 
 // ─── Mappers ──────────────────────────────────────────────────────────────────
-
-// ─── Media URL helper ─────────────────────────────────────────────────────────
-
-const getMediaUrl = (url: string | null | undefined): string => {
-  if (!url) return "";
-  if (url.startsWith("http")) return url;
-  return `${getApiOrigin()}${url}`;
-};
 
 const mapPropertyType = (type: string): PropertyType => {
   const m: Record<string, PropertyType> = {
@@ -193,7 +179,6 @@ const emptyForm: PropertyFormData = {
 
 const PropiedadesSection = () => {
   const isMobile = useIsMobile();
-  const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // List state
@@ -218,56 +203,17 @@ const PropiedadesSection = () => {
   const [isSaving, setIsSaving] = useState(false);
 
   // Cascading cities
-  const selectedStateId = formData.state_id !== "" ? formData.state_id : null;
+  const selectedStateId = formData.state_id !== "" ? (formData.state_id as number) : null;
 
-  // ─── Queries ────────────────────────────────────────────────────────────────
-
-  const propertiesQuery = useQuery({
-    queryKey: ["admin-properties"],
-    queryFn: () => getAdminPropertiesAction({ limit: 200 }),
-  });
-
-  const statesQuery = useQuery({
-    queryKey: ["catalog-states"],
-    queryFn: getAdminStatesAction,
-    staleTime: 10 * 60 * 1000,
-    enabled: isFormOpen,
-  });
-
-  const citiesQuery = useQuery({
-    queryKey: ["catalog-cities", selectedStateId],
-    queryFn: () => getAdminCitiesAction(selectedStateId!),
-    enabled: isFormOpen && selectedStateId !== null,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const amenitiesQuery = useQuery({
-    queryKey: ["catalog-amenities"],
-    queryFn: getAdminAmenitiesAction,
-    staleTime: 10 * 60 * 1000,
-    enabled: isFormOpen,
-  });
-
-  // ─── Mutations ──────────────────────────────────────────────────────────────
-
-  const deleteMutation = useMutation({
-    mutationFn: (rawId: number) => deleteAdminPropertyAction(rawId),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["admin-properties"] });
-      toast.success("Propiedad eliminada");
-      setIsDetailOpen(false);
-    },
-    onError: () => toast.error("Error al eliminar la propiedad"),
-  });
-
-  const toggleFeaturedMutation = useMutation({
-    mutationFn: (rawId: number) => toggleAdminPropertyFeaturedAction(rawId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-properties"] });
-      toast.success("Propiedad destacada actualizada");
-    },
-    onError: () => toast.error("Error al actualizar"),
-  });
+  const {
+    propertiesQuery,
+    statesQuery,
+    citiesQuery,
+    amenitiesQuery,
+    deleteMutation,
+    toggleFeaturedMutation,
+    invalidateProperties,
+  } = useAdminProperties({ isFormOpen, selectedStateId });
 
   // ─── Derived data ────────────────────────────────────────────────────────────
 
@@ -357,7 +303,7 @@ const PropiedadesSection = () => {
   };
 
   const handleDelete = (rawId: number) => {
-    deleteMutation.mutate(rawId);
+    deleteMutation.mutate(rawId, { onSuccess: () => setIsDetailOpen(false) });
   };
 
   const handleToggleFeatured = (rawId: number) => {
@@ -465,10 +411,7 @@ const PropiedadesSection = () => {
         }
       }
 
-      // Await the refetch so the list is already updated when the dialog closes.
-      // Without await, production network latency means the user sees the stale
-      // list for a moment before the background refetch completes.
-      await queryClient.invalidateQueries({ queryKey: ["admin-properties"] });
+      await invalidateProperties();
       toast.success(editingId !== null ? "Propiedad actualizada" : "Propiedad creada");
       setIsFormOpen(false);
     } catch {
@@ -489,18 +432,6 @@ const PropiedadesSection = () => {
 
   const handleStateChange = (value: string) => {
     setFormData((prev) => ({ ...prev, state_id: Number(value), city_id: "" }));
-  };
-
-  const extractYouTubeId = (input: string): string => {
-    const patterns = [
-      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
-    ];
-    for (const pattern of patterns) {
-      const match = input.match(pattern);
-      if (match) return match[1];
-    }
-    // Already just an ID (≤11 alphanumeric chars)
-    return input.trim();
   };
 
   // ─── Sub-components ───────────────────────────────────────────────────────────

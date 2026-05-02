@@ -1,5 +1,4 @@
 import { useRef, useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Plus,
   Clock,
@@ -27,46 +26,11 @@ import { useIsMobile } from "@/shared/hooks/use-mobile.hook";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { formatPhone } from "@/shared/utils/format-input";
-import { getApiOrigin } from "@/shared/utils/media-url.utils";
-import {
-  getAdminAgentsAction,
-  getAdminAgentSchedulesAction,
-  createAdminAgentScheduleAction,
-  updateAdminAgentScheduleAction,
-  deleteAdminAgentScheduleAction,
-  createAdminAgentAction,
-  updateAdminAgentAction,
-  uploadAdminAgentAvatarAction,
-  deleteAdminAgentAction,
-} from "@/myAccount/admin/actions/get-admin-agents.actions";
+import type { ScheduleFormPayload } from "@/myAccount/admin/actions/get-admin-agents.actions";
 import type { AdminAgent, AgentSchedule } from "@/myAccount/admin/types/admin.types";
-
-// ─── helpers ──────────────────────────────────────────────────────────────────
-
-const getMediaUrl = (url: string | null | undefined): string | null => {
-  if (!url) return null;
-  if (url.startsWith("http")) return url;
-  if (url.startsWith("/media/")) return `${getApiOrigin()}${url}`;
-  return null;
-};
-
-// ─── constants ────────────────────────────────────────────────────────────────
-
-type DayKey = "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday";
-const DAY_KEYS: DayKey[] = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
-const DAY_ABBR: Record<DayKey, string> = {
-  monday: "Lu", tuesday: "Ma", wednesday: "Mi", thursday: "Ju",
-  friday: "Vi", saturday: "Sa", sunday: "Do",
-};
-const BREAK_TYPE_LABELS: Record<string, string> = {
-  lunch: "Almuerzo", coffee: "Café", rest: "Descanso", other: "Otro",
-};
-const BREAK_TYPE_COLORS: Record<string, string> = {
-  lunch: "bg-orange-100 text-orange-700 border-orange-200",
-  coffee: "bg-amber-100 text-amber-700 border-amber-200",
-  rest: "bg-blue-100 text-blue-700 border-blue-200",
-  other: "bg-gray-100 text-gray-700 border-gray-200",
-};
+import { useAdminAgents } from "@/myAccount/admin/hooks/use-admin-agents.admin.hook";
+import { getMediaUrl } from "@/myAccount/admin/utils/admin.utils";
+import { type DayKey, DAY_KEYS, DAY_ABBR, BREAK_TYPE_LABELS, BREAK_TYPE_COLORS } from "@/myAccount/admin/constants/admin.constants";
 
 // ─── local types ──────────────────────────────────────────────────────────────
 
@@ -144,83 +108,26 @@ const mapAdminAgent = (item: AdminAgent): MappedAgent => {
 
 const AgentesSection = () => {
   const isMobile = useIsMobile();
-  const queryClient = useQueryClient();
   const avatarInputRef = useRef<HTMLInputElement>(null);
-
-  // ── queries ──
-  const agentsQuery = useQuery({ queryKey: ["admin-agents"], queryFn: getAdminAgentsAction });
-  const agents = (agentsQuery.data?.results ?? []).map(mapAdminAgent);
 
   const [selectedAgent, setSelectedAgent] = useState<MappedAgent | null>(null);
   const [isSchedulerOpen, setIsSchedulerOpen] = useState(false);
 
-  const schedulesQuery = useQuery({
-    queryKey: ["admin-agent-schedules", selectedAgent?.rawId],
-    queryFn: () => getAdminAgentSchedulesAction(selectedAgent!.rawId),
-    enabled: isSchedulerOpen && !!selectedAgent,
-  });
+  const {
+    agentsQuery,
+    schedulesQuery,
+    createAgentMutation,
+    updateAgentMutation,
+    avatarMutation,
+    deleteAgentMutation,
+    createScheduleMutation,
+    updateScheduleMutation,
+    deleteScheduleMutation,
+    invalidateAgents,
+  } = useAdminAgents({ selectedAgentId: selectedAgent?.rawId, isSchedulerOpen });
+
+  const agents = (agentsQuery.data?.results ?? []).map(mapAdminAgent);
   const schedules = schedulesQuery.data ?? [];
-
-  // ── agent mutations ──
-  const updateAgentMutation = useMutation({
-    mutationFn: ({ id, payload }: { id: number; payload: Partial<AgentFormData> }) =>
-      updateAdminAgentAction(id, payload),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin-agents"] }),
-    onError: () => toast.error("Error al guardar los datos del agente"),
-  });
-  const avatarMutation = useMutation({
-    mutationFn: ({ id, file }: { id: number; file: File }) =>
-      uploadAdminAgentAvatarAction(id, file),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin-agents"] }),
-    onError: () => toast.error("Error al subir la foto de perfil"),
-  });
-  const deleteAgentMutation = useMutation({
-    mutationFn: (rawId: number) => deleteAdminAgentAction(rawId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-agents"] });
-      toast.success("Agente eliminado");
-    },
-    onError: () => toast.error("Error al eliminar el agente"),
-  });
-
-  // ── schedule mutations ──
-  const invalidateSchedules = () =>
-    queryClient.invalidateQueries({ queryKey: ["admin-agent-schedules", selectedAgent?.rawId] });
-
-  const createScheduleMutation = useMutation({
-    mutationFn: ({ agentId, payload }: { agentId: number; payload: ScheduleFormData }) => {
-      const { breaks, ...rest } = payload;
-      return createAdminAgentScheduleAction(agentId, {
-        ...rest,
-        lunch_start: rest.has_lunch_break ? rest.lunch_start : null,
-        lunch_end: rest.has_lunch_break ? rest.lunch_end : null,
-        breaks: breaks.map(({ break_type, name, start_time, end_time }) => ({ break_type, name, start_time, end_time })),
-      });
-    },
-    onSuccess: () => { invalidateSchedules(); toast.success("Horario creado"); },
-    onError: () => toast.error("Error al crear el horario"),
-  });
-
-  const updateScheduleMutation = useMutation({
-    mutationFn: ({ agentId, scheduleId, payload }: { agentId: number; scheduleId: number; payload: ScheduleFormData }) => {
-      const { breaks, ...rest } = payload;
-      return updateAdminAgentScheduleAction(agentId, scheduleId, {
-        ...rest,
-        lunch_start: rest.has_lunch_break ? rest.lunch_start : null,
-        lunch_end: rest.has_lunch_break ? rest.lunch_end : null,
-        breaks: breaks.map(({ break_type, name, start_time, end_time }) => ({ break_type, name, start_time, end_time })),
-      });
-    },
-    onSuccess: () => { invalidateSchedules(); toast.success("Horario actualizado"); },
-    onError: () => toast.error("Error al actualizar el horario"),
-  });
-
-  const deleteScheduleMutation = useMutation({
-    mutationFn: ({ agentId, scheduleId }: { agentId: number; scheduleId: number }) =>
-      deleteAdminAgentScheduleAction(agentId, scheduleId),
-    onSuccess: () => { invalidateSchedules(); toast.success("Horario eliminado"); },
-    onError: () => toast.error("Error al eliminar el horario"),
-  });
 
   // ── agent form state ──
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -278,7 +185,7 @@ const AgentesSection = () => {
       }
       setIsSavingAgent(true);
       try {
-        const created = await createAdminAgentAction({
+        const created = await createAgentMutation.mutateAsync({
           email: agentForm.email,
           first_name: agentForm.first_name,
           last_name: agentForm.last_name,
@@ -288,13 +195,12 @@ const AgentesSection = () => {
         });
         if (avatarFile && created.id) {
           await avatarMutation.mutateAsync({ id: created.id, file: avatarFile });
+          invalidateAgents();
         }
-        queryClient.invalidateQueries({ queryKey: ["admin-agents"] });
         toast.success("Agente creado exitosamente");
         setIsFormOpen(false);
-      } catch (err: unknown) {
-        const error = err as { response?: { data?: { error?: string } } };
-        toast.error(error?.response?.data?.error || "Error al crear el agente");
+      } catch {
+        // handled in mutation onError
       } finally {
         setIsSavingAgent(false);
       }
@@ -384,14 +290,23 @@ const AgentesSection = () => {
     if (!scheduleForm.name.trim()) { toast.error("El nombre del horario es obligatorio"); return; }
     const hasDay = DAY_KEYS.some(d => scheduleForm[d]);
     if (!hasDay) { toast.error("Selecciona al menos un día"); return; }
+
+    const { breaks, ...rest } = scheduleForm;
+    const schedulePayload: ScheduleFormPayload = {
+      ...rest,
+      lunch_start: rest.has_lunch_break ? rest.lunch_start : null,
+      lunch_end: rest.has_lunch_break ? rest.lunch_end : null,
+      breaks: breaks.map(({ break_type, name, start_time, end_time }) => ({ break_type, name, start_time, end_time })),
+    };
+
     setIsSavingSchedule(true);
     try {
       if (editingScheduleId) {
         await updateScheduleMutation.mutateAsync({
-          agentId: selectedAgent.rawId, scheduleId: editingScheduleId, payload: scheduleForm,
+          agentId: selectedAgent.rawId, scheduleId: editingScheduleId, payload: schedulePayload,
         });
       } else {
-        await createScheduleMutation.mutateAsync({ agentId: selectedAgent.rawId, payload: scheduleForm });
+        await createScheduleMutation.mutateAsync({ agentId: selectedAgent.rawId, payload: schedulePayload });
       }
       setSchedulerView("list");
     } catch {

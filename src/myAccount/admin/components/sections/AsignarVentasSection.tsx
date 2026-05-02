@@ -1,12 +1,7 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  getSaleProcessAssignmentsAction,
-  assignSaleProcessAgentAction,
-  unassignSaleProcessAgentAction,
-} from "@/myAccount/admin/actions/get-admin-sale-assignments.actions";
-import { getAdminAgentsAction } from "@/myAccount/admin/actions/get-admin-agents.actions";
 import type { SaleProcessAssignmentEntry } from "@/myAccount/admin/types/admin.types";
+import { useAdminAsignarVentas } from "@/myAccount/admin/hooks/use-admin-asignar-ventas.admin.hook";
+import { getMediaUrl } from "@/myAccount/admin/utils/admin.utils";
 import {
   Home,
   User,
@@ -41,15 +36,6 @@ import {
   DrawerTitle,
 } from "@/shared/components/ui/drawer";
 import { useIsMobile } from "@/shared/hooks/use-mobile.hook";
-import { toast } from "sonner";
-import { getApiOrigin } from "@/shared/utils/media-url.utils";
-
-// ─── Media URL helper ─────────────────────────────────────────────────────────
-const getMediaUrl = (url: string | null | undefined): string => {
-  if (!url) return "";
-  if (url.startsWith("http")) return url;
-  return `${getApiOrigin()}${url}`;
-};
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -89,58 +75,13 @@ const AgentAvatarEl = ({
 
 const AsignarVentasSection = () => {
   const isMobile = useIsMobile();
-  const queryClient = useQueryClient();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedEntry, setSelectedEntry] = useState<SaleProcessAssignmentEntry | null>(null);
   const [isTransferOpen, setIsTransferOpen] = useState(false);
 
-  // ─── Queries ──────────────────────────────────────────────────────────────────
-
-  const assignmentsQuery = useQuery({
-    queryKey: ["admin-sale-process-assignments"],
-    queryFn: getSaleProcessAssignmentsAction,
-  });
-
-  const agentsQuery = useQuery({
-    queryKey: ["admin-agents"],
-    queryFn: getAdminAgentsAction,
-  });
-
-  // ─── Mutations ────────────────────────────────────────────────────────────────
-
-  const assignMutation = useMutation({
-    mutationFn: ({ saleProcessId, membershipId }: { saleProcessId: number; membershipId: number }) =>
-      assignSaleProcessAgentAction(saleProcessId, membershipId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-sale-process-assignments"] });
-      toast.success("Agente asignado al proceso de venta");
-    },
-    onError: () => toast.error("Error al asignar el agente"),
-  });
-
-  const unassignMutation = useMutation({
-    mutationFn: (saleProcessId: number) => unassignSaleProcessAgentAction(saleProcessId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-sale-process-assignments"] });
-      toast.success("Agente removido del proceso de venta");
-    },
-    onError: () => toast.error("Error al remover el agente"),
-  });
-
-  // Transfer = unassign old + assign new
-  const transferMutation = useMutation({
-    mutationFn: async ({ saleProcessId, newMembershipId }: { saleProcessId: number; newMembershipId: number }) => {
-      await unassignSaleProcessAgentAction(saleProcessId);
-      await assignSaleProcessAgentAction(saleProcessId, newMembershipId);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-sale-process-assignments"] });
-      toast.success("Agente actualizado");
-      setIsTransferOpen(false);
-    },
-    onError: () => toast.error("Error al cambiar el agente"),
-  });
+  const { assignmentsQuery, agentsQuery, assignMutation, unassignMutation, transferMutation } =
+    useAdminAsignarVentas();
 
   // ─── Derived data ─────────────────────────────────────────────────────────────
 
@@ -176,10 +117,10 @@ const AsignarVentasSection = () => {
 
   const handleTransfer = (newMembershipId: number) => {
     if (!selectedEntry) return;
-    transferMutation.mutate({
-      saleProcessId: selectedEntry.saleProcessId,
-      newMembershipId,
-    });
+    transferMutation.mutate(
+      { saleProcessId: selectedEntry.saleProcessId, newMembershipId },
+      { onSuccess: () => setIsTransferOpen(false) },
+    );
   };
 
   // ─── Sub-renders ──────────────────────────────────────────────────────────────

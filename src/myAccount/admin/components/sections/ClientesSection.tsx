@@ -1,7 +1,13 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { getAdminClientsAction, getAdminClientDetailAction } from "@/myAccount/admin/actions/get-admin-clients.actions";
 import type { AdminClient, AdminClientDetail } from "@/myAccount/admin/types/admin.types";
+import { useAdminClientes } from "@/myAccount/admin/hooks/use-admin-clientes.admin.hook";
+import {
+  PURCHASE_PROCESS_STATUS_LABELS,
+  PURCHASE_PIPELINE_STAGES_STAGES,
+  SALE_PROCESS_STATUS_LABELS,
+  SALE_PIPELINE_STAGES_STAGES,
+} from "@/myAccount/admin/constants/admin.constants";
+import { getMediaUrl, getInitials } from "@/myAccount/admin/utils/admin.utils";
 import {
   User,
   Search,
@@ -33,59 +39,6 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from "
 import { useIsMobile } from "@/shared/hooks/use-mobile.hook";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { getApiOrigin } from "@/shared/utils/media-url.utils";
-
-// ─── helpers ────────────────────────────────────────────────────────────────
-
-const getMediaUrl = (url: string | null | undefined): string | null => {
-  if (!url) return null;
-  if (url.startsWith("http")) return url;
-  if (url.startsWith("/media/")) return `${getApiOrigin()}${url}`;
-  return null;
-};
-
-const getInitials = (name: string): string =>
-  name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
-
-const PURCHASE_STATUS_LABELS: Record<string, string> = {
-  lead: "Lead",
-  visita: "Visita",
-  interes: "Interés",
-  pre_aprobacion: "Pre-aprobación",
-  avaluo: "Avalúo",
-  credito: "Crédito",
-  docs_finales: "Docs Finales",
-  escrituras: "Escrituras",
-  cerrado: "Cerrado",
-  cancelado: "Cancelado",
-};
-
-const PURCHASE_PIPELINE = [
-  "lead", "visita", "interes", "pre_aprobacion",
-  "avaluo", "credito", "docs_finales", "escrituras", "cerrado",
-];
-
-const SALE_STATUS_LABELS: Record<string, string> = {
-  nuevo: "Nuevo",
-  contactado: "Contactado",
-  en_revision: "En Revisión",
-  vendedor_completado: "Vendedor Completado",
-  contacto_inicial: "Contacto Inicial",
-  evaluacion: "Evaluación",
-  valuacion: "Valuación",
-  firma_contrato: "Firma Contrato",
-  marketing: "Marketing",
-  publicar: "Publicar",
-  cancelado: "Cancelado",
-};
-
-const SALE_PIPELINE = [
-  "nuevo", "contactado", "en_revision", "vendedor_completado",
-  "contacto_inicial", "evaluacion", "valuacion",
-  "firma_contrato", "marketing", "publicar",
-];
-
-// ─── component ───────────────────────────────────────────────────────────────
 
 const ClientesSection = () => {
   const isMobile = useIsMobile();
@@ -96,22 +49,11 @@ const ClientesSection = () => {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [formData, setFormData] = useState({ name: "", email: "", phone: "" });
 
-  // ─── queries ──────────────────────────────────────────────────────────────
-
-  const clientsQuery = useQuery({
-    queryKey: ["admin-clients", searchTerm],
-    queryFn: () => getAdminClientsAction({ search: searchTerm || undefined, limit: 200 }),
+  const { clientsQuery, clients, detailQuery, clientDetail } = useAdminClientes({
+    searchTerm,
+    selectedClientId,
+    isDetailOpen,
   });
-
-  const clients = clientsQuery.data?.results ?? [];
-
-  const detailQuery = useQuery({
-    queryKey: ["admin-client-detail", selectedClientId],
-    queryFn: () => getAdminClientDetailAction(selectedClientId!),
-    enabled: selectedClientId !== null && isDetailOpen,
-  });
-
-  const clientDetail = detailQuery.data;
 
   // ─── handlers ─────────────────────────────────────────────────────────────
 
@@ -306,7 +248,7 @@ const ClientesSection = () => {
                         <div className="flex-1 min-w-0">
                           <h4 className="font-semibold text-midnight truncate">{proc.property.title}</h4>
                           <Badge className="bg-champagne-gold/20 text-champagne-gold-dark mt-1">
-                            {PURCHASE_STATUS_LABELS[proc.status] ?? proc.status}
+                            {PURCHASE_PROCESS_STATUS_LABELS[proc.status] ?? proc.status}
                           </Badge>
                           <div className="flex items-center gap-1 mt-1 text-xs text-foreground/50">
                             <User className="w-3 h-3" />
@@ -334,8 +276,8 @@ const ClientesSection = () => {
                         <p className="text-xs font-medium text-foreground/60">Pipeline</p>
                         <PipelineSteps
                           currentStatus={proc.status}
-                          pipeline={PURCHASE_PIPELINE}
-                          labels={PURCHASE_STATUS_LABELS}
+                          pipeline={PURCHASE_PIPELINE_STAGES}
+                          labels={PURCHASE_PROCESS_STATUS_LABELS}
                         />
                       </div>
 
@@ -383,7 +325,7 @@ const ClientesSection = () => {
                         <div className="flex-1 min-w-0">
                           <h4 className="font-semibold text-midnight truncate">{proc.property.title}</h4>
                           <Badge className="bg-champagne-gold/20 text-champagne-gold-dark mt-1">
-                            {SALE_STATUS_LABELS[proc.status] ?? proc.status}
+                            {SALE_PROCESS_STATUS_LABELS[proc.status] ?? proc.status}
                           </Badge>
                           <div className="flex items-center gap-1 mt-1 text-xs text-foreground/50">
                             <User className="w-3 h-3" />
@@ -397,8 +339,8 @@ const ClientesSection = () => {
                         <p className="text-xs font-medium text-foreground/60">Pipeline</p>
                         <PipelineSteps
                           currentStatus={proc.status}
-                          pipeline={SALE_PIPELINE}
-                          labels={SALE_STATUS_LABELS}
+                          pipeline={SALE_PIPELINE_STAGES}
+                          labels={SALE_PROCESS_STATUS_LABELS}
                         />
                       </div>
                     </CardContent>
