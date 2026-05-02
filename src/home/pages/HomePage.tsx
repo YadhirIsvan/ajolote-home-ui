@@ -22,7 +22,6 @@ import {
 } from "lucide-react";
 import { useFeaturedProperties } from "@/home/hooks/use-featured-properties.home.hook";
 import { useHomeCities } from "@/home/hooks/use-home-cities.home.hook";
-import videoBackground from "@/assets/videos/video-background.mp4";
 
 /* ── Trust bar partners (text placeholders until real logos exist) ── */
 const PARTNERS = [
@@ -70,9 +69,14 @@ const STEPS = [
   },
 ];
 
+const VIDEO_WEBM = "/videos/video-background.webm";
+const VIDEO_MP4 = "/videos/video-background.mp4";
+const VIDEO_POSTER = "/videos/poster.webp";
+
 const HomePage = () => {
   const navigate = useNavigate();
   const [selectedCity, setSelectedCity] = useState<string>("");
+  const [isVideoReady, setIsVideoReady] = useState<boolean>(false);
 
   const { cities, isLoading: isLoadingCities } = useHomeCities();
 
@@ -94,15 +98,26 @@ const HomePage = () => {
     <div className="min-h-screen bg-background">
       {/* ═══ HERO — IMMERSIVE VIDEO ═══ */}
       <section className="relative min-h-[75vh] sm:min-h-[80vh] md:min-h-[85vh] flex items-center justify-center overflow-hidden">
-        {/* Video bg */}
+        {/* Poster: visible instantly while video buffers */}
+        <img
+          src={VIDEO_POSTER}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        {/* Video: fades in once ready */}
         <video
           autoPlay
           muted
           loop
           playsInline
-          className="absolute inset-0 w-full h-full object-cover"
+          onCanPlay={() => setIsVideoReady(true)}
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${
+            isVideoReady ? "opacity-100" : "opacity-0"
+          }`}
         >
-          <source src={videoBackground} type="video/mp4" />
+          <source src={VIDEO_WEBM} type="video/webm" />
+          <source src={VIDEO_MP4} type="video/mp4" />
         </video>
 
         {/* Cinematic overlay */}

@@ -113,7 +113,7 @@ const mapProcess = (p: AdminPurchaseProcess): KanbanItem => ({
   property: p.property.title,
   propertyImage: p.property.image,
   agent: p.agent.name,
-  lastActivity: p.updatedAt.split("T")[0],
+  lastActivity: p.updatedAt?.split("T")[0] ?? "",
   price: p.property.price || "",
   daysInStage: calcDays(p.updatedAt),
   progress: p.overallProgress,

@@ -74,7 +74,7 @@ const mapProcess = (p: AdminSaleProcess): KanbanItem => ({
   property: p.property.title,
   propertyImage: p.property.image,
   agent: p.agent?.name ?? "Sin agente",
-  lastActivity: p.updatedAt.split("T")[0],
+  lastActivity: p.updatedAt?.split("T")[0] ?? "",
   daysInStage: calcDays(p.updatedAt),
 });
 

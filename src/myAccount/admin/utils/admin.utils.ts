@@ -12,8 +12,10 @@ export const fmtPrice = (price: string): string => {
   return n.toLocaleString("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 });
 };
 
-export const calcDays = (updatedAt: string): number =>
-  Math.floor((Date.now() - new Date(updatedAt).getTime()) / 86_400_000);
+export const calcDays = (updatedAt: string | null): number => {
+  if (!updatedAt) return 0;
+  return Math.floor((Date.now() - new Date(updatedAt).getTime()) / 86_400_000);
+};
 
 export const localDateStr = (d: Date): string =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;

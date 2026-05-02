@@ -53,12 +53,12 @@ const mapHistoryItem = (item: AdminSaleHistoryItem): SoldProperty => ({
   priceNum: Number(item.salePrice) || 0,
   location: item.property.zone,
   zone: item.property.zone,
-  soldDate: item.closedAt.split("T")[0],
+  soldDate: item.closedAt?.split("T")[0] ?? "",
   daysToSell: 0,
   paymentMethod: item.paymentMethod,
   documents: [],
   closedBy: item.agent.name,
-  closedAt: item.closedAt.split("T")[0],
+  closedAt: item.closedAt?.split("T")[0] ?? "",
 });
 
 const HistorialSection = () => {

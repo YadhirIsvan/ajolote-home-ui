@@ -217,7 +217,7 @@ export interface AdminClient {
   id: number;
   membershipId: number;
   name: string;
-  email: string;
+  email: string | null;
   phone: string;
   avatar: string | null;
   city: string;
@@ -278,7 +278,7 @@ export interface AdminPurchaseProcess {
   property: { id: number; title: string; image: string | null; price: string };
   agent: { id: number; name: string };
   createdAt: string;
-  updatedAt: string;
+  updatedAt: string | null;
 }
 
 // ─── Pipeline de venta ───────────────────────────────────────────────────────
@@ -302,7 +302,7 @@ export interface AdminSaleProcess {
   client: { id: number; name: string } | null;
   agent: { id: number; name: string } | null;
   createdAt: string;
-  updatedAt: string;
+  updatedAt: string | null;
 }
 
 // ─── Seller Leads ─────────────────────────────────────────────────────────────
@@ -334,7 +334,7 @@ export interface AdminSaleHistoryItem {
   agent: { name: string };
   salePrice: string;
   paymentMethod: string;
-  closedAt: string;
+  closedAt: string | null;
 }
 
 // ─── Insights ─────────────────────────────────────────────────────────────────

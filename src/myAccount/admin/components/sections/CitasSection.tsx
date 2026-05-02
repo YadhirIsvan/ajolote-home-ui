@@ -3,11 +3,11 @@ import { getAdminAppointmentAvailabilityAction } from "@/myAccount/admin/actions
 import type { AdminAppointment, AdminClient, AdminProperty, AppointmentType } from "@/myAccount/admin/types/admin.types";
 import { useAdminCitas } from "@/myAccount/admin/hooks/use-admin-citas.admin.hook";
 import {
-  APPOINTMENT_APPOINTMENT_STATUS_LABELS,
-  APPOINTMENT_APPOINTMENT_STATUS_COLORS,
-  APPOINTMENT_APPOINTMENT_STATUS_PILL,
-  APPOINTMENT_APPOINTMENT_EDITABLE_STATUSES,
-  APPOINTMENT_APPOINTMENT_STATUS_ORDER,
+  APPOINTMENT_STATUS_LABELS,
+  APPOINTMENT_STATUS_COLORS,
+  APPOINTMENT_STATUS_PILL,
+  APPOINTMENT_EDITABLE_STATUSES,
+  APPOINTMENT_STATUS_ORDER,
   APPOINTMENT_TYPE_OPTIONS,
   MONTHS,
   WEEKDAYS,
@@ -122,7 +122,7 @@ const mapAdminAppointment = (item: AdminAppointment): Appointment => ({
 const mapAdminClient = (item: AdminClient): Client => ({
   id: String(item.membershipId),
   name: item.name,
-  matricula: item.email.split("@")[0].toUpperCase(),
+  matricula: item.email?.split("@")[0].toUpperCase() ?? "",
   assignedAgent: "",
   phone: item.phone,
   email: item.email,
