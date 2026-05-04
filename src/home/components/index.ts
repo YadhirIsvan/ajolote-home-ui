@@ -1,3 +1,4 @@
-// Barrel export de componentes del dominio home.
-// Los sub-componentes se añadirán aquí a medida que se extraigan de HomePage.
-export {};
+export { default as HeroSection } from "./HeroSection";
+export { default as TrustBar } from "./TrustBar";
+export { default as StepsSection } from "./StepsSection";
+export { default as FeaturedPropertiesSection } from "./FeaturedPropertiesSection";
