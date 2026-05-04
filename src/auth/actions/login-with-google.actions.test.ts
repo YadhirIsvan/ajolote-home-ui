@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { loginWithGoogleAction } from "./login-with-google.actions";
 import { authApi } from "@/auth/api/auth.api";
-import type { AuthResponse } from "@/auth/types/auth.types";
+import type { AuthResponse, AuthMembership } from "@/auth/types/auth.types";
 
 vi.mock("@/auth/api/auth.api", () => ({
   authApi: { loginWithGoogle: vi.fn() },
@@ -15,7 +15,7 @@ const BASE_USER = {
   first_name: "Carlos",
   last_name: "García",
   phone: null,
-  memberships: [],
+  memberships: [] as AuthMembership[],
 };
 
 const MEMBERSHIP = {

@@ -4,6 +4,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 import { useState } from "react";
 import { useClientConfig } from "@/myAccount/client/hooks/use-client-config.client.hook";
+import type { NotificationPreferences } from "@/myAccount/client/types/client.types";
 import ClientProfileEditForm from "./ClientProfileEditForm";
 
 interface ClientConfigScreenProps {
@@ -14,6 +15,7 @@ const ClientConfigScreen = ({ onBack }: ClientConfigScreenProps) => {
   const [activeTab, setActiveTab] = useState("datos");
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const { profile, profileLoading, phone } = useClientConfig();
+  const notifPrefs = undefined as NotificationPreferences | undefined;
 
   const initials =
     [profile?.first_name, profile?.last_name]
@@ -128,10 +130,10 @@ const ClientConfigScreen = ({ onBack }: ClientConfigScreenProps) => {
                 )}
                 {!profileLoading &&
                   [
-                    { label: "Nuevas propiedades", enabled: profile?.NewProperties ?? false },
-                    { label: "Actualizaciones de precio", enabled: profile?.PriceUpdates ?? false },
-                    { label: "Recordatorios de citas", enabled: profile?.AppointmentReminders ?? false },
-                    { label: "Ofertas y promociones", enabled: profile?.Offers ?? false },
+                    { label: "Nuevas propiedades", enabled: notifPrefs?.new_properties ?? false },
+                    { label: "Actualizaciones de precio", enabled: notifPrefs?.price_updates ?? false },
+                    { label: "Recordatorios de citas", enabled: notifPrefs?.appointment_reminders ?? false },
+                    { label: "Ofertas y promociones", enabled: notifPrefs?.offers ?? false },
                   ].map((item) => (
                     <div
                       key={item.label}

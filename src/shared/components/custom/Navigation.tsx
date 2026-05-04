@@ -85,12 +85,6 @@ const Navigation = () => {
                 <Button variant="ghost" className="hidden md:flex items-center gap-2.5 px-2 py-1.5 h-auto rounded-full hover:bg-champagne-gold/5 transition-all">
                   {isLoadingUser ? (
                     <div className="w-8 h-8 rounded-full bg-muted animate-pulse" />
-                  ) : user?.avatar_url ? (
-                    <img
-                      src={user.avatar_url}
-                      alt=""
-                      className="w-8 h-8 rounded-full object-cover ring-2 ring-champagne-gold/30"
-                    />
                   ) : (
                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-champagne-gold to-champagne-gold-dark flex items-center justify-center text-white text-sm font-semibold shadow-sm">
                       {getInitial(user)}
@@ -190,8 +184,6 @@ const Navigation = () => {
                       <div className="flex items-center gap-3 px-1 pb-3 mb-1 border-b border-border/30">
                         {isLoadingUser ? (
                           <div className="w-9 h-9 rounded-full bg-muted animate-pulse shrink-0" />
-                        ) : user?.avatar_url ? (
-                          <img src={user.avatar_url} alt="" className="w-9 h-9 rounded-full object-cover ring-2 ring-champagne-gold/30 shrink-0" />
                         ) : (
                           <div className="w-9 h-9 rounded-full bg-gradient-to-br from-champagne-gold to-champagne-gold-dark flex items-center justify-center text-white text-sm font-semibold shrink-0">
                             {getInitial(user)}

@@ -30,6 +30,7 @@ import {
 import { useIsMobile } from "@/shared/hooks/use-mobile.hook";
 import { cn } from "@/lib/utils";
 import { useAdminInsights } from "@/myAccount/admin/hooks/use-admin-insights.admin.hook";
+import type { InsightsPeriod } from "@/myAccount/admin/actions/get-admin-insights.actions";
 
 const PIE_COLORS = ["#C5A059", "#3B82F6", "#8B5CF6", "#10B981", "#F59E0B", "#EF4444"];
 

@@ -309,9 +309,9 @@ export interface AdminSaleProcess {
 export type SellerLeadStatus =
   | "new"
   | "contacted"
-  | "visit_scheduled"
+  | "in_review"
   | "converted"
-  | "discarded";
+  | "rejected";
 
 export interface AdminSellerLead {
   id: number;

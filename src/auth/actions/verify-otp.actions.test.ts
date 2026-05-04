@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { verifyOtpAction } from "./verify-otp.actions";
 import { authApi } from "@/auth/api/auth.api";
-import type { AuthResponse } from "@/auth/types/auth.types";
+import type { AuthResponse, AuthMembership } from "@/auth/types/auth.types";
 
 vi.mock("@/auth/api/auth.api", () => ({
   authApi: { verifyOtp: vi.fn() },
@@ -15,7 +15,7 @@ const BASE_USER = {
   first_name: "Ana",
   last_name: "López",
   phone: null,
-  memberships: [],
+  memberships: [] as AuthMembership[],
 };
 
 const MEMBERSHIP = {

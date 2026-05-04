@@ -60,18 +60,18 @@ describe("updatePurchaseProcessStatusAction", () => {
   it("llama a la API con id y payload correctos", async () => {
     mockedApi.updatePurchaseProcessStatus.mockResolvedValueOnce(undefined as never);
 
-    await updatePurchaseProcessStatusAction(1, "completado", "ok");
+    await updatePurchaseProcessStatusAction(1, "cerrado", "ok");
 
     expect(mockedApi.updatePurchaseProcessStatus).toHaveBeenCalledWith(
       1,
-      expect.objectContaining({ status: "completado", notes: "ok" })
+      expect.objectContaining({ status: "cerrado", notes: "ok" })
     );
   });
 
   it("lanza el error en caso de fallo", async () => {
     mockedApi.updatePurchaseProcessStatus.mockRejectedValueOnce(new Error("err"));
     await expect(
-      updatePurchaseProcessStatusAction(1, "completado")
+      updatePurchaseProcessStatusAction(1, "cerrado")
     ).rejects.toThrow();
   });
 });
@@ -102,7 +102,7 @@ describe("updateSaleProcessStatusAction", () => {
   it("llama a la API con status y notes", async () => {
     mockedApi.updateSaleProcessStatus.mockResolvedValueOnce(undefined as never);
 
-    await updateSaleProcessStatusAction(2, "cerrado", "Firmado");
+    await updateSaleProcessStatusAction(2, "firma_contrato", "Firmado");
 
     expect(mockedApi.updateSaleProcessStatus).toHaveBeenCalledWith(
       2,
@@ -113,7 +113,7 @@ describe("updateSaleProcessStatusAction", () => {
   it("lanza el error en caso de fallo", async () => {
     mockedApi.updateSaleProcessStatus.mockRejectedValueOnce(new Error("err"));
     await expect(
-      updateSaleProcessStatusAction(2, "cerrado")
+      updateSaleProcessStatusAction(2, "firma_contrato")
     ).rejects.toThrow();
   });
 });

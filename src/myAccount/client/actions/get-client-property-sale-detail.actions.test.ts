@@ -109,7 +109,7 @@ describe("getClientPropertySaleDetailAction", () => {
 
     const result = await getClientPropertySaleDetailAction(30);
 
-    expect(result.stages[0]).toMatchObject({ name: "Valuación", status: "completed" });
-    expect(result.history[0]).toMatchObject({ new_status: "activo" });
+    expect(result.stages?.[0]).toMatchObject({ name: "Valuación", status: "completed" });
+    expect(result.history?.[0]).toMatchObject({ new_status: "activo" });
   });
 });

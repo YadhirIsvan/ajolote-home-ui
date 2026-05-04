@@ -148,7 +148,7 @@ const PropertyDetailCard = ({
                           <FileText className="w-3.5 h-3.5 text-champagne-gold flex-shrink-0" />
                           <span className="truncate">{f.name}</span>
                           <span className="text-foreground/40">
-                            ({(f.size / 1024).toFixed(1)} KB)
+                            ({(f.size_bytes / 1024).toFixed(1)} KB)
                           </span>
                         </div>
                       ))

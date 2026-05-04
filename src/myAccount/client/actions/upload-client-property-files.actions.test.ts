@@ -52,8 +52,8 @@ describe("uploadClientPropertyFilesAction", () => {
     await uploadClientPropertyFilesAction(1, [makeFile("contrato.pdf")]);
 
     // appendSpy called with ("file", File) and ("name", "contrato")
-    const nameCalls = appendSpy.mock.calls.filter(
-      ([key]: [string]) => key === "name"
+    const nameCalls = (appendSpy.mock.calls as [string, unknown][]).filter(
+      ([key]) => key === "name"
     );
     expect(nameCalls[0][1]).toBe("contrato");
   });

@@ -98,9 +98,10 @@ const ClientVentas = ({ onBack }: ClientVentasProps) => {
   if (selectedPropertyId && selectedProperty) {
     const prop = selectedProperty as PropertySaleItem;
     const isPublished = prop.status === "Publicada";
+    const trendNum = prop.trend != null ? parseFloat(prop.trend) : null;
     const trendStr =
-      prop.trend != null
-        ? prop.trend >= 0
+      trendNum != null
+        ? trendNum >= 0
           ? `+${prop.trend}% visitas`
           : `${prop.trend}% visitas`
         : "";

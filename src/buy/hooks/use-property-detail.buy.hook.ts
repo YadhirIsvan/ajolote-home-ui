@@ -112,7 +112,8 @@ export const usePropertyDetail = () => {
 
   // ── Handlers ─────────────────────────────────────────────────────
 
-  const handleDateSelect = async (date: Date) => {
+  const handleDateSelect = async (date: Date | undefined) => {
+    if (!date) return;
     setSelectedDate(date);
     setSelectedTime(null);
     const dateStr = date.toISOString().split("T")[0];

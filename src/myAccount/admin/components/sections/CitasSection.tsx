@@ -125,7 +125,7 @@ const mapAdminClient = (item: AdminClient): Client => ({
   matricula: item.email?.split("@")[0].toUpperCase() ?? "",
   assignedAgent: "",
   phone: item.phone,
-  email: item.email,
+  email: item.email ?? undefined,
 });
 
 // ─── component ───────────────────────────────────────────────────────────────

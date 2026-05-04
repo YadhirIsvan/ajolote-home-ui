@@ -55,7 +55,7 @@ describe("updateAdminSellerLeadAction", () => {
   it("llama a la API con id y payload correctos", async () => {
     mockedApi.updateSellerLead.mockResolvedValueOnce(undefined as never);
 
-    const payload = { status: "en_proceso" as const, notes: "Contactado" };
+    const payload = { status: "in_review" as const, notes: "Contactado" };
     await updateAdminSellerLeadAction(1, payload);
 
     expect(mockedApi.updateSellerLead).toHaveBeenCalledWith(1, payload);

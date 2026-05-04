@@ -1,4 +1,4 @@
-import { Clock, CheckCircle, XCircle, RefreshCw, Play, MapPin } from "lucide-react";
+import { Clock, CheckCircle, XCircle, RefreshCw, Play, MapPin, UserX } from "lucide-react";
 import { Badge } from "@/shared/components/ui/badge";
 import { Switch } from "@/shared/components/ui/switch";
 import { cn } from "@/lib/utils";
@@ -6,7 +6,7 @@ import type { AgentAppointment } from "@/myAccount/agent/types/agent.types";
 
 interface AppointmentCardProps {
   appointment: AgentAppointment;
-  onCheckIn?: (id: string, checked: boolean) => void;
+  onCheckIn?: (id: number, checked: boolean) => void;
 }
 
 const statusConfig: Record<
@@ -18,6 +18,7 @@ const statusConfig: Record<
   en_progreso: { label: "En Progreso", color: "text-champagne-gold", bgColor: "bg-champagne-gold/10", icon: Play },
   completada: { label: "Completada", color: "text-gray-600", bgColor: "bg-gray-100", icon: CheckCircle },
   cancelada: { label: "Cancelada", color: "text-red-600", bgColor: "bg-red-50", icon: XCircle },
+  no_show: { label: "No se presentó", color: "text-gray-500", bgColor: "bg-gray-100", icon: UserX },
   reagendada: { label: "Reagendada", color: "text-orange-600", bgColor: "bg-orange-50", icon: RefreshCw },
 };
 

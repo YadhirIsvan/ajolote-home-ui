@@ -36,7 +36,7 @@ const MOCK_USER = {
   first_name: "Ana",
   last_name: "López",
   phone: null,
-  memberships: [{ id: 1, tenant_id: 10, role: "client" }],
+  memberships: [{ id: 1, tenant_id: 10, tenant_name: "Avakanta", tenant_slug: "avakanta", role: "client" as const }],
 };
 
 // ── Lifecycle ─────────────────────────────────────────────────────────────────

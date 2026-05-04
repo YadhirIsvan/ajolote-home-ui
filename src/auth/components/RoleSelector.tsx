@@ -11,13 +11,13 @@ interface RoleSelectorProps {
 
 const roles: { id: UserRole; title: string; description: string; icon: React.ComponentType<{ className?: string }> }[] = [
   {
-    id: "cliente",
+    id: "client",
     title: "Cliente",
     description: "Busco comprar o vender mi propiedad.",
     icon: User,
   },
   {
-    id: "agente",
+    id: "agent",
     title: "Agente",
     description: "Gestionar mis propiedades y prospectos.",
     icon: Briefcase,

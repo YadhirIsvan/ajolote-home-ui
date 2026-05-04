@@ -5,7 +5,7 @@ import {
   formatMoney,
   formatSqm,
   formatPhone,
-} from "./format-input";
+} from "./format-input.utils";
 
 // ─── parseRawNumber ───────────────────────────────────────────────────────────
 

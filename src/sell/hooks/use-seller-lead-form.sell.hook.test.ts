@@ -6,6 +6,8 @@ import { useSellerLeadForm } from "./use-seller-lead-form.sell.hook";
 import { submitSellerLeadAction } from "@/sell/actions/submit-seller-lead.actions";
 import type { SellerLeadData } from "@/sell/actions/submit-seller-lead.actions";
 
+type FormHookResult = { current: ReturnType<typeof useSellerLeadForm> };
+
 vi.mock("@/sell/actions/submit-seller-lead.actions");
 vi.mock("@/shared/actions/get-cities.actions", () => ({
   getCitiesAction: vi.fn().mockResolvedValue([]),
@@ -35,18 +37,18 @@ function renderForm(opts: {
 }
 
 // Helpers para rellenar formulario hasta un step dado
-function fillStep1(result: ReturnType<typeof renderHook>["result"]) {
+function fillStep1(result: FormHookResult) {
   act(() => result.current.updateFormData("propertyType", "casa"));
   act(() => result.current.updateFormData("location", "Orizaba"));
   act(() => result.current.updateFormData("squareMeters", "120"));
 }
 
-function fillStep2(result: ReturnType<typeof renderHook>["result"]) {
+function fillStep2(result: FormHookResult) {
   act(() => result.current.updateFormData("bedrooms", "3"));
   act(() => result.current.updateFormData("bathrooms", "2"));
 }
 
-function fillStep3(result: ReturnType<typeof renderHook>["result"]) {
+function fillStep3(result: FormHookResult) {
   act(() => result.current.updateFormData("fullName", "Ana García"));
   act(() => result.current.updateFormData("phone", "555-1234"));
 }
@@ -168,7 +170,7 @@ describe("useSellerLeadForm — handleNext validaciones", () => {
 // ─── handleSubmit ─────────────────────────────────────────────────────────────
 
 describe("useSellerLeadForm — handleSubmit", () => {
-  async function submitFromStep3(result: ReturnType<typeof renderHook>["result"]) {
+  async function submitFromStep3(result: FormHookResult) {
     fillStep1(result);
     act(() => result.current.handleNext());
     fillStep2(result);

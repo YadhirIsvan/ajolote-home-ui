@@ -86,7 +86,7 @@ function setupDefaultMocks() {
   mockedCheckSaved.mockResolvedValue({ isSaved: false });
   mockedGetSlots.mockResolvedValue({ success: true, data: { date: "", agent: { name: "" }, available_slots: [], slot_duration_minutes: 30 } });
   mockedSchedule.mockResolvedValue({ success: true, message: "ok" });
-  mockedToggleSaved.mockResolvedValue({ isSaved: true });
+  mockedToggleSaved.mockResolvedValue({ success: true, isSaved: true });
 }
 
 beforeEach(() => {

@@ -43,7 +43,7 @@ function makeWrapper(search = "") {
 beforeEach(() => {
   vi.clearAllMocks();
   mockedGetProperties.mockResolvedValue({
-    data: [], totalCount: 0, hasMore: false, fromFallback: false,
+    data: [], totalCount: 0, hasMore: false,
   });
   mockedGetCities.mockResolvedValue([]);
 });
@@ -214,7 +214,7 @@ describe("useBuyProperties — filteredProperties", () => {
           interested: 0, views: 0, isFeatured: false, isVerified: true,
         },
       ],
-      totalCount: 2, hasMore: false, fromFallback: false,
+      totalCount: 2, hasMore: false,
     });
 
     const { result } = renderHook(() => useBuyProperties(), { wrapper: makeWrapper() });

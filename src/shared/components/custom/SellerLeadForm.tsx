@@ -43,7 +43,7 @@ const SellerLeadForm = ({ open, onOpenChange, mode = "default", onPropertyAdded 
     onOpenChange,
     mode,
     onPropertyAdded,
-    membershipId: user?.membership_id,
+    membershipId: user?.memberships[0]?.id,
   });
 
   return (

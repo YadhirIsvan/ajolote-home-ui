@@ -3,9 +3,9 @@ import type { AdminClient, AdminClientDetail } from "@/myAccount/admin/types/adm
 import { useAdminClientes } from "@/myAccount/admin/hooks/use-admin-clientes.admin.hook";
 import {
   PURCHASE_PROCESS_STATUS_LABELS,
-  PURCHASE_PIPELINE_STAGES_STAGES,
+  PURCHASE_PIPELINE_STAGES,
   SALE_PROCESS_STATUS_LABELS,
-  SALE_PIPELINE_STAGES_STAGES,
+  SALE_PIPELINE_STAGES,
 } from "@/myAccount/admin/constants/admin.constants";
 import { getMediaUrl, getInitials } from "@/myAccount/admin/utils/admin.utils";
 import {
