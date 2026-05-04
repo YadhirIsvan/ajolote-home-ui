@@ -7,8 +7,8 @@ import { getPropertyDetailAction } from "@/buy/actions/get-property-detail.actio
 import { getFinancialProfileAction } from "@/buy/actions/get-financial-profile.actions";
 import { getAppointmentSlotsAction } from "@/buy/actions/get-appointment-slots.actions";
 import { scheduleAppointmentAction } from "@/buy/actions/schedule-appointment.actions";
-import { checkSavedPropertyAction } from "@/shared/actions/check-saved-property.actions";
-import { toggleSavedPropertyAction } from "@/shared/actions/toggle-saved-property.actions";
+import { checkSavedPropertyAction } from "@/buy/actions/check-saved-property.buy.actions";
+import { toggleSavedPropertyAction } from "@/buy/actions/toggle-saved-property.buy.actions";
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 
@@ -16,8 +16,8 @@ vi.mock("@/buy/actions/get-property-detail.actions");
 vi.mock("@/buy/actions/get-financial-profile.actions");
 vi.mock("@/buy/actions/get-appointment-slots.actions");
 vi.mock("@/buy/actions/schedule-appointment.actions");
-vi.mock("@/shared/actions/check-saved-property.actions");
-vi.mock("@/shared/actions/toggle-saved-property.actions");
+vi.mock("@/buy/actions/check-saved-property.buy.actions");
+vi.mock("@/buy/actions/toggle-saved-property.buy.actions");
 
 // El hook usa useAuth() — lo mockeamos para controlar isAuthenticated en cada test
 vi.mock("@/shared/hooks/auth.context", () => ({

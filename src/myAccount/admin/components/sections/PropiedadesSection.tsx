@@ -35,7 +35,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from "@/shared/components/ui/drawer";
 import { useIsMobile } from "@/shared/hooks/use-mobile.hook";
 import { toast } from "sonner";
-import { formatMoney, formatSqm, parseRawNumber, parseRawDecimal } from "@/shared/utils/format-input";
+import { formatMoney, formatSqm, parseRawNumber, parseRawDecimal } from "@/shared/utils/format-input.utils";
 import {
   getAdminPropertyDetailAction,
   createAdminPropertyAction,

@@ -25,7 +25,7 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/shared/compo
 import { useIsMobile } from "@/shared/hooks/use-mobile.hook";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { formatPhone } from "@/shared/utils/format-input";
+import { formatPhone } from "@/shared/utils/format-input.utils";
 import type { ScheduleFormPayload } from "@/myAccount/admin/actions/get-admin-agents.actions";
 import type { AdminAgent, AgentSchedule } from "@/myAccount/admin/types/admin.types";
 import { useAdminAgents } from "@/myAccount/admin/hooks/use-admin-agents.admin.hook";

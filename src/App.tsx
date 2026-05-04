@@ -2,9 +2,9 @@ import { Toaster } from "@/shared/components/ui/toaster";
 import { Toaster as Sonner } from "@/shared/components/ui/sonner";
 import { TooltipProvider } from "@/shared/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter } from "react-router-dom";
+import { RouterProvider } from "react-router-dom";
 import { Loader2 } from "lucide-react";
-import AppRouter from "@/router/app.router";
+import { router } from "@/router/app.router";
 import { FinancialModalProvider } from "@/shared/hooks/financial-modal.context";
 import { AuthProvider, useAuth } from "@/shared/hooks/auth.context";
 
@@ -22,9 +22,7 @@ const AppContent = () => {
         </div>
       )}
       <FinancialModalProvider>
-        <BrowserRouter>
-          <AppRouter />
-        </BrowserRouter>
+        <RouterProvider router={router} />
       </FinancialModalProvider>
     </>
   );

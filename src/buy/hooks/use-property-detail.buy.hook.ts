@@ -6,9 +6,9 @@ import { scheduleAppointmentAction } from "@/buy/actions/schedule-appointment.ac
 import { getAppointmentSlotsAction } from "@/buy/actions/get-appointment-slots.actions";
 import { getFinancialProfileAction } from "@/buy/actions/get-financial-profile.actions";
 import { FINANCIAL_PROFILE_QUERY_KEY } from "@/shared/actions/save-financial-profile.actions";
-import { checkSavedPropertyAction } from "@/shared/actions/check-saved-property.actions";
-import { toggleSavedPropertyAction } from "@/shared/actions/toggle-saved-property.actions";
-import { updateUserPhoneAction } from "@/shared/actions/update-user-phone.actions";
+import { checkSavedPropertyAction } from "@/buy/actions/check-saved-property.buy.actions";
+import { toggleSavedPropertyAction } from "@/buy/actions/toggle-saved-property.buy.actions";
+import { updateUserPhoneAction } from "@/buy/actions/update-user-phone.buy.actions";
 import { useAuth } from "@/shared/hooks/auth.context";
 import type { AppointmentResponse, AppointmentSlot } from "@/buy/types/property.types";
 

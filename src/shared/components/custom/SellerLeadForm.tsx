@@ -8,7 +8,7 @@ import { ArrowRight, ArrowLeft, CircleCheckBig, Loader2 } from "lucide-react";
 import { useSellerLeadForm } from "@/shared/hooks/use-seller-lead-form.hook";
 import type { SellerLeadData } from "@/shared/actions/submit-seller-lead.actions";
 import { useAuth } from "@/shared/hooks/use-auth.hook";
-import { formatMoney, formatSqm, formatPhone, parseRawNumber, parseRawDecimal } from "@/shared/utils/format-input";
+import { formatMoney, formatSqm, formatPhone, parseRawNumber, parseRawDecimal } from "@/shared/utils/format-input.utils";
 
 const SELLER_FORM_PROPERTY_TYPES = [
   { id: "casa", label: "Casa", icon: Home },

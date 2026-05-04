@@ -1,6 +1,4 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
-import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/shared/components/ui/dialog";
 import { Button } from "@/shared/components/ui/button";
@@ -11,13 +9,8 @@ import { Checkbox } from "@/shared/components/ui/checkbox";
 import { Separator } from "@/shared/components/ui/separator";
 import { Calculator, Info, Loader2 } from "lucide-react";
 import { useFinancialModal } from "@/shared/hooks/financial-modal.context";
-import AuthModal from "@/auth/components/AuthModal";
-import { formatMoney, parseRawNumber } from "@/shared/utils/format-input";
-import {
-  getFinancialProfileAction,
-  saveFinancialProfileAction,
-  FINANCIAL_PROFILE_QUERY_KEY,
-} from "@/shared/actions/save-financial-profile.actions";
+import { useFinancialProfile } from "@/shared/hooks/use-financial-profile.shared.hook";
+import { formatMoney, parseRawNumber } from "@/shared/utils/format-input.utils";
 
 interface FormData {
   loanType: string;
@@ -38,41 +31,30 @@ const emptyForm: FormData = {
 };
 
 const FinancialProfileModal = () => {
-  const { isOpen, showAuthFirst, closeFinancialModal, closeAuthModal, onAuthSuccess } =
-    useFinancialModal();
-  const queryClient = useQueryClient();
+  const { isOpen, closeFinancialModal } = useFinancialModal();
+  const { existingProfile, fetchingProfile, saveMutation } = useFinancialProfile(isOpen);
 
   const [formData, setFormData] = useState<FormData>({ ...emptyForm });
-  const [loading, setLoading] = useState(false);
-  const [fetchingProfile, setFetchingProfile] = useState(false);
   const [showResult, setShowResult] = useState(false);
   const [calculatedBudget, setCalculatedBudget] = useState(0);
 
   useEffect(() => {
     if (!isOpen) return;
-
-    const fetchProfile = async () => {
-      setFetchingProfile(true);
-      const profile = await getFinancialProfileAction();
-      if (profile?.calculatedBudget) {
-        setCalculatedBudget(profile.calculatedBudget);
-        setShowResult(true);
-        setFormData({
-          loanType: profile.loanType,
-          monthlyIncome: profile.monthlyIncome,
-          partnerMonthlyIncome: profile.partnerMonthlyIncome,
-          savingsForEnganche: profile.savingsForEnganche,
-          hasInfonavit: profile.hasInfonavit,
-          infonautSubcuentaBalance: profile.infonavitSubcuentaBalance,
-        });
-      } else {
-        setShowResult(false);
-      }
-      setFetchingProfile(false);
-    };
-
-    fetchProfile();
-  }, [isOpen]);
+    if (existingProfile?.calculatedBudget) {
+      setCalculatedBudget(existingProfile.calculatedBudget);
+      setShowResult(true);
+      setFormData({
+        loanType: existingProfile.loanType,
+        monthlyIncome: existingProfile.monthlyIncome,
+        partnerMonthlyIncome: existingProfile.partnerMonthlyIncome,
+        savingsForEnganche: existingProfile.savingsForEnganche,
+        hasInfonavit: existingProfile.hasInfonavit,
+        infonautSubcuentaBalance: existingProfile.infonavitSubcuentaBalance,
+      });
+    } else {
+      setShowResult(false);
+    }
+  }, [isOpen, existingProfile]);
 
   const handleLoanTypeChange = (value: string) => {
     setFormData((prev) => ({
@@ -163,9 +145,8 @@ const FinancialProfileModal = () => {
       return;
     }
 
-    setLoading(true);
     try {
-      const result = await saveFinancialProfileAction({
+      const result = await saveMutation.mutateAsync({
         loan_type: formData.loanType,
         monthly_income: monthlyIncome,
         partner_monthly_income:
@@ -176,21 +157,8 @@ const FinancialProfileModal = () => {
       });
       setCalculatedBudget(result.calculatedBudget);
       setShowResult(true);
-      await queryClient.invalidateQueries({ queryKey: [FINANCIAL_PROFILE_QUERY_KEY] });
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        const detail: string =
-          error.response?.data?.detail ??
-          error.response?.data?.message ??
-          "Verifica los datos e intenta de nuevo.";
-        toast.error("Error al guardar tu perfil", { description: detail });
-      } else {
-        toast.error("Error inesperado", {
-          description: "No se pudo guardar tu perfil. Intenta de nuevo.",
-        });
-      }
-    } finally {
-      setLoading(false);
+    } catch {
+      // Error toast already handled in useMutation onError
     }
   };
 
@@ -214,267 +182,263 @@ const FinancialProfileModal = () => {
     }).format(value);
 
   return (
-    <>
-      <AuthModal isOpen={showAuthFirst} onClose={closeAuthModal} onLoginSuccess={onAuthSuccess} />
-
-      <Dialog open={isOpen} onOpenChange={handleClose}>
-        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto scrollbar-desktop bg-white rounded-2xl border border-border/20 shadow-lg">
-          {fetchingProfile ? (
-            <div className="flex flex-col items-center justify-center py-12 space-y-4">
-              <Loader2 className="w-8 h-8 text-champagne-gold animate-spin" />
-              <p className="text-sm text-foreground/60">Consultando tu perfil financiero...</p>
-            </div>
-          ) : showResult ? (
-            <>
-              <DialogHeader>
-                <div className="flex items-center gap-2">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-champagne-gold to-amber-500 flex items-center justify-center">
-                    <span className="text-white text-xl">✓</span>
-                  </div>
-                  <DialogTitle className="text-2xl font-bold text-midnight">
-                    Tu Pre-aprobación Estimada
-                  </DialogTitle>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto scrollbar-desktop bg-white rounded-2xl border border-border/20 shadow-lg">
+        {fetchingProfile ? (
+          <div className="flex flex-col items-center justify-center py-12 space-y-4">
+            <Loader2 className="w-8 h-8 text-champagne-gold animate-spin" />
+            <p className="text-sm text-foreground/60">Consultando tu perfil financiero...</p>
+          </div>
+        ) : showResult ? (
+          <>
+            <DialogHeader>
+              <div className="flex items-center gap-2">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-champagne-gold to-amber-500 flex items-center justify-center">
+                  <span className="text-white text-xl">✓</span>
                 </div>
-              </DialogHeader>
-
-              <Separator className="my-4" />
-
-              <div className="space-y-6 py-6">
-                <div className="text-center space-y-2">
-                  <p className="text-foreground/60 text-sm">Presupuesto Máximo Estimado</p>
-                  <p className="text-5xl font-bold text-champagne-gold">
-                    {formatCurrency(calculatedBudget)}
-                  </p>
-                  <p className="text-sm text-foreground/50">MXN</p>
-                </div>
-
-                <div className="p-4 bg-blue-50 rounded-xl border border-blue-200 space-y-2">
-                  <p className="text-sm font-semibold text-blue-900">¿Cómo se calcula?</p>
-                  <p className="text-xs text-blue-800">
-                    Este presupuesto incluye tu ahorro actual más lo que podrías financiar en 15
-                    años con una tasa de interés estimada del 11% anual.
-                  </p>
-                </div>
-
-                <div className="space-y-3 pt-2">
-                  <button
-                    onClick={handleUpdateData}
-                    className="w-full h-10 text-sm font-medium text-champagne-gold hover:text-champagne-gold-dark hover:bg-champagne-gold/5 rounded-lg transition-colors py-2 px-4"
-                  >
-                    ¿Quieres calcular con otros datos? Actualizar información
-                  </button>
-                </div>
+                <DialogTitle className="text-2xl font-bold text-midnight">
+                  Tu Pre-aprobación Estimada
+                </DialogTitle>
               </div>
-            </>
-          ) : (
-            <>
-              <DialogHeader>
-                <div className="flex items-center gap-2">
-                  <Calculator className="w-5 h-5 text-champagne-gold" />
-                  <DialogTitle className="text-2xl font-bold text-midnight">
-                    Calcula tu Presupuesto
-                  </DialogTitle>
-                </div>
-                <DialogDescription className="text-foreground/60">
-                  Ingresa tus datos financieros para calcular tu presupuesto máximo de compra
-                </DialogDescription>
-              </DialogHeader>
+            </DialogHeader>
 
-              <Separator className="my-4" />
+            <Separator className="my-4" />
 
-              <form onSubmit={handleSubmit} className="space-y-5">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor="loanType" className="text-sm font-semibold text-midnight">
-                      Tipo de Crédito <span className="text-red-500">*</span>
-                    </Label>
-                  </div>
-                  <Select value={formData.loanType} onValueChange={handleLoanTypeChange}>
-                    <SelectTrigger id="loanType" className="h-10 rounded-lg">
-                      <SelectValue placeholder="Selecciona tu tipo de crédito" />
-                    </SelectTrigger>
-                    <SelectContent className="w-full">
-                      <SelectItem value="individual" className="py-3">
-                        <div className="flex flex-col gap-1">
-                          <span className="font-semibold">
-                            Individual (Banco, Infonavit o Fovissste)
-                          </span>
-                          <span className="text-xs text-foreground/60">Para comprar yo solo.</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="conyugal" className="py-3">
-                        <div className="flex flex-col gap-1">
-                          <span className="font-semibold">Conyugal o Familiar (Unir créditos)</span>
-                          <span className="text-xs text-foreground/60">
-                            Para comprar con mi pareja, padre o hijos.
-                          </span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="cofinavit" className="py-3">
-                        <div className="flex flex-col gap-1">
-                          <span className="font-semibold">
-                            Cofinavit (Banco + Mi ahorro Infonavit)
-                          </span>
-                          <span className="text-xs text-foreground/60">
-                            Para usar lo que tengo guardado en el IMSS.
-                          </span>
-                        </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+            <div className="space-y-6 py-6">
+              <div className="text-center space-y-2">
+                <p className="text-foreground/60 text-sm">Presupuesto Máximo Estimado</p>
+                <p className="text-5xl font-bold text-champagne-gold">
+                  {formatCurrency(calculatedBudget)}
+                </p>
+                <p className="text-sm text-foreground/50">MXN</p>
+              </div>
 
-                  <div className="grid grid-cols-1 gap-2 mt-3">
-                    {formData.loanType === "individual" && (
-                      <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                        <Info className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
-                        <p className="text-xs text-blue-700">
-                          Si cotizas en el IMSS/ISSSTE o eres independiente y tienes buen historial.
-                        </p>
-                      </div>
-                    )}
-                    {formData.loanType === "conyugal" && (
-                      <div className="flex items-start gap-2 p-3 bg-green-50 rounded-lg border border-green-200">
-                        <Info className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                        <p className="text-xs text-green-700">
-                          Pueden sumar ingresos para alcanzar una casa de mayor precio.
-                        </p>
-                      </div>
-                    )}
-                    {formData.loanType === "cofinavit" && (
-                      <div className="flex items-start gap-2 p-3 bg-amber-50 rounded-lg border border-amber-200">
-                        <Info className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
-                        <p className="text-xs text-amber-700">
-                          Ideal si tienes mucho dinero ahorrado en tu Subcuenta de Vivienda.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
+              <div className="p-4 bg-blue-50 rounded-xl border border-blue-200 space-y-2">
+                <p className="text-sm font-semibold text-blue-900">¿Cómo se calcula?</p>
+                <p className="text-xs text-blue-800">
+                  Este presupuesto incluye tu ahorro actual más lo que podrías financiar en 15
+                  años con una tasa de interés estimada del 11% anual.
+                </p>
+              </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="monthlyIncome" className="text-sm font-semibold text-midnight">
-                    {formData.loanType === "conyugal"
-                      ? "Tu Ingreso Mensual Neto"
-                      : "Ingreso Mensual Neto"}{" "}
-                    <span className="text-red-500">*</span>
-                  </Label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/60 font-medium">
-                      $
-                    </span>
-                    <Input
-                      id="monthlyIncome"
-                      type="text"
-                      placeholder="Ej. 40,000"
-                      value={formatMoney(formData.monthlyIncome)}
-                      onChange={handleMonthlyIncomeChange}
-                      className="pl-7 h-10 rounded-lg"
-                    />
-                  </div>
-                </div>
-
-                {formData.loanType === "conyugal" && (
-                  <div className="space-y-2 pl-2 border-l-2 border-champagne-gold/30">
-                    <Label htmlFor="partnerIncome" className="text-sm font-semibold text-midnight">
-                      ¿Cuánto gana la persona con la que vas a comprar?{" "}
-                      <span className="text-red-500">*</span>
-                    </Label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/60 font-medium">
-                        $
-                      </span>
-                      <Input
-                        id="partnerIncome"
-                        type="text"
-                        placeholder="Ej. 35,000"
-                        value={formatMoney(formData.partnerMonthlyIncome)}
-                        onChange={handlePartnerIncomeChange}
-                        className="pl-7 h-10 rounded-lg"
-                      />
-                    </div>
-                    <p className="text-xs text-foreground/60 mt-2">
-                      Sumaremos ambos ingresos para calcular tu capacidad de crédito.
-                    </p>
-                  </div>
-                )}
-
-                <div className="space-y-2">
-                  <Label htmlFor="savings" className="text-sm font-semibold text-midnight">
-                    Ahorro Actual para Enganche/Escrituras{" "}
-                    <span className="text-red-500">*</span>
-                  </Label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/60 font-medium">
-                      $
-                    </span>
-                    <Input
-                      id="savings"
-                      type="text"
-                      placeholder="Ej. 150,000"
-                      value={formatMoney(formData.savingsForEnganche)}
-                      onChange={handleSavingsChange}
-                      className="pl-7 h-10 rounded-lg"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 py-2">
-                  <Checkbox
-                    id="infonavit"
-                    checked={formData.hasInfonavit}
-                    onCheckedChange={(checked) => handleInfonavitChange(checked as boolean)}
-                  />
-                  <Label
-                    htmlFor="infonavit"
-                    className="text-sm font-medium text-midnight cursor-pointer"
-                  >
-                    ¿Cuentas con puntos Infonavit?
-                  </Label>
-                </div>
-
-                {formData.hasInfonavit && (
-                  <div className="space-y-2 pl-2 border-l-2 border-champagne-gold/30">
-                    <Label htmlFor="subcuenta" className="text-sm font-semibold text-midnight">
-                      Saldo de Subcuenta <span className="text-red-500">*</span>
-                    </Label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/60 font-medium">
-                        $
-                      </span>
-                      <Input
-                        id="subcuenta"
-                        type="text"
-                        placeholder="Ej. 85,000"
-                        value={formatMoney(formData.infonautSubcuentaBalance)}
-                        onChange={handleSubcuentaChange}
-                        className="pl-7 h-10 rounded-lg"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                <Separator className="my-6" />
-
-                <Button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full h-11 bg-champagne-gold hover:bg-champagne-gold-dark text-white font-semibold rounded-lg transition-colors"
+              <div className="space-y-3 pt-2">
+                <button
+                  onClick={handleUpdateData}
+                  className="w-full h-10 text-sm font-medium text-champagne-gold hover:text-champagne-gold-dark hover:bg-champagne-gold/5 rounded-lg transition-colors py-2 px-4"
                 >
-                  {loading ? (
-                    "Calculando..."
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <Calculator className="w-4 h-4" />
-                      Calcular mi Presupuesto
+                  ¿Quieres calcular con otros datos? Actualizar información
+                </button>
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            <DialogHeader>
+              <div className="flex items-center gap-2">
+                <Calculator className="w-5 h-5 text-champagne-gold" />
+                <DialogTitle className="text-2xl font-bold text-midnight">
+                  Calcula tu Presupuesto
+                </DialogTitle>
+              </div>
+              <DialogDescription className="text-foreground/60">
+                Ingresa tus datos financieros para calcular tu presupuesto máximo de compra
+              </DialogDescription>
+            </DialogHeader>
+
+            <Separator className="my-4" />
+
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="loanType" className="text-sm font-semibold text-midnight">
+                    Tipo de Crédito <span className="text-red-500">*</span>
+                  </Label>
+                </div>
+                <Select value={formData.loanType} onValueChange={handleLoanTypeChange}>
+                  <SelectTrigger id="loanType" className="h-10 rounded-lg">
+                    <SelectValue placeholder="Selecciona tu tipo de crédito" />
+                  </SelectTrigger>
+                  <SelectContent className="w-full">
+                    <SelectItem value="individual" className="py-3">
+                      <div className="flex flex-col gap-1">
+                        <span className="font-semibold">
+                          Individual (Banco, Infonavit o Fovissste)
+                        </span>
+                        <span className="text-xs text-foreground/60">Para comprar yo solo.</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="conyugal" className="py-3">
+                      <div className="flex flex-col gap-1">
+                        <span className="font-semibold">Conyugal o Familiar (Unir créditos)</span>
+                        <span className="text-xs text-foreground/60">
+                          Para comprar con mi pareja, padre o hijos.
+                        </span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="cofinavit" className="py-3">
+                      <div className="flex flex-col gap-1">
+                        <span className="font-semibold">
+                          Cofinavit (Banco + Mi ahorro Infonavit)
+                        </span>
+                        <span className="text-xs text-foreground/60">
+                          Para usar lo que tengo guardado en el IMSS.
+                        </span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <div className="grid grid-cols-1 gap-2 mt-3">
+                  {formData.loanType === "individual" && (
+                    <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                      <Info className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                      <p className="text-xs text-blue-700">
+                        Si cotizas en el IMSS/ISSSTE o eres independiente y tienes buen historial.
+                      </p>
                     </div>
                   )}
-                </Button>
-              </form>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
-    </>
+                  {formData.loanType === "conyugal" && (
+                    <div className="flex items-start gap-2 p-3 bg-green-50 rounded-lg border border-green-200">
+                      <Info className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                      <p className="text-xs text-green-700">
+                        Pueden sumar ingresos para alcanzar una casa de mayor precio.
+                      </p>
+                    </div>
+                  )}
+                  {formData.loanType === "cofinavit" && (
+                    <div className="flex items-start gap-2 p-3 bg-amber-50 rounded-lg border border-amber-200">
+                      <Info className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                      <p className="text-xs text-amber-700">
+                        Ideal si tienes mucho dinero ahorrado en tu Subcuenta de Vivienda.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="monthlyIncome" className="text-sm font-semibold text-midnight">
+                  {formData.loanType === "conyugal"
+                    ? "Tu Ingreso Mensual Neto"
+                    : "Ingreso Mensual Neto"}{" "}
+                  <span className="text-red-500">*</span>
+                </Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/60 font-medium">
+                    $
+                  </span>
+                  <Input
+                    id="monthlyIncome"
+                    type="text"
+                    placeholder="Ej. 40,000"
+                    value={formatMoney(formData.monthlyIncome)}
+                    onChange={handleMonthlyIncomeChange}
+                    className="pl-7 h-10 rounded-lg"
+                  />
+                </div>
+              </div>
+
+              {formData.loanType === "conyugal" && (
+                <div className="space-y-2 pl-2 border-l-2 border-champagne-gold/30">
+                  <Label htmlFor="partnerIncome" className="text-sm font-semibold text-midnight">
+                    ¿Cuánto gana la persona con la que vas a comprar?{" "}
+                    <span className="text-red-500">*</span>
+                  </Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/60 font-medium">
+                      $
+                    </span>
+                    <Input
+                      id="partnerIncome"
+                      type="text"
+                      placeholder="Ej. 35,000"
+                      value={formatMoney(formData.partnerMonthlyIncome)}
+                      onChange={handlePartnerIncomeChange}
+                      className="pl-7 h-10 rounded-lg"
+                    />
+                  </div>
+                  <p className="text-xs text-foreground/60 mt-2">
+                    Sumaremos ambos ingresos para calcular tu capacidad de crédito.
+                  </p>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="savings" className="text-sm font-semibold text-midnight">
+                  Ahorro Actual para Enganche/Escrituras{" "}
+                  <span className="text-red-500">*</span>
+                </Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/60 font-medium">
+                    $
+                  </span>
+                  <Input
+                    id="savings"
+                    type="text"
+                    placeholder="Ej. 150,000"
+                    value={formatMoney(formData.savingsForEnganche)}
+                    onChange={handleSavingsChange}
+                    className="pl-7 h-10 rounded-lg"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 py-2">
+                <Checkbox
+                  id="infonavit"
+                  checked={formData.hasInfonavit}
+                  onCheckedChange={(checked) => handleInfonavitChange(checked as boolean)}
+                />
+                <Label
+                  htmlFor="infonavit"
+                  className="text-sm font-medium text-midnight cursor-pointer"
+                >
+                  ¿Cuentas con puntos Infonavit?
+                </Label>
+              </div>
+
+              {formData.hasInfonavit && (
+                <div className="space-y-2 pl-2 border-l-2 border-champagne-gold/30">
+                  <Label htmlFor="subcuenta" className="text-sm font-semibold text-midnight">
+                    Saldo de Subcuenta <span className="text-red-500">*</span>
+                  </Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/60 font-medium">
+                      $
+                    </span>
+                    <Input
+                      id="subcuenta"
+                      type="text"
+                      placeholder="Ej. 85,000"
+                      value={formatMoney(formData.infonautSubcuentaBalance)}
+                      onChange={handleSubcuentaChange}
+                      className="pl-7 h-10 rounded-lg"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <Separator className="my-6" />
+
+              <Button
+                type="submit"
+                disabled={saveMutation.isPending}
+                className="w-full h-11 bg-champagne-gold hover:bg-champagne-gold-dark text-white font-semibold rounded-lg transition-colors"
+              >
+                {saveMutation.isPending ? (
+                  "Calculando..."
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Calculator className="w-4 h-4" />
+                    Calcular mi Presupuesto
+                  </div>
+                )}
+              </Button>
+            </form>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 };
 
