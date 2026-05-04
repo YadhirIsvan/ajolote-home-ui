@@ -51,6 +51,9 @@ const MortgageCalculatorWidget = ({
 
   // Determinar viabilidad (no debe superar 40% del ingreso mensual total)
   const isViable = calculateMonthlyPayment <= totalMonthlyIncome * 0.4;
+  const incomePercentage = totalMonthlyIncome > 0
+    ? Math.round((calculateMonthlyPayment / totalMonthlyIncome) * 100)
+    : 0;
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("es-MX", {
@@ -84,7 +87,7 @@ const MortgageCalculatorWidget = ({
           {isViable ? (
             <>✅ Viable con tus ingresos</>
           ) : (
-            <>⚠️ Supera el 40% de tu sueldo</>
+            <>⚠️ Supera el {incomePercentage}% de tu sueldo</>
           )}
         </Badge>
       </div>
