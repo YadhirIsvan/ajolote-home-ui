@@ -146,6 +146,9 @@ const CitasSection = () => {
   const [isFromCalendarClick, setIsFromCalendarClick]     = useState(false);
   const [availableSlots, setAvailableSlots]   = useState<string[]>([]);
   const [slotsLoading, setSlotsLoading]       = useState(false);
+  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
+  const [cancelReason, setCancelReason]             = useState("");
+  const [pendingCancelId, setPendingCancelId]       = useState<number | null>(null);
 
   const { appointmentsQuery, propertiesQuery, clientsQuery, updateStatusMutation, createMutation } =
     useAdminCitas({ clientSearch });
@@ -277,9 +280,30 @@ const CitasSection = () => {
 
   const handleStatusChange = (newStatus: string) => {
     if (!selectedAppointment) return;
+    if (newStatus === "cancelada") {
+      setPendingCancelId(selectedAppointment.rawId);
+      setCancelReason("");
+      setIsCancelDialogOpen(true);
+      return;
+    }
     updateStatusMutation.mutate(
       { id: selectedAppointment.rawId, status: newStatus },
       { onSuccess: () => setSelectedAppointment(prev => prev ? { ...prev, status: newStatus } : null) }
+    );
+  };
+
+  const handleConfirmCancel = () => {
+    if (!pendingCancelId || !cancelReason.trim()) return;
+    updateStatusMutation.mutate(
+      { id: pendingCancelId, status: "cancelada", cancellation_reason: cancelReason.trim() },
+      {
+        onSuccess: () => {
+          setSelectedAppointment(prev => prev ? { ...prev, status: "cancelada" } : null);
+          setIsCancelDialogOpen(false);
+          setCancelReason("");
+          setPendingCancelId(null);
+        },
+      }
     );
   };
 
@@ -852,6 +876,37 @@ const CitasSection = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* ── Cancel Reason Dialog ── */}
+      <Dialog open={isCancelDialogOpen} onOpenChange={open => { if (!open) { setIsCancelDialogOpen(false); setCancelReason(""); setPendingCancelId(null); } }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Motivo de cancelación</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <Label className="text-sm text-foreground/70">Razón <span className="text-red-500">*</span></Label>
+            <Textarea
+              value={cancelReason}
+              onChange={e => setCancelReason(e.target.value)}
+              placeholder="Describe el motivo de la cancelación..."
+              className="min-h-[100px] resize-none"
+              autoFocus
+            />
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => { setIsCancelDialogOpen(false); setCancelReason(""); setPendingCancelId(null); }}>
+              Volver
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmCancel}
+              disabled={!cancelReason.trim() || updateStatusMutation.isPending}
+            >
+              {updateStatusMutation.isPending ? "Cancelando…" : "Confirmar cancelación"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* ── Detail Dialog/Drawer ── */}
       {isMobile ? (

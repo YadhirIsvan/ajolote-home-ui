@@ -33,8 +33,8 @@ export const useAdminCitas = ({ clientSearch }: UseAdminCitasOptions) => {
   });
 
   const updateStatusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: number; status: string }) =>
-      updateAdminAppointmentStatusAction(id, { status }),
+    mutationFn: ({ id, status, cancellation_reason }: { id: number; status: string; cancellation_reason?: string }) =>
+      updateAdminAppointmentStatusAction(id, { status, cancellation_reason }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-appointments"] });
       queryClient.invalidateQueries({ queryKey: ["admin-kanban"] });

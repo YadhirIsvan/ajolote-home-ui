@@ -79,7 +79,7 @@ export const getAdminAppointmentAvailabilityAction = async (
 
 export const updateAdminAppointmentStatusAction = async (
   id: number,
-  payload: { status: string; notes?: string }
+  payload: { status: string; notes?: string; cancellation_reason?: string }
 ): Promise<AdminAppointment> => {
   try {
     const { data } = await adminApi.updateAppointment(id, payload);
