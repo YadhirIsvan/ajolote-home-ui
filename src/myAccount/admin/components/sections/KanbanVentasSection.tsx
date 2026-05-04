@@ -2,7 +2,7 @@ import { useState, useEffect, DragEvent } from "react";
 import type { AdminSaleProcess, SaleProcessStatus } from "@/myAccount/admin/types/admin.types";
 import { useAdminKanbanVentas } from "@/myAccount/admin/hooks/use-admin-kanban-ventas.admin.hook";
 import {
-  SALE_PROCESS_SALE_PROCESS_STATUS_LABELS,
+  SALE_PROCESS_STATUS_LABELS,
   SALE_PIPELINE_STAGES,
 } from "@/myAccount/admin/constants/admin.constants";
 import { getMediaUrl, calcDays } from "@/myAccount/admin/utils/admin.utils";

@@ -2,7 +2,7 @@ import { useState, useEffect, DragEvent } from "react";
 import type { AdminPurchaseProcess, PurchaseProcessStatus } from "@/myAccount/admin/types/admin.types";
 import { useAdminKanban } from "@/myAccount/admin/hooks/use-admin-kanban.admin.hook";
 import {
-  PURCHASE_PROCESS_PURCHASE_PROCESS_STATUS_LABELS,
+  PURCHASE_PROCESS_STATUS_LABELS,
   PURCHASE_PIPELINE_STAGES,
 } from "@/myAccount/admin/constants/admin.constants";
 import { getMediaUrl, fmtPrice, calcDays } from "@/myAccount/admin/utils/admin.utils";
