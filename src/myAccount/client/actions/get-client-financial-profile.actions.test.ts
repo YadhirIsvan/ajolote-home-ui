@@ -1,8 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import {
-  getLoanTypeLabel,
-  getClientFinancialProfileAction,
-} from "./get-client-financial-profile.actions";
+import { getClientFinancialProfileAction } from "./get-client-financial-profile.actions";
+import { getLoanTypeLabel } from "@/myAccount/client/utils/client.utils";
 import { clientApi } from "@/myAccount/client/api/client.api";
 
 vi.mock("@/myAccount/client/api/client.api", () => ({

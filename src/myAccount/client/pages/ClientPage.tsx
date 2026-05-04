@@ -8,7 +8,6 @@ import type { ClientSubView } from "@/myAccount/client/types/client.types";
 
 interface ClientPageProps {
   onLogout: () => void;
-  onNavigateConfig: () => void;
 }
 
 const ClientPage = ({ onLogout }: ClientPageProps) => {

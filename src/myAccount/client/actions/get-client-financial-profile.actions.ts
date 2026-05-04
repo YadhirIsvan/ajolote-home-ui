@@ -1,10 +1,5 @@
 import { clientApi } from "@/myAccount/client/api/client.api";
-import { LOAN_TYPE_LABELS } from "@/myAccount/client/constants/client.constants";
 import type { FinancialProfile } from "@/myAccount/client/types/client.types";
-
-export function getLoanTypeLabel(loanType: string): string {
-  return LOAN_TYPE_LABELS[loanType] ?? loanType;
-}
 
 export async function getClientFinancialProfileAction(): Promise<FinancialProfile | null> {
   try {

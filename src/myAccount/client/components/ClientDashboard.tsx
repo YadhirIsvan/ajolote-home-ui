@@ -7,8 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { useClientDashboard } from "@/myAccount/client/hooks/use-client-dashboard.client.hook";
 import { useFinancialModal } from "@/shared/hooks/financial-modal.context";
 import { useAuth } from "@/shared/hooks/use-auth.hook";
-import { getLoanTypeLabel } from "@/myAccount/client/actions/get-client-financial-profile.actions";
-import { formatPrice } from "@/myAccount/client/utils/client.utils";
+import { getLoanTypeLabel, formatPrice } from "@/myAccount/client/utils/client.utils";
 import ProfileFieldModal from "./ProfileFieldModal";
 import type { PropertySaleItem, PropertyBuySummary, ClientProfileDetail, ClientAppointment } from "@/myAccount/client/types/client.types";
 

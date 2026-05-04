@@ -1,4 +1,8 @@
+import { LOAN_TYPE_LABELS } from "@/myAccount/client/constants/client.constants";
 import type { AppointmentStatus } from "@/myAccount/client/types/client.types";
+
+export const getLoanTypeLabel = (loanType: string): string =>
+  LOAN_TYPE_LABELS[loanType] ?? loanType;
 
 export const formatPrice = (price: string | number | undefined): string => {
   if (!price) return "$0";

@@ -88,7 +88,7 @@ export const useBuyProperties = () => {
       if (!lastPage.hasMore) return undefined;
       return allPages.reduce((total, page) => total + page.data.length, 0);
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: 0,
   });
 
   const allProperties = useMemo(
