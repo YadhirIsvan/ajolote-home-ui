@@ -145,58 +145,6 @@ describe("useAuthModal — handleTokenVerify", () => {
     vi.useRealTimers();
   });
 
-  it("verify exitoso con memberships guarda selected_tenant_id en localStorage", async () => {
-    vi.useFakeTimers();
-    mockedVerifyOtp.mockResolvedValueOnce({
-      success: true,
-      message: "ok",
-      data: {
-        refresh_expires_at: 0,
-        user: {
-          id: 1,
-          email: "u@x.com",
-          first_name: "",
-          last_name: "",
-          phone: "+525512345678",
-          memberships: [MEMBERSHIP],
-        },
-      },
-    });
-    const { result } = renderModal();
-
-    act(() => result.current.setToken("1234"));
-    await act(() => result.current.handleTokenVerify());
-
-    expect(localStorage.getItem("selected_tenant_id")).toBe("99");
-    vi.useRealTimers();
-  });
-
-  it("verify exitoso sin memberships NO escribe selected_tenant_id", async () => {
-    vi.useFakeTimers();
-    mockedVerifyOtp.mockResolvedValueOnce({
-      success: true,
-      message: "ok",
-      data: {
-        refresh_expires_at: 0,
-        user: {
-          id: 1,
-          email: "u@x.com",
-          first_name: "",
-          last_name: "",
-          phone: "+525512345678",
-          memberships: [],
-        },
-      },
-    });
-    const { result } = renderModal();
-
-    act(() => result.current.setToken("1234"));
-    await act(() => result.current.handleTokenVerify());
-
-    expect(localStorage.getItem("selected_tenant_id")).toBeNull();
-    vi.useRealTimers();
-  });
-
   it("verify exitoso sin phone → step 'profile' variante full, authMethod otp", async () => {
     mockedVerifyOtp.mockResolvedValueOnce({
       success: true,
@@ -358,15 +306,6 @@ describe("useAuthModal — handleAppleLogin", () => {
     await act(() => result.current.handleAppleLogin());
 
     expect(onLoginSuccess).toHaveBeenCalledTimes(1);
-  });
-
-  it("Apple login exitoso con memberships guarda selected_tenant_id", async () => {
-    mockedApple.mockResolvedValueOnce({ success: true, user: { id: 1, email: "a@b.com", first_name: "", last_name: "", phone: null, memberships: [MEMBERSHIP] } });
-    const { result } = renderModal();
-
-    await act(() => result.current.handleAppleLogin());
-
-    expect(localStorage.getItem("selected_tenant_id")).toBe("99");
   });
 
   it("Apple login fallido popula error", async () => {

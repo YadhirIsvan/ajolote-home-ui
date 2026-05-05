@@ -6,7 +6,6 @@ import type {
   AuthMethod,
   ProfileVariant,
 } from "@/auth/types/auth.types";
-import type { AuthMembership } from "@/auth/types/auth.types";
 import { sendEmailOtpAction } from "@/auth/actions/send-email-otp.actions";
 import { verifyOtpAction } from "@/auth/actions/verify-otp.actions";
 import { loginWithGoogleAction } from "@/auth/actions/login-with-google.actions";
@@ -65,14 +64,6 @@ export const useAuthModal = ({ onLoginSuccess, onClose }: UseAuthModalOptions) =
     appleLoginMutation.isPending ||
     updateProfileMutation.isPending;
 
-  // ── Helpers ────────────────────────────────────────────────────────────────────
-
-  const saveTenantPreference = (memberships?: AuthMembership[]) => {
-    if (memberships?.length) {
-      localStorage.setItem("selected_tenant_id", String(memberships[0].tenant_id));
-    }
-  };
-
   // ── Handlers ──────────────────────────────────────────────────────────────────
 
   const handleGoogleLogin = () => {
@@ -114,7 +105,6 @@ export const useAuthModal = ({ onLoginSuccess, onClose }: UseAuthModalOptions) =
         try {
           const result = await googleLoginMutation.mutateAsync(tokenResponse.access_token);
           if (result.success) {
-            saveTenantPreference(result.user?.memberships);
             const needsPhone = !result.user?.phone?.trim();
             if (needsPhone) {
               setAuthMethod("google");
@@ -140,7 +130,6 @@ export const useAuthModal = ({ onLoginSuccess, onClose }: UseAuthModalOptions) =
     try {
       const result = await appleLoginMutation.mutateAsync("");
       if (result.success) {
-        saveTenantPreference(result.user?.memberships);
         onLoginSuccess();
       } else {
         setError(result.message ?? "Apple Login no está disponible actualmente");
@@ -180,7 +169,6 @@ export const useAuthModal = ({ onLoginSuccess, onClose }: UseAuthModalOptions) =
       const result = await verifyOtpMutation.mutateAsync({ email, token });
 
       if (result.success) {
-        saveTenantPreference(result.data?.user?.memberships);
         const hasPhone = !!result.data?.user?.phone?.trim();
         if (hasPhone) {
           setStep("success");

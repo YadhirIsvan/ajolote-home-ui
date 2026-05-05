@@ -164,10 +164,9 @@ describe("AuthProvider — syncAuthState", () => {
 // ─── handleLogout ─────────────────────────────────────────────────────────────
 
 describe("AuthProvider — handleLogout", () => {
-  it("llama logoutAction, limpia estado de auth y elimina selected_tenant_id", async () => {
+  it("llama logoutAction y limpia estado de auth", async () => {
     setSessionCookie();
     mockedMeAction.mockResolvedValueOnce({ user: MOCK_USER, refresh_expires_at: 9999 });
-    localStorage.setItem("selected_tenant_id", "10");
 
     const { result } = renderHook(() => useAuth(), { wrapper: makeWrapper() });
     await waitFor(() => expect(result.current.user).not.toBeNull());
@@ -177,8 +176,6 @@ describe("AuthProvider — handleLogout", () => {
     expect(mockedLogout).toHaveBeenCalledTimes(1);
     expect(result.current.isAuthenticated).toBe(false);
     expect(result.current.user).toBeNull();
-    expect(localStorage.getItem("selected_tenant_id")).toBeNull();
-
     // Los tokens en httpOnly cookies los borra el backend — el frontend no los toca
   });
 });

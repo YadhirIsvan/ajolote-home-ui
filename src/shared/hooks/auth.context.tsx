@@ -97,7 +97,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsAuthenticated(false);
     setUser(null);
     setRefreshExpiresAt(null);
-    localStorage.removeItem("selected_tenant_id");
     // Full navigation reset so no stale component state (name, avatar) bleeds
     // into the next login session. Mirrors handleLoginSuccess().
     window.location.href = "/";
@@ -108,7 +107,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await new Promise<void>((resolve) => setTimeout(resolve, 1500));
     await logoutAction();
     queryClient.clear();  // limpia el cache de queries del usuario anterior
-    localStorage.removeItem("selected_tenant_id");
     setIsLoggingOut(false);
     setIsAuthenticated(false);
     setUser(null);
