@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/shared/components/ui/dialog";
-import { Sheet, SheetContent, SheetTitle, SheetPortal, SheetOverlay } from "@/shared/components/ui/sheet";
+import { Sheet, SheetTitle, SheetPortal, SheetOverlay } from "@/shared/components/ui/sheet";
 import { Calendar } from "@/shared/components/ui/calendar";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/shared/components/ui/carousel";
 import {
@@ -16,7 +16,6 @@ import {
   ChevronLeft, ChevronRight, X,
 } from "lucide-react";
 import { usePropertyDetail } from "@/buy/hooks/use-property-detail.buy.hook";
-import { TIME_SLOTS } from "@/buy/constants/buy.constants";
 import { getPOIIcon, getAmenityIcon } from "@/buy/components/PropertyDetailIcons";
 import { extractYouTubeId } from "@/buy/utils/extract-youtube-id.utils";
 import AuthModal from "@/auth/components/AuthModal";

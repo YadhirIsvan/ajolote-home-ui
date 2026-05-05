@@ -25,7 +25,7 @@ const interestConfig = {
 
 const LeadDetailCard = ({ lead, onBack, onUploadDocs, onStageChange }: LeadDetailCardProps) => {
   const [showActionSheet, setShowActionSheet] = useState(false);
-  const [selectedStage, setSelectedStage] = useState<{ id: number; name: string } | null>(null);
+  const [_selectedStage, setSelectedStage] = useState<{ id: number; name: string } | null>(null);
   const isMobile = useIsMobile();
 
   const interestLevel = lead.interestLevel || "media";

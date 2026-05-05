@@ -4,7 +4,6 @@ import { Dialog, DialogContent } from "@/shared/components/ui/dialog";
 import { Button } from "@/shared/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 import { Badge } from "@/shared/components/ui/badge";
-import { Card, CardContent } from "@/shared/components/ui/card";
 import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import LeadDetailCard from "@/myAccount/agent/components/LeadDetailCard";
 import LeadCard from "@/myAccount/agent/components/LeadCard";

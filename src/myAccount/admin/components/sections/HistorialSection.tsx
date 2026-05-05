@@ -4,7 +4,6 @@ import {
   User,
   MapPin,
   Calendar,
-  FileText,
   DollarSign,
   Eye,
   Download,

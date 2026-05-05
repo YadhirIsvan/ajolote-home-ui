@@ -30,7 +30,7 @@ import type { ScheduleFormPayload } from "@/myAccount/admin/actions/get-admin-ag
 import type { AdminAgent, AgentSchedule } from "@/myAccount/admin/types/admin.types";
 import { useAdminAgents } from "@/myAccount/admin/hooks/use-admin-agents.admin.hook";
 import { getMediaUrl } from "@/myAccount/admin/utils/admin.utils";
-import { type DayKey, DAY_KEYS, DAY_ABBR, BREAK_TYPE_LABELS, BREAK_TYPE_COLORS } from "@/myAccount/admin/constants/admin.constants";
+import { DAY_KEYS, DAY_ABBR, BREAK_TYPE_LABELS, BREAK_TYPE_COLORS } from "@/myAccount/admin/constants/admin.constants";
 
 // ─── local types ──────────────────────────────────────────────────────────────
 

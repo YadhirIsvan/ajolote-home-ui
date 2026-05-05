@@ -23,9 +23,7 @@ import {
   Save,
   Check,
   Lock,
-  Upload,
   MapPin,
-  Calendar,
   Loader2,
 } from "lucide-react";
 import { Card, CardContent } from "@/shared/components/ui/card";

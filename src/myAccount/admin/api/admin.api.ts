@@ -8,7 +8,6 @@ import type {
   BackendCatalogCity,
   BackendCatalogAmenity,
   BackendAdminAgent,
-  BackendAgentScheduleBreak,
   BackendAgentSchedule,
   BackendAdminAppointment,
   BackendAdminAssignmentsResponse,
