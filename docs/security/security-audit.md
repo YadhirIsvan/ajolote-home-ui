@@ -14,7 +14,7 @@
 |----------|----------|-----------|
 | CRITICAL | 2        | 0         |
 | HIGH     | 5        | 1         |
-| MEDIUM   | 7        | 1         |
+| MEDIUM   | 7        | 0         |
 | LOW      | 5        | 1         |
 
 ---
@@ -96,17 +96,13 @@
 > `isAuthenticated` from `AuthContext` and renders a spinner → `LoginPage` → children,
 > with no race condition. `AuthGuard` was removed from `MiCuentaPage`.
 
-### [M4] File upload lacks client-side MIME type and size validation — **OPEN**
-- **File:** `src/myAccount/client/actions/upload-client-property-files.actions.ts`
-- **Description:** Files are sent to the backend without client-side validation of
-  MIME type or size. The backend must validate server-side; the frontend currently
-  provides no early feedback for oversized or wrong-format files.
-- **Fix:** Validate before upload:
-  ```typescript
-  const MAX_SIZE = 10 * 1024 * 1024; // 10 MB
-  const ALLOWED = ["application/pdf", "image/jpeg", "image/png"];
-  if (!ALLOWED.includes(file.type) || file.size > MAX_SIZE) { /* reject */ }
-  ```
+### [M4] ~~File upload lacks client-side MIME type and size validation~~ — **RESOLVED**
+> **Resolved:** `use-client-compras.client.hook.ts` now validates each file before
+> calling `uploadMutation.mutate()`. Constants match the backend (`core/validators.py`):
+> `ALLOWED_DOCUMENT_TYPES = ["application/pdf", "image/jpeg", "image/png"]` and
+> `MAX_DOCUMENT_SIZE_BYTES = 20 * 1024 * 1024`. Invalid files are rejected with a
+> per-file error message surfaced in `ClientCompras.tsx`. The `accept` attribute on the
+> hidden file input was also corrected from `.pdf,.doc,.docx,.txt` to `.pdf,.jpg,.jpeg,.png`.
 
 ### [M5] ~~console.error calls expose data in production browser console~~ — **RESOLVED**
 > **Resolved:** `vite.config.ts` includes `esbuild: { drop: mode === "production" ? ["console", "debugger"] : [] }`.

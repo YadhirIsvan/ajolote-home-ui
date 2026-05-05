@@ -1,4 +1,4 @@
-import { ArrowLeft, MapPin, CircleCheckBig, Clock, CircleAlert, Upload, FileText } from "lucide-react";
+import { ArrowLeft, MapPin, CircleCheckBig, Clock, CircleAlert, Upload, FileText, AlertCircle } from "lucide-react";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import { Badge } from "@/shared/components/ui/badge";
@@ -197,6 +197,8 @@ const ClientCompras = ({ onBack }: ClientComprasProps) => {
     filesLoading,
     purchaseSteps,
     isUploading,
+    uploadError,
+    setUploadError,
     fileInputRef,
     activePropertyId,
     setActivePropertyId,
@@ -211,7 +213,7 @@ const ClientCompras = ({ onBack }: ClientComprasProps) => {
         ref={fileInputRef}
         type="file"
         multiple
-        accept=".pdf,.doc,.docx,.txt"
+        accept=".pdf,.jpg,.jpeg,.png"
         className="hidden"
         onChange={(e) => {
           if (activePropertyId !== null) {
@@ -220,6 +222,21 @@ const ClientCompras = ({ onBack }: ClientComprasProps) => {
           }
         }}
       />
+
+      {uploadError && (
+        <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <AlertCircle className="mt-0.5 w-4 h-4 flex-shrink-0" />
+          <div>
+            <span className="font-semibold">Archivos rechazados:</span> {uploadError}
+            <button
+              onClick={() => setUploadError("")}
+              className="ml-2 underline hover:no-underline"
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Back */}
       <button

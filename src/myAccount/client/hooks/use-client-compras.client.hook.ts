@@ -5,10 +5,14 @@ import { getClientPropertyFilesAction } from "@/myAccount/client/actions/get-cli
 import { uploadClientPropertyFilesAction } from "@/myAccount/client/actions/upload-client-property-files.actions";
 import { getClientPurchaseStepsAction } from "@/myAccount/client/actions/get-client-purchase-steps.actions";
 
+const ALLOWED_DOCUMENT_TYPES = ["application/pdf", "image/jpeg", "image/png"];
+const MAX_DOCUMENT_SIZE_BYTES = 20 * 1024 * 1024;
+
 export const useClientCompras = () => {
   const queryClient = useQueryClient();
   const [selectedPropertyId, setSelectedPropertyId] = useState<number | null>(null);
   const [activePropertyId, setActivePropertyId] = useState<number | null>(null);
+  const [uploadError, setUploadError] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: comprasList = [], isLoading: comprasLoading } = useQuery({
@@ -42,7 +46,29 @@ export const useClientCompras = () => {
 
   const handleFileSelect = (propertyId: number, files: FileList | null) => {
     if (!files?.length) return;
-    uploadMutation.mutate({ propertyId, files: Array.from(files) });
+
+    setUploadError("");
+    const valid: File[] = [];
+    const rejected: string[] = [];
+
+    for (const file of Array.from(files)) {
+      if (!ALLOWED_DOCUMENT_TYPES.includes(file.type)) {
+        rejected.push(`"${file.name}" — tipo no permitido (solo PDF, JPG, PNG)`);
+      } else if (file.size > MAX_DOCUMENT_SIZE_BYTES) {
+        rejected.push(`"${file.name}" — supera el límite de 20 MB`);
+      } else {
+        valid.push(file);
+      }
+    }
+
+    if (rejected.length > 0) {
+      setUploadError(rejected.join("; "));
+    }
+
+    if (valid.length > 0) {
+      uploadMutation.mutate({ propertyId, files: valid });
+    }
+
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -69,6 +95,8 @@ export const useClientCompras = () => {
     filesLoading,
     purchaseSteps,
     isUploading: uploadMutation.isPending,
+    uploadError,
+    setUploadError,
     fileInputRef,
     activePropertyId,
     setActivePropertyId,
