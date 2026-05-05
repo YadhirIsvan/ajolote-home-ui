@@ -15,7 +15,7 @@ vi.mock("@/myAccount/client/api/client.api", () => ({
 const mockedGet = vi.mocked(clientApi.getNotificationPreferences);
 const mockedUpdate = vi.mocked(clientApi.updateNotificationPreferences);
 
-const DEFAULT_PREFERENCES = {
+const _DEFAULT_PREFERENCES = {
   new_properties: false,
   price_updates: false,
   appointment_reminders: false,

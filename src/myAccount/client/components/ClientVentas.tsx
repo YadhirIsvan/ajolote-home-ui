@@ -11,7 +11,6 @@ import {
   getStatusBadgeColor,
   getProgressStepIndex,
 } from "@/myAccount/client/utils/client.utils";
-import type { ClientVisibleStatus } from "@/myAccount/client/utils/client.utils";
 import { SALE_PROGRESS_STEPS } from "@/myAccount/client/constants/client.constants";
 
 interface ClientVentasProps {

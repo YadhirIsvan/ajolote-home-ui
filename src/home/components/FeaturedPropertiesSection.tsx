@@ -76,8 +76,6 @@ const FeaturedPropertiesSection = memo(({ properties, isLoading }: FeaturedPrope
       </div>
     </div>
   </section>
-);
-
 ));
 
 FeaturedPropertiesSection.displayName = "FeaturedPropertiesSection";

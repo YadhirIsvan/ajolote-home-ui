@@ -24,7 +24,7 @@ const mockedUpdateProfile = vi.mocked(updateAuthProfileAction);
 
 const VALID_PHONE_E164 = "+525512345678";
 
-const MEMBERSHIP = {
+const _MEMBERSHIP = {
   id: 1,
   tenant_id: 99,
   tenant_name: "Test Corp",
