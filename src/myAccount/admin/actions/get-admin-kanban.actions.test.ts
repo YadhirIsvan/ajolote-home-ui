@@ -106,7 +106,7 @@ describe("updateSaleProcessStatusAction", () => {
 
     expect(mockedApi.updateSaleProcessStatus).toHaveBeenCalledWith(
       2,
-      { status: "cerrado", notes: "Firmado" }
+      { status: "firma_contrato", notes: "Firmado" }
     );
   });
 

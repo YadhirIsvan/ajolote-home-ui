@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act, waitFor } from "@testing-library/react";
 import { createElement } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider, useAuth } from "./auth.context";
 import { logoutAction } from "@/shared/actions/logout.actions";
 import { meAction } from "@/shared/actions/me.actions";
@@ -24,8 +25,15 @@ function clearSessionCookie() {
 // ── Test wrapper ──────────────────────────────────────────────────────────────
 
 function makeWrapper() {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
   return ({ children }: { children: React.ReactNode }) =>
-    createElement(AuthProvider, null, children);
+    createElement(
+      QueryClientProvider,
+      { client: queryClient },
+      createElement(AuthProvider, null, children)
+    );
 }
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────

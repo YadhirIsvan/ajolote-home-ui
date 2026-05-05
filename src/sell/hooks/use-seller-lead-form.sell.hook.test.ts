@@ -3,12 +3,12 @@ import { renderHook, act } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createElement } from "react";
 import { useSellerLeadForm } from "./use-seller-lead-form.sell.hook";
-import { submitSellerLeadAction } from "@/sell/actions/submit-seller-lead.actions";
-import type { SellerLeadData } from "@/sell/actions/submit-seller-lead.actions";
+import { submitSellerLeadAction } from "@/shared/actions/submit-seller-lead.actions";
+import type { SellerLeadData } from "@/shared/actions/submit-seller-lead.actions";
 
 type FormHookResult = { current: ReturnType<typeof useSellerLeadForm> };
 
-vi.mock("@/sell/actions/submit-seller-lead.actions");
+vi.mock("@/shared/actions/submit-seller-lead.actions");
 vi.mock("@/shared/actions/get-cities.actions", () => ({
   getCitiesAction: vi.fn().mockResolvedValue([]),
 }));

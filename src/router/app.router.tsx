@@ -7,6 +7,7 @@ import PageTransition from "@/shared/components/custom/PageTransition";
 import FinancialProfileModal from "@/shared/components/custom/FinancialProfileModal";
 import NotFound from "@/shared/components/custom/NotFound";
 import AuthModal from "@/auth/components/AuthModal";
+import ProtectedRoute from "@/auth/guardian/ProtectedRoute";
 import { useFinancialModal } from "@/shared/hooks/financial-modal.context";
 
 // ── Pages (todas lazy) ────────────────────────────────────────────────────────
@@ -79,7 +80,7 @@ export const router = createBrowserRouter([
       { path: "/vender", element: <SellPage /> },
       { path: "/credito", element: <CreditFlowPage /> },
       { path: "/servicios", element: <ServiciosPage /> },
-      { path: "/mi-cuenta", element: <MiCuentaPage /> },
+      { path: "/mi-cuenta", element: <ProtectedRoute><MiCuentaPage /></ProtectedRoute> },
       { path: "/auth/register", element: <RegisterPage /> },
       { path: "/auth/verify", element: <VerifyOtpPage /> },
       { path: "*", element: <NotFound /> },

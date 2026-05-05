@@ -1,14 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { submitSellerLeadAction } from "./submit-seller-lead.actions";
-import { sellApi } from "@/sell/api/sell.api";
+import { axiosInstance } from "@/shared/api/axios.instance";
 import type { SellerLeadData } from "./submit-seller-lead.actions";
 
-vi.mock("@/sell/api/sell.api", () => ({
-  sellApi: { post: vi.fn() },
-  ENDPOINTS: { SUBMIT_LEAD: "/public/sale-processes" },
+vi.mock("@/shared/api/axios.instance", () => ({
+  axiosInstance: { post: vi.fn() },
 }));
 
-const mockedPost = vi.mocked(sellApi.post);
+const mockedPost = vi.mocked(axiosInstance.post);
 
 const BASE_DATA: SellerLeadData = {
   propertyType: "casa",
