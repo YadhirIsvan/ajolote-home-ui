@@ -8,7 +8,15 @@ import { router } from "@/router/app.router";
 import { FinancialModalProvider } from "@/shared/hooks/financial-modal.context";
 import { AuthProvider, useAuth } from "@/shared/hooks/auth.context";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,
+      gcTime: 10 * 60 * 1000,
+      retry: 1,
+    },
+  },
+});
 
 const AppContent = () => {
   const { isLoggingOut } = useAuth();

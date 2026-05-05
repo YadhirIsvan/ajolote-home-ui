@@ -74,6 +74,7 @@ const AgentAvatarEl = ({
       src={url}
       alt={initials}
       className={`${cls} rounded-full object-cover flex-shrink-0`}
+      loading="lazy"
     />
   ) : (
     <div
@@ -191,6 +192,7 @@ const AsignarSection = () => {
             src={property.image}
             alt={property.title}
             className="w-24 h-24 md:w-28 md:h-28 object-cover flex-shrink-0"
+            loading="lazy"
           />
         ) : (
           <div className="w-24 h-24 md:w-28 md:h-28 bg-muted/30 flex items-center justify-center flex-shrink-0">
@@ -274,7 +276,7 @@ const AsignarSection = () => {
       <div className="space-y-5 p-4">
         <div className="flex items-center gap-3 p-3 bg-muted/20 rounded-xl">
           {selectedProperty.image ? (
-            <img src={selectedProperty.image} alt="" className="w-14 h-14 rounded-lg object-cover flex-shrink-0" />
+            <img src={selectedProperty.image} alt="" className="w-14 h-14 rounded-lg object-cover flex-shrink-0" loading="lazy" />
           ) : (
             <div className="w-14 h-14 rounded-lg bg-muted/30 flex items-center justify-center flex-shrink-0">
               <Home className="w-6 h-6 text-foreground/30" />

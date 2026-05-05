@@ -49,6 +49,7 @@ const PropertyDetailCard = ({
               src={prop.image || "/placeholder.svg"}
               alt={prop.title}
               className="w-full h-full object-cover"
+              loading="lazy"
             />
             <Badge className={`absolute top-3 left-3 ${getStatusBadgeClass(prop.status)}`}>
               {capitalizeFirst(prop.status)}

@@ -257,7 +257,7 @@ const PropertyDetailPage = () => {
                       className="aspect-[4/3] rounded-2xl overflow-hidden shadow-medium cursor-pointer"
                       onClick={() => setLightboxIndex(index)}
                     >
-                      <img src={image} alt={`${property.title} - Vista ${index + 1}`} className="w-full h-full object-cover" />
+                      <img src={image} alt={`${property.title} - Vista ${index + 1}`} className="w-full h-full object-cover" loading="lazy" />
                     </div>
                   </CarouselItem>
                 ))}
@@ -310,7 +310,7 @@ const PropertyDetailPage = () => {
           <div className="px-4 mb-6">
             <h3 className="text-lg font-semibold text-primary mb-3">Recorrido Virtual</h3>
             <div className="aspect-video bg-primary/5 rounded-2xl relative overflow-hidden shadow-medium">
-              <img src={property.images[0]} alt="Video thumbnail" className="w-full h-full object-cover" />
+              <img src={property.images[0]} alt="Video thumbnail" className="w-full h-full object-cover" loading="lazy" />
               <div className="absolute inset-0 flex items-center justify-center bg-primary/20">
                 <button
                   onClick={() => setShowVideoModal(true)}
@@ -408,7 +408,7 @@ const PropertyDetailPage = () => {
             <h3 className="text-lg font-semibold text-primary mb-3">Agente Inmobiliario</h3>
             <Card className="p-4 rounded-2xl shadow-soft">
               <div className="flex items-center gap-4 mb-4">
-                <img src={property.agent.photo} alt={property.agent.name} className="w-16 h-16 rounded-full object-cover border-2 border-champagne" />
+                <img src={property.agent.photo} alt={property.agent.name} className="w-16 h-16 rounded-full object-cover border-2 border-champagne" loading="lazy" />
                 <div>
                   <p className="font-semibold text-primary">{property.agent.name}</p>
                   <p className="text-sm text-muted-foreground">Agente Certificado</p>
@@ -449,7 +449,7 @@ const PropertyDetailPage = () => {
                 className="col-span-2 row-span-2 rounded-2xl overflow-hidden shadow-medium cursor-pointer"
                 onClick={() => setLightboxIndex(0)}
               >
-                <img src={displayImages[0]} alt={property.title} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
+                <img src={displayImages[0]} alt={property.title} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" loading="eager" />
               </div>
               {displayImages.slice(1, 5).map((image, index) => (
                 <div
@@ -457,7 +457,7 @@ const PropertyDetailPage = () => {
                   className="rounded-2xl overflow-hidden shadow-soft cursor-pointer"
                   onClick={() => setLightboxIndex(index + 1)}
                 >
-                  <img src={image} alt={`Vista ${index + 2}`} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
+                  <img src={image} alt={`Vista ${index + 2}`} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" loading="lazy" />
                 </div>
               ))}
             </div>
@@ -570,7 +570,7 @@ const PropertyDetailPage = () => {
                   <div>
                     <h3 className="text-xl font-semibold text-primary mb-4">Recorrido Virtual</h3>
                     <div className="aspect-video bg-primary/5 rounded-2xl relative overflow-hidden shadow-medium">
-                      <img src={property.videoImg || displayImages[0]} alt="Video thumbnail" className="w-full h-full object-cover" />
+                      <img src={property.videoImg || displayImages[0]} alt="Video thumbnail" className="w-full h-full object-cover" loading="lazy" />
                       <div className="absolute inset-0 flex items-center justify-center bg-primary/20">
                         <button
                           onClick={() => setShowVideoModal(true)}
@@ -638,7 +638,7 @@ const PropertyDetailPage = () => {
                     {property.agent && (
                     <div className="pt-4 border-t border-border">
                       <div className="flex items-center gap-4 mb-4">
-                        <img src={property.agent.photo} alt={property.agent.name} className="w-14 h-14 rounded-full object-cover border-2 border-champagne" />
+                        <img src={property.agent.photo} alt={property.agent.name} className="w-14 h-14 rounded-full object-cover border-2 border-champagne" loading="lazy" />
                         <div>
                           <p className="font-semibold text-primary">{property.agent.name}</p>
                           <p className="text-sm text-muted-foreground">Agente Certificado</p>
@@ -901,6 +901,7 @@ const PropertyDetailPage = () => {
             alt={`${property.title} - Vista ${lightboxIndex + 1}`}
             className="max-h-[75vh] max-w-[75vw] object-contain rounded-2xl shadow-2xl select-none"
             onClick={(e) => e.stopPropagation()}
+            loading="lazy"
           />
 
           {/* Next */}
@@ -926,7 +927,7 @@ const PropertyDetailPage = () => {
                     : "border-white/20 opacity-60 hover:opacity-100"
                 }`}
               >
-                <img src={img} alt="" className="w-full h-full object-cover" />
+                <img src={img} alt="" className="w-full h-full object-cover" loading="lazy" />
               </button>
             ))}
           </div>
@@ -959,6 +960,7 @@ const PropertyDetailPage = () => {
                 src={displayImages[0]}
                 alt={property.title}
                 className="w-16 h-16 rounded-xl object-cover shrink-0"
+                loading="lazy"
               />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-primary truncate">{property.title}</p>

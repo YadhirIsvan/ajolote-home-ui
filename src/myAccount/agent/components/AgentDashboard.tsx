@@ -130,6 +130,7 @@ const AgentDashboard = ({ onLogout }: AgentDashboardProps) => {
                     src={property.image}
                     alt={property.title}
                     className="w-full h-40 md:h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                    loading="lazy"
                   />
                   <Badge
                     className={`absolute top-3 right-3 ${

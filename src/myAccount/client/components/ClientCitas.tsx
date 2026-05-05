@@ -79,6 +79,7 @@ const ClientCitas = ({ onBack }: ClientCitasProps) => {
                           src={apt.property_image}
                           alt={apt.property_title}
                           className="w-full h-full object-cover"
+                          loading="lazy"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">

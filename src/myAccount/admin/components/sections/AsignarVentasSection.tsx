@@ -62,6 +62,7 @@ const AgentAvatarEl = ({
       src={url}
       alt={initials}
       className={`${cls} rounded-full object-cover flex-shrink-0`}
+      loading="lazy"
     />
   ) : (
     <div

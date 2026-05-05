@@ -97,6 +97,7 @@ const ClientesSection = () => {
           src={imgUrl}
           alt={name}
           className={cn("rounded-full object-cover", sizeClasses[size])}
+          loading="lazy"
         />
       );
     }
@@ -239,7 +240,7 @@ const ClientesSection = () => {
                     <CardContent className="p-4">
                       <div className="flex gap-4 mb-4">
                         {propImg ? (
-                          <img src={propImg} alt={proc.property.title} className="w-20 h-20 rounded-lg object-cover" />
+                          <img src={propImg} alt={proc.property.title} className="w-20 h-20 rounded-lg object-cover" loading="lazy" />
                         ) : (
                           <div className="w-20 h-20 rounded-lg bg-muted flex items-center justify-center">
                             <Home className="w-8 h-8 text-foreground/30" />
@@ -316,7 +317,7 @@ const ClientesSection = () => {
                     <CardContent className="p-4">
                       <div className="flex gap-4 mb-4">
                         {propImg ? (
-                          <img src={propImg} alt={proc.property.title} className="w-20 h-20 rounded-lg object-cover" />
+                          <img src={propImg} alt={proc.property.title} className="w-20 h-20 rounded-lg object-cover" loading="lazy" />
                         ) : (
                           <div className="w-20 h-20 rounded-lg bg-muted flex items-center justify-center">
                             <Home className="w-8 h-8 text-foreground/30" />

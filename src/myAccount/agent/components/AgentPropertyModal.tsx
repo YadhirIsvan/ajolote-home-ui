@@ -83,6 +83,7 @@ const AgentPropertyModal = ({ isOpen, onClose, property }: AgentPropertyModalPro
                 src={property.image}
                 alt={property.title}
                 className="w-14 h-14 md:w-16 md:h-16 rounded-xl object-cover flex-shrink-0 border border-slate-100"
+                loading="lazy"
               />
               <div className="min-w-0 flex-1">
                 <h2 className="text-base md:text-lg font-bold text-midnight truncate">
@@ -137,6 +138,7 @@ const AgentPropertyModal = ({ isOpen, onClose, property }: AgentPropertyModalPro
                     src={property.image}
                     alt={property.title}
                     className="w-full h-48 md:h-64 rounded-2xl object-cover"
+                    loading="lazy"
                   />
                   <div className="space-y-3">
                     <h3 className="text-lg font-semibold text-midnight">

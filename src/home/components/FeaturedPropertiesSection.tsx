@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
@@ -9,7 +10,7 @@ interface FeaturedPropertiesSectionProps {
   isLoading: boolean;
 }
 
-const FeaturedPropertiesSection = ({ properties, isLoading }: FeaturedPropertiesSectionProps) => (
+const FeaturedPropertiesSection = memo(({ properties, isLoading }: FeaturedPropertiesSectionProps) => (
   <section className="py-24 md:py-32 px-6 bg-gradient-to-b from-secondary/15 via-secondary/5 to-background">
     <div className="container mx-auto max-w-6xl">
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-12 md:mb-16">
@@ -76,5 +77,9 @@ const FeaturedPropertiesSection = ({ properties, isLoading }: FeaturedProperties
     </div>
   </section>
 );
+
+));
+
+FeaturedPropertiesSection.displayName = "FeaturedPropertiesSection";
 
 export default FeaturedPropertiesSection;

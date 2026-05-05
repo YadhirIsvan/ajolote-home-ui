@@ -274,6 +274,7 @@ const ClientVentas = ({ onBack }: ClientVentasProps) => {
                         src={prop.image || "https://via.placeholder.com/400x300?text=Propiedad"}
                         alt={prop.title}
                         className="w-full h-full object-cover"
+                        loading="lazy"
                         onError={(e) => {
                           (e.target as HTMLImageElement).src = "https://via.placeholder.com/400x300?text=Sin+Imagen";
                         }}

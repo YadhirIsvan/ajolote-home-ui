@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
@@ -38,7 +39,7 @@ const statusConfig: Record<PropertyStatus, { label: string; className: string }>
   },
 };
 
-const PropertyCard = ({ id, image, image_thumb, price, title, location, beds, baths, area, status = "disponible" }: PropertyCardProps) => {
+const PropertyCard = memo(({ id, image, image_thumb, price, title, location, beds, baths, area, status = "disponible" }: PropertyCardProps) => {
   const statusStyle = statusConfig[status];
 
   return (
@@ -95,6 +96,8 @@ const PropertyCard = ({ id, image, image_thumb, price, title, location, beds, ba
       </Link>
     </Card>
   );
-};
+});
+
+PropertyCard.displayName = "PropertyCard";
 
 export default PropertyCard;

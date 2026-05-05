@@ -153,6 +153,7 @@ const ClientDashboard = ({ onNavigateVentas, onNavigateCompras, onNavigateCitas,
                 src={displayAvatar}
                 alt="Avatar"
                 className="w-full h-full rounded-full object-cover"
+                loading="lazy"
               />
             ) : (
               <div className="w-full h-full rounded-full bg-gradient-to-br from-[hsl(var(--champagne-gold))]/20 to-[hsl(var(--champagne-gold))]/10 flex items-center justify-center">
@@ -340,7 +341,7 @@ const ClientDashboard = ({ onNavigateVentas, onNavigateCompras, onNavigateCitas,
                   >
                     <div className="w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 bg-muted/30">
                       {item.image ? (
-                        <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
+                        <img src={item.image} alt={item.title} className="w-full h-full object-cover" loading="lazy" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
                           <Home className="w-5 h-5 text-foreground/30" />
@@ -513,7 +514,7 @@ const ClientDashboard = ({ onNavigateVentas, onNavigateCompras, onNavigateCitas,
                       >
                         <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-muted/30">
                           {apt.property_image ? (
-                            <img src={apt.property_image} alt={apt.property_title} className="w-full h-full object-cover" />
+                            <img src={apt.property_image} alt={apt.property_title} className="w-full h-full object-cover" loading="lazy" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">
                               <Home className="w-4 h-4 text-foreground/20" />
