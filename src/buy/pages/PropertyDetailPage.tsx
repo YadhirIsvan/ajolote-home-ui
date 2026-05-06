@@ -774,13 +774,15 @@ const PropertyDetailPage = () => {
 
       {/* Schedule Modal */}
       <Dialog open={showScheduleModal} onOpenChange={setShowScheduleModal}>
-        <DialogContent className="sm:max-w-md rounded-2xl bg-background">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-primary text-center">
-              Programa tu visita
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-6 pt-4">
+        <DialogContent className="w-[calc(100%-2rem)] sm:max-w-md rounded-2xl bg-background flex flex-col gap-0 max-h-[90dvh] overflow-hidden p-0">
+          <div className="flex-shrink-0 px-6 pt-6 pr-12">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold text-primary text-center">
+                Programa tu visita
+              </DialogTitle>
+            </DialogHeader>
+          </div>
+          <div className="flex-1 overflow-y-auto min-h-0 px-6 pt-4 pb-2 space-y-6">
             <div className="flex justify-center">
               <Calendar
                 mode="single"
@@ -822,6 +824,8 @@ const PropertyDetailPage = () => {
                 </div>
               )}
             </div>
+          </div>
+          <div className="flex-shrink-0 px-6 pb-6 pt-3">
             <Button
               variant="gold"
               size="lg"

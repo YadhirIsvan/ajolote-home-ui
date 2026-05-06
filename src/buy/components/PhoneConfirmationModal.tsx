@@ -51,7 +51,7 @@ export const PhoneConfirmationModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md rounded-2xl bg-background">
+      <DialogContent className="w-[calc(100%-2rem)] sm:max-w-md rounded-2xl bg-background max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-primary text-center">
             {editing && missingPhone
